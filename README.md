@@ -4,8 +4,8 @@ pystudio - Qubic Studio for Python
 ==================================
 
 A Python interface for Qubic Studio
-originally implemented by Pierre Chanial
-current maintainer: Steve Torchinsky <satorchi@apc,in2p3.fr>
+- originally implemented by Pierre Chanial
+- current maintainer: Steve Torchinsky <satorchi@apc,in2p3.fr>
 
 QubicStudio is the control software for QUBIC
 developed by Wilfried Marty at IRAP
