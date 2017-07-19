@@ -41,19 +41,20 @@ can be used to specify
 
 - Download pystudio-<version>.tar.gz, and follow the steps below:
 
-$ tar -xvzf pystudio-<version>.tar.gz
-$ cd pystudio
-$ python ./setup.py build
-$ sudo python ./setup.py install
+    $ tar -xvzf pystudio-<version>.tar.gz
+    $ cd pystudio
+    $ python ./setup.py build
+    $ sudo python ./setup.py install
 
 and run pystudio!  See the description of QubicPack below for more details.
 
 Qubic Pack
 ----------
 
-authors: Steve Torchinsky <satorchi@apc.in2p3.fr>
-         Michel Piat
-	 and other members of the QUBIC team
+authors:
+- Steve Torchinsky <satorchi@apc.in2p3.fr>
+- Michel Piat
+- and other members of the QUBIC team
 
 
 QubicPack is implemented as a python class with a number of methods.
@@ -61,9 +62,9 @@ It is intended to be used with your favourite python environment, such
 as ipython or jupiter.  A simple example of a qubicpack program is the
 following:
 
->>> from qubicpack import qubicpack
->>> go=qubipack()
->>> Vtes=go.get_Vavg_data()
+    >>> from qubicpack import qubicpack
+    >>> go=qubipack()
+    >>> Vtes=go.get_Vavg_data()
 
 The above three lines will run the I-V curve measurements for all TES.
 Afterwards, you have all the data saved in the qubicpack object.  The
@@ -93,6 +94,11 @@ Here is a list of QubicPack methods:
 
 assignment methods
 ------------------
+
+Assignment methods are intended to assign valid values to various
+parameters.  It's good practice to use these methods rather than
+assigning through a back-door (knowing that Python does not have
+"private" variables).
 
 assign_defaults()
  - assign default values to parameters
@@ -126,23 +132,41 @@ setup_plot_Vavg(axes=None)
  - setup the window, axes, etc for a running plot during I-V measurement
  
 plot_Vavg(Vavg,Vbias,offset=None,axes=None)
- - 
+ - plot the current output for each TES.  This method is used by get_Vavg_data().  see below.
+
+make_line(pt1,pt2,xmin,xmax)
+ - find the end points of a line at xmin and xmax given points pt1 and pt2
  
-plot_all_Vavg(good=None):
-make_line(pt1,pt2,xmin,xmax):
-draw_iv(I,colour='blue'):
-plot_iv(TES=None,offset=None,fudge=1.0):
+draw_iv(I,colour='blue')
+ - draw the I-V curve on the plot
+ 
+plot_iv(TES=None,offset=None,fudge=1.0,multi=False)
+ - make a plot of an I-V curve, or multiple curves
+ - if TES=None, all I-V curves are plotted on top of each other
+ - if multi=True, a grid of plots is made, one for each TES
+ 
 make_Vbias(cycle_voltage=True,vmin=5.0,vmax=8.0,dv=0.04,lowhigh=True):
+
 get_Vavg_data(self):
+
 filter_Vtes(self):
+
 read_Vtes_file(filename):
+
 heres_one_I_made_earlier(filename=None, axes=None):
+
 connect_QubicStudio(client=None, ip=None):
+
 get_amplitude(integration_time=None, asic=None):
+
 get_mean(integration_time=None, asic=None):
+
 integrate_scientific_data(integration_time=None, asic=None):
+
 set_VoffsetTES(tension, amplitude, asic=0):
+
 set_diffDAC(tension):
+
 set_slowDAC(tension):
 
 
