@@ -36,14 +36,14 @@ code, but by the dispatchertf library.
 if the utility pkg-config is not installed, the environment variable QTPATH
 can be used to specify
 
-- The source code for pystudio and qubicpack is available in a tar-zip file
-  on the QUBIC wiki (add URL here).
+- The source code for pystudio and qubicpack is available from GitHub:
+-- https://github.com/satorchi/pystudio
 
-- Download pystudio-<version>.tar.gz, and follow the steps below:
+- Download pystudio and use the build.sh script
 
-    $ tar -xvzf pystudio-<version>.tar.gz
+    $ git clone git@github.com:satorchi/pystudio.git
     $ cd pystudio
-    $ python ./setup.py build
+    $ ./build.sh
     $ sudo python ./setup.py install
 
 and run pystudio!  See the description of QubicPack below for more details.
