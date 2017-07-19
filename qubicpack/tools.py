@@ -136,6 +136,8 @@ def read_fits(self,filename):
     if not os.path.exists(filename):
         print('ERROR! file not found: %s' % filename)
         return None
+
+    print('reading fits file: %s' % filename)
     h=pyfits.open(filename)
     nhdu=len(h)
 
@@ -184,10 +186,11 @@ def read_fits(self,filename):
             for n in range(nbias):
                 self.vbias[n]=data[n][0]
 
-        if hdrtype=='timeline':
+        if hdrtype=='timelines':
             '''
             this is the timeline data
             '''
+            print('reading timeline data')
             data=hdu.data
             npts=eval(hdu.header['TFORM1'].strip()[:-1])
             timeline=np.empty((self.NPIXELS,npts))
@@ -195,8 +198,10 @@ def read_fits(self,filename):
                 timeline[n,:]=data[n][0]
             timelines.append(timeline)
             
-            
-    if hdrtype=='timeline':
+
+    print('hdrtype=%s' % hdrtype)
+    if hdrtype=='timelines':
+        print('assigning timeline data')
         self.timelines=np.array(timelines)
     h.close()
     return

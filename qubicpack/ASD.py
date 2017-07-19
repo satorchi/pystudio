@@ -35,12 +35,15 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         self.obsdate=self.read_date_from_filename(picklename)
         if self.obsdate==None: self.obsdate=dt.datetime.utcnow()
         self.nsamples=100 # this should be read from file!
-        
 
-    self.assign_integration_time(tinteg)  # s
-    tinteg=self.tinteg
-    
-    if not replay:
+    if replay:
+        if self.timelines==None:
+            print('Please read a timeline file, or run a new measurement!')
+            return None
+        ntimelines=self.timelines.shape[0]
+        
+    else:
+        self.assign_integration_time(tinteg)  # s
         client=self.connect_QubicStudio()
         self.nsamples = client.fetch('QUBIC_Nsample')
         self.obsdate=dt.datetime.utcnow()
@@ -50,6 +53,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     
     saved_timelines=[]
     ttl=str('Timeline and Amplitude Spectral Density')
+    subttl=str('TES #%i' % TES)
     plt.ion()
 
     nrows=1
@@ -59,7 +63,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     ax_timeline=axes[0]
     ax_asd=axes[1]
     fig.canvas.set_window_title('plt: '+ttl)
-    fig.suptitle(ttl,fontsize=16)
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
 
     ax_asd.set_xlabel('freq')
     ax_asd.set_ylabel('P')
@@ -69,12 +73,11 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     
     filerootname=self.obsdate.strftime('AmplitudeSpectralDensity_%Y%m%dT%H%M%SUTC')
     for i in range(ntimelines):
-	#print(i)
 	if not replay:
             timeline = self.integrate_scientific_data()
             saved_timelines.append(timeline)
         else:
-            timeline = timelines[i,:,:]
+            timeline = self.timelines[i,:,:]
             
         if timeline==None:
             plt.close(fig)
@@ -94,7 +97,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         ax_asd.cla()
 	ax_asd.loglog(freqs,np.sqrt(PSD))
         plt.pause(0.01)
-        pngname=str('%s_%03i.png' % (filerootname,i))
+        pngname=str('%s_TES%03i_timeline%03i.png' % (filerootname,TES,i))
         plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
             
 
@@ -110,7 +113,8 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         h.close()
     '''
     if not replay:
+        self.timelines=np.array(saved_timelines)
         self.write_fits()
 
-    return timelines
+    return self.timelines
 
