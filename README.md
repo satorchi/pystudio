@@ -37,14 +37,14 @@ if the utility pkg-config is not installed, the environment variable QTPATH
 can be used to specify
 
 - The source code for pystudio and qubicpack is available from GitHub:
--- https://github.com/satorchi/pystudio
+https://github.com/satorchi/pystudio
 
 - Download pystudio and use the build.sh script
 
-    $ git clone git@github.com:satorchi/pystudio.git
-    $ cd pystudio
-    $ ./build.sh
-    $ sudo python ./setup.py install
+     $ git clone git@github.com:satorchi/pystudio.git
+     $ cd pystudio
+     $ ./build.sh
+     $ sudo python ./setup.py install
 
 and run pystudio!  See the description of QubicPack below for more details.
 
