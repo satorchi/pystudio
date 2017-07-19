@@ -146,7 +146,8 @@ plot_iv(TES=None,offset=None,fudge=1.0,multi=False)
  - if multi=True, a grid of plots is made, one for each TES
  
 make_Vbias(cycle_voltage=True,vmin=5.0,vmax=8.0,dv=0.04,lowhigh=True):
-
+ - make the list of bias voltages used during the I-V curve measurement
+ 
 get_Vavg_data(self):
 
 filter_Vtes(self):
