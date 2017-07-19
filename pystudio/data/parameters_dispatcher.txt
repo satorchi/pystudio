@@ -1,0 +1,24 @@
+DISP_LogbookFilename ; 128 ; DISP current Logbook file name
+DISP_BackupsState ; 3 ; DISP state of the differents backups used
+DISP_BackupsRawFilesSize ; 7 ; DISP size of the current raw backup
+DISP_BackupsHkFilesSize ; 7 ; DISP size of the current hk backup
+DISP_SubsystemConnectionState ; 7 ; DISP subsystems connection state flag
+DISP_BackupsBaseDirectory ; 128 ; DISP base directory used to save raw and HK backups
+DISP_RunningTime ; 7 ; DISP How many seconds dispatcher runs
+DISP_SubsystemsRate ; 7 ; DISP subsystems rates
+DISP_SubsystemsDataTransfered ; 7 ; DISP subsystems data transfered
+DISP_NbClientsConnected ; 1 ; DISP Number of clients connected
+DISP_RequestsRate ; 3 ; DISP Rate of all request during the last 5 seconds
+DISP_ActiveRequestsNumber ; 3 ; DISP Number of client request
+DISP_PercentIdle ; 0 ; DISP Percent of time in idle mode
+DISP_DecommuteLastErrorCode ; 0 ; DISP Last error encountered
+DISP_DecommuteLastErrorTmId ; 7 ; DISP Id of the TM were error occurs (if id is already decommute
+DISP_DecommuteLastErrorIndexLocation ; 1 ; DISP Index in the header for header error, or index in the EOP for EOP error (from 0 to N)
+DISP_DecommuteStartHeaderErrorsNumber ; 1 ; DISP Number of header error encountered
+DISP_DecommuteEndOfPacketErrorsNumber ; 1 ; DISP Number of EOP error encountered
+DISP_DecommuteSizeErrorsNumber ; 1 ; DISP Number of size field overlap error encountered
+DISP_DecommuteChecksumErrorsNumber ; 1 ; DISP Number of checksum error encountered
+DISP_DecommuteOthersErrorsNumber ; 1 ; DISP Number of others errors encountered
+DISP_DecommuteIdErrorsNumber ; 1 ; DISP Number of ID error encountered
+DISP_DecommuteLastErrorFieldValue ; 7 ; DISP Error field value
+DISP_DecommuteLastErrorDatation ; 15 ; DISP Error date/time value (number of milliseconds that have passed since 1970-01-01T00:00:00.000)

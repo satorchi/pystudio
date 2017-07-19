@@ -1,0 +1,11 @@
+startRawBackup ,0 ,1,1,sessionName,string_0,{1} #start raw backup
+stopRawBackup ,1 ,0 #stop raw backup
+startHKBackup ,2 ,3,2,sessionName,string_0,comment,string_0,01{1}{2} #start HK backup (hk displayed in HKPlot tool)
+stopHKBackup ,3 ,0 #stop HK backup
+setBackupDir ,8 ,1,1,directory,string_0,{1} #define the base backup directory
+resetSubsystem ,9 ,1,1,subsystemId,8,{1} #reset the subsystem
+resetDecommutationFlags ,10 ,1,1,subsytemId,8,{1} #reset the decommutation flags for the subsytem, if subsytemId = 0xFF reset all subsystems flags (DISP_DecommuteLastErrorCode, DISP_Decommute...)
+addToLogbook ,11 ,2,2,key,string_0,comment,string_0,{1}{2} #add a line into the logbook file (line is : YYYYMMDD hhmmss: key => comment)
+setLogBookFilename ,12 ,1,1,filename,string_0,{1} #Set the logbook file, if filename is empty, a new logbook file is opened according to the automatic logbook filename strategy
+setLogBookBaseDirectory ,13 ,1,1,directory,string_0,{1} #Change the logbook base directory
+

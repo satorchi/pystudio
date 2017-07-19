@@ -1,0 +1,13 @@
+$Id: LICENSE
+$auth: Steve Torchinsky <satorchi@apc.in2p3.fr>
+$created: Tue 18 Jul 2017 10:05:46 CEST
+$license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
+
+          This is free software: you are free to change and
+          redistribute it.  There is NO WARRANTY, to the extent
+          permitted by law.
+
+pystudio and qubicpack are licensed under the terms of the GPLv3 or later.
+
+header files from QubicStudio are authored by Wilfried Marty.  License unknown.
+

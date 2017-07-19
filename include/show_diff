@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+from __future__ import print_function
+from glob import glob
+from subprocess import call
+from os.path import join
+import os
+import sys
+
+root = '../tmp/libdispatcheraccess'
+rootg = join(root, 'generatedfiles')
+headers = glob('*.h')
+
+for h in ('tvirtualcommandencode.h', 'tparameterstable.h'):
+    print('diffing {}...'.format(h))
+    call(['colordiff', '-u', h, join(rootg, h)])
+    headers.remove(h)
+
+for path, dirs, files in os.walk(root):
+    for h in list(headers):
+        if h in files:
+            print('diffing {}...'.format(h))
+            call(['colordiff', '-u', h, os.path.join(path, h)])
+            headers.remove(h)
+
+for h in headers:
+    print('The header {} has not been found.'.format(h))
+
