@@ -321,6 +321,9 @@ def make_Vbias(self,cycle_voltage=None,vmin=5.0,vmax=8.0,dv=0.04,lowhigh=True):
     return vbias
 
 def get_Vavg_data(self):
+    '''
+    DEPRECATED! use get_IV_data() instead
+    '''
     client = self.connect_QubicStudio()
     if client==None: return None
 
@@ -331,20 +334,67 @@ def get_Vavg_data(self):
 
     v_tes = np.empty((self.NPIXELS,nbias))
 
-    fig=setup_plot_Vavg()
+    fig=self.setup_plot_Vavg()
     for j in range(nbias) :
         print("measures at Voffset=%gV " % vbias[j])
         self.set_VoffsetTES(vbias[j],0.0,self.asic_index())
-        wait_a_bit(0.3)
+        self.wait_a_bit()
         Vavg= self.get_mean(tinteg,asic)
         print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
         v_tes[:,j]=Vavg
-        plot_Vavg(Vavg,vbias[j])
+        self.plot_Vavg(Vavg,vbias[j])
 
 
     plt.show()
     np.savetxt(ofilename, v_tes,delimiter="\t")
     self.assign_Vtes(v_tes)
+    return v_tes
+
+def get_IV_data(self,replay=False):
+    '''
+    get IV data and make a running plot
+    optionally, replay saved data.
+    '''
+
+    if replay:
+        if self.v_tes==None:
+            print('Please read an I-V data file, or run a new measurement!')
+            return None
+        if self.vbias==None:
+            print('There appears to be I-V data, but no Vbias info.')
+            print('Please run make_Vbias() with the correct max and min values')
+            return None
+        vbias=self.vbias
+        v_tes=self.v_tes
+    else:
+        client = self.connect_QubicStudio()
+        if client==None: return None
+        self.obsdate=dt.datetime.utcnow()
+        if self.vbias==None: vbias=make_Vbias()
+        v_tes = np.empty((self.NPIXELS,nbias))
+
+        
+    nbias=len(vbias)
+
+    fig=self.setup_plot_Vavg()
+    for j in range(nbias) :
+        print("measures at Voffset=%gV " % vbias[j])
+        if not replay:
+            self.set_VoffsetTES(vbias[j],0.0,self.asic_index())
+            self.wait_a_bit()
+            Vavg= self.get_mean(tinteg,asic)
+            v_tes[:,j]=Vavg
+        else:
+            Vavg=v_tes[:,j]
+        print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
+        self.plot_Vavg(Vavg,vbias[j])
+
+
+    plt.show()
+    self.assign_Vtes(v_tes)
+    if not replay:
+        self.write_fits()
+    
     return v_tes
 
 def filter_Vtes(self):
