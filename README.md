@@ -150,13 +150,9 @@ plot_iv(TES=None,offset=None,fudge=1.0,multi=False)
 make_Vbias(cycle_voltage=True,vmin=5.0,vmax=8.0,dv=0.04,lowhigh=True):
  - make the list of bias voltages used during the I-V curve measurement
  
-get_Vavg_data(self):
+get_IV_data():
 
-filter_Vtes(self):
-
-read_Vtes_file(filename):
-
-heres_one_I_made_earlier(filename=None, axes=None):
+filter_Vtes():
 
 connect_QubicStudio(client=None, ip=None):
 
@@ -166,7 +162,7 @@ get_mean(integration_time=None, asic=None):
 
 integrate_scientific_data(integration_time=None, asic=None):
 
-set_VoffsetTES(tension, amplitude, asic=0):
+set_VoffsetTES(tension, amplitude):
 
 set_diffDAC(tension):
 
