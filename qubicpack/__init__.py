@@ -58,6 +58,7 @@ class qubicpack:
         plot_iv,\
         make_Vbias,\
         get_Vavg_data,\
+        get_IV_data,\
         filter_Vtes,\
         read_Vtes_file,\
         heres_one_I_made_earlier
