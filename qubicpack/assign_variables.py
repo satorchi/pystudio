@@ -60,7 +60,6 @@ def TES_index(self,TES=1):
         print('TES should have a value between 1 and %i' % self.NPIXELS)
         print('assigning default: TES=1')
         TES=1
-        TES_idx=0
     TES_idx=TES-1
     return TES_idx
         
