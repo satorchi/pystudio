@@ -22,8 +22,8 @@ from glob import glob
 import matplotlib.mlab as mlab
 import pickle
 
-def plot_ASD(self,chan=0,tinteg=None,picklename=None,ntimelines=10,replay=False):
-
+def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
+    TES_index=self.TES_index(TES)
     # legacy: pickle file was only used once.  Use FITS from now on.
     if isinstance(picklename,str) and os.path.exists(picklename):
         h=open(picklename,'r')
@@ -81,10 +81,10 @@ def plot_ASD(self,chan=0,tinteg=None,picklename=None,ntimelines=10,replay=False)
             return None
 
         ax_timeline.cla()
-	ax_timeline.plot(timeline[chan])
+	ax_timeline.plot(timeline[TES_index])
         plt.pause(0.01)
         
-	PSD, freqs = mlab.psd(timeline[chan],
+	PSD, freqs = mlab.psd(timeline[TES_index],
                               Fs = fs,
                               NFFT = timeline.shape[1],
                               window=mlab.window_hanning,
