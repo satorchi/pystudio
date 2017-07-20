@@ -51,10 +51,12 @@ class qubicpack:
         setup_plot_Vavg,\
         plot_Vavg,\
         plot_iv_all,\
+        setup_plot_iv_multi,\
         plot_iv_multi,\
         make_line,\
         fit_iv,\
         draw_iv,\
+        setup_plot_iv,\
         plot_iv,\
         make_Vbias,\
         get_Vavg_data,\
@@ -71,6 +73,6 @@ class qubicpack:
         return
 
     def verdate(self):
-        print("Thu 13 Jul 2017 15:54:22 CEST")
+        print("Thu 20 Jul 2017 15:20:25 CEST")
         return
 
