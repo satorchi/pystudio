@@ -40,7 +40,7 @@ def ADU2I(self,ADU, offset=None, fudge=1.0):
     Rfb   = 10000. # Ohm
     q_ADC = 20./(2**16-1)
     G_FLL = (10.4 / 0.2) * Rfb
-    I = 1e6 * (ADU / 2**7) * (q_ADC/G_FLL) * fudge
+    I = 1e6 * (ADU / 2**7) * (q_ADC/G_FLL) * (self.nsamples - 8) * fudge
 
     if offset!=None: return I+offset
     return I
@@ -116,8 +116,7 @@ def plot_iv_all(self,selection=None):
     plt.ioff()
     fig=plt.figure(figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
-    fig.suptitle(ttl,fontsize=16)
-    plt.title(subttl,fontsize=14)
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
     plt.xlabel('Bias Voltage  /  V')
     plt.ylabel('Current  /  $\mu$A')
 
@@ -148,7 +147,7 @@ def plot_iv_all(self,selection=None):
     plt.show()
     return fig
 
-def plot_iv_multi(self):
+def setup_plot_iv_multi(self,nrows=16,ncols=8):
     if self.vbias==None: self.vbias=make_Vbias()
     min_bias=min(self.vbias)
     max_bias=max(self.vbias)
@@ -158,15 +157,22 @@ def plot_iv_multi(self):
     else:
         ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (min_bias,max_bias))
 
-    nrows=16
-    ncols=8
     plt.ion()
     fig,axes=plt.subplots(nrows,ncols,sharex=True,sharey=False,figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl)
     fig.suptitle(ttl,fontsize=16)
     plt.xlabel('Bias Voltage  /  V')
     plt.ylabel('Current  /  $\mu$A')
+    return fig,axes
 
+def plot_iv_multi(self):
+    nrows=16
+    ncols=8
+    fig,axes=self.setup_plot_iv_multi(nrows,ncols)
+    min_bias=min(self.vbias)
+    max_bias=max(self.vbias)
+    max_bias_position=np.argmax(self.vbias)
+    
     tes_index=0
     for row in range(nrows):
         for col in range(ncols):
@@ -210,30 +216,64 @@ def fit_iv(self,I):
     '''
     if self.cycle_vbias:
         # only fit half the points
+        # also, ignore the first point which is often not good
         mid=int(len(self.vbias)/2)
-        ypts=I[0:mid]
-        xpts=self.vbias[0:mid]
+        ypts=I[1:mid]
+        xpts=self.vbias[1:mid]
         npts=len(xpts)
     else:
         ypts=I
         xpts=self.vbias
         npts=len(I)
 
-    ret=np.polyfit(xpts,ypts,2,full=True)
+    # fit to polynomial degree 3 (?)
+    ret=np.polyfit(xpts,ypts,3,full=True)
     return ret
 
 def draw_iv(self,I,colour='blue',axis=plt):
     '''
     draw an individual I-V curve
     '''
+
+    npts=len(I)
+    print('npts=%i' % npts)
+    if npts<len(self.vbias) and npts>0:
+        # this is a partial curve
+        plt.cla()
+        axis.set_xlim([min(self.vbias),max(self.vbias)])
+
+        # we mark the last point
+        axis.plot(self.vbias[0:npts],I,color=colour)
+        axis.plot(self.vbias[npts-1],I[npts-1],color='red',marker='D',linestyle='none')
+        plt.pause(0.01)
+        return
+    
     if self.cycle_vbias:
         # plot down and up voltage with different linestyles
         mid=int(len(self.vbias)/2)
         axis.plot(self.vbias[0:mid],I[0:mid],linestyle='solid', color=colour)
         axis.plot(self.vbias[mid:-1], I[mid:-1], linestyle='dashed',color=colour)
-    else:
-        axis.plot(self.vbias,I,color=colour)
+        return
+    
+    axis.plot(self.vbias,I,color=colour)
     return
+
+def setup_plot_iv(self,TES,offset):
+    if isinstance(self.obsdate,dt.datetime):
+        ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+    else:
+        ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,min_bias,max_bias))
+    subttl=str('offset I=%.4e' % offset)
+    plt.ion()
+    fig,ax=plt.subplots(1,1,figsize=self.figsize)
+    fig.canvas.set_window_title('plt: '+ttl) 
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    ax.set_xlabel('Bias Voltage  /  V')
+    ax.set_ylabel('Current  /  $\mu$A')
+    min_bias=min(self.vbias)
+    max_bias=max(self.vbias)
+    ax.set_xlim([min_bias,max_bias])
+    return fig,ax
 
 def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     if multi:return self.plot_iv_multi()
@@ -241,7 +281,6 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     if not isinstance(TES,int): return self.plot_iv_all()
 
     TES_index=self.TES_index(TES)
-    
     
     if self.vbias==None: self.vbias=make_Vbias()
     min_bias=min(self.vbias)
@@ -253,19 +292,8 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     I=self.ADU2I(self.v_tes[TES_index,max_bias_position])
     if offset==None: offset=self.find_offset(I,Vbias)
 
-    if isinstance(self.obsdate,dt.datetime):
-        ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    else:
-        ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,min_bias,max_bias))
-    subttl=str('offset I=%.4e' % offset)
-    plt.ion()
-    fig=plt.figure(figsize=self.figsize)
-    fig.canvas.set_window_title('plt: '+ttl) 
-    fig.suptitle(ttl,fontsize=16)
-    plt.title(subttl)
-    plt.xlabel('Bias Voltage  /  V')
-    plt.ylabel('Current  /  $\mu$A')
-
+    fig,ax=self.setup_plot_iv(TES,offset)
+    
     Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset,fudge=fudge)
     self.draw_iv(Iavg)
 
@@ -324,6 +352,7 @@ def get_Vavg_data(self):
     '''
     DEPRECATED! use get_IV_data() instead
     '''
+    print('DEPRECATION WARNING! Please use get_IV_data().')
     client = self.connect_QubicStudio()
     if client==None: return None
 
@@ -334,7 +363,7 @@ def get_Vavg_data(self):
 
     v_tes = np.empty((self.NPIXELS,nbias))
 
-    fig=self.setup_plot_Vavg()
+    fig,ax=self.setup_plot_Vavg()
     for j in range(nbias) :
         print("measures at Voffset=%gV " % vbias[j])
         self.set_VoffsetTES(vbias[j],0.0,self.asic_index())
@@ -350,11 +379,22 @@ def get_Vavg_data(self):
     self.assign_Vtes(v_tes)
     return v_tes
 
-def get_IV_data(self,replay=False):
+def get_IV_data(self,replay=False,TES=None,monitor=False):
     '''
     get IV data and make a running plot
     optionally, replay saved data.
+
+    you can monitor the progress of a given TES by the keyword TES=<number>
+
+    setting monitor=True will monitor *all* the TES, but this slows everything down
+    enormously!  Not recommended!!
+
     '''
+
+    monitor_iv=False
+    if not TES==None:
+        monitor_TES_index=self.TES_index(TES)
+        monitor_iv=True
 
     if replay:
         if self.v_tes==None:
@@ -376,18 +416,47 @@ def get_IV_data(self,replay=False):
         
     nbias=len(vbias)
 
-    fig=self.setup_plot_Vavg()
+    figavg=self.setup_plot_Vavg()
+    if monitor_iv:figiv,axiv=self.setup_plot_iv(TES,0.0)
+    if monitor:
+        nrows=16
+        ncols=8
+        figmulti,axmulti=self.setup_plot_iv_multi()
+    
     for j in range(nbias) :
         print("measures at Voffset=%gV " % vbias[j])
         if not replay:
-            self.set_VoffsetTES(vbias[j],0.0,self.asic_index())
+            self.set_VoffsetTES(vbias[j],0.0)
             self.wait_a_bit()
-            Vavg= self.get_mean(tinteg,asic)
+            Vavg= self.get_mean()
             v_tes[:,j]=Vavg
         else:
             Vavg=v_tes[:,j]
+
         print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
+        plt.figure(figavg.number)
         self.plot_Vavg(Vavg,vbias[j])
+        if monitor_iv:
+            plt.figure(figiv.number)
+            I_tes=v_tes[monitor_TES_index,0:j+1]
+            Iavg=self.ADU2I(I_tes)
+            self.draw_iv(Iavg,axis=axiv)
+
+        if monitor:
+            # monitor all the I-V curves:  Warning!  Extremely slow!!!
+            TES_index=0
+            for row in range(nrows):
+                for col in range(ncols):
+                    axmulti[row,col].get_xaxis().set_visible(False)
+                    axmulti[row,col].get_yaxis().set_visible(False)
+
+                    Iavg=self.ADU2I(self.v_tes[TES_index,0:j+1])
+                    self.draw_iv(Iavg,colour='blue',axis=axmulti[row,col])
+                    text_y=min(Iavg)
+                    axmulti[row,col].text(max(self.vbias),text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
+            
+                    TES_index+=1
+        
 
 
     plt.show()
@@ -397,45 +466,45 @@ def get_IV_data(self,replay=False):
     
     return v_tes
 
-def filter_Vtes(self):
-    means=self.v_tes.mean(axis=1)
-    meanmean_all=means.mean()
-    good=[]
+def filter_Vtes(self,residual_limit=1e-3,amplitude_limit=1.0):
+    '''
+    find which TES are good
+    '''
+    if self.v_tes==None:
+        print('No data!  Please read a file, or run a measurement.')
+        return None
 
-    # first filter: get rid of negative values
-    # and also large values
-    # recalulate meanmean of only the accepted traces
-    meanmean=0.0
-    ngood=0
-    for val in means:
-        if val<0.0 or (val>5*meanmean_all):
-            good.append(False)
-        else:
-            good.append(True)
-            meanmean+=val
-            ngood+=1
+    min_bias=min(self.vbias)
+    max_bias=max(self.vbias)
+    max_bias_position=np.argmax(self.vbias)
 
-    if ngood==0:
-        print("all TES are bad!!")
-        return good
-    meanmean=meanmean/ngood
+    is_good=[]
+    for TES_index in range(self.NPIXELS):
+        is_good.append(True)
 
 
-    # second filter: reject large means
-    #for i in range(self.NPIXELS):
-    #    if good[i] and (means[i] > 5 * meanmean): good[i]=False
-
-    ngood=0
+    # first filter: fit to a polynomial
     good_index=[]
-    good_mean=[]
-    for val in good:
-        if val:
-            good_index.append(ngood)
-            good_mean.append(means[ngood])
-            ngood+=1
-    
-    return good, good_index, good_mean
-
+    for TES_index in range(self.NPIXELS):
+        # normalize the Current so that R=1 Ohm at the highest Voffset
+        Vbias=self.vbias[max_bias_position]
+        I=self.ADU2I(self.v_tes[TES_index,max_bias_position])
+        offset=self.find_offset(I,Vbias)
+        Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset)
+        fit=self.fit_iv(Iavg)
+        residual=fit[1][0]
+        if residual>residual_limit:
+            is_good[TES_index]=False
+        else:
+            # second filter: small amplitude is rejected
+            meanval=self.v_tes[TES_index,:].mean()
+            maxval=max(self.v_tes[TES_index,:])
+            minval=min(self.v_tes[TES_index,:])
+            rel_amplitude=abs(meanval/(maxval-minval))
+            if rel_amplitude<amplitude_limit:
+                is_good[TES_index]=False
+        if is_good[TES_index]: good_index.append(TES_index)
+    return is_good, good_index
 
 def read_Vtes_file(self,filename):
     if not os.path.exists(filename):
