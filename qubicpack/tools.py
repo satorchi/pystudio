@@ -185,6 +185,11 @@ def read_fits(self,filename):
             self.vbias=np.empty(nbias)
             for n in range(nbias):
                 self.vbias[n]=data[n][0]
+            # check if this is cycled bias
+            if self.vbias[0]==self.vbias[-1]:
+                self.cycle_vbias=True
+            else:
+                self.cycle_vbias=False
 
         if hdrtype=='timelines':
             '''
