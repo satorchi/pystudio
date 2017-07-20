@@ -113,7 +113,7 @@ def plot_iv_all(self,selection=None):
         nselection=self.NPIXELS
                 
     subttl=str('plotting curves for %i TES out of %i' % (nselection,self.NPIXELS))
-    plt.ioff()
+    plt.ion()
     fig=plt.figure(figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
@@ -165,7 +165,13 @@ def setup_plot_iv_multi(self,nrows=16,ncols=8):
     plt.ylabel('Current  /  $\mu$A')
     return fig,axes
 
-def plot_iv_multi(self):
+def plot_iv_multi(self,is_good=None):
+    '''
+    plot all TES I-V curves on a grid
+    the optional list "is_good" is boolean for each TES
+    if present, a label will be shown on each curve indicating 
+    whether that TES is considered good or not
+    '''
     nrows=16
     ncols=8
     fig,axes=self.setup_plot_iv_multi(nrows,ncols)
@@ -187,7 +193,10 @@ def plot_iv_multi(self):
             # axes[row,col].plot(self.vbias,Iavg,color='blue')
             text_y=min(Iavg)
             axes[row,col].text(max_bias,text_y,str('%i' % (tes_index+1)),va='bottom',ha='right',color='black')
-            
+
+            if (not is_good==None) and (not is_good[tes_index]):
+                axes[row,col].text(min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
+                
             tes_index+=1
 
     pngname='I-V_all_multi.png'
@@ -216,10 +225,10 @@ def fit_iv(self,I):
     '''
     if self.cycle_vbias:
         # only fit half the points
-        # also, ignore the first point which is often not good
+        # fit the second half which is often better
         mid=int(len(self.vbias)/2)
-        ypts=I[1:mid]
-        xpts=self.vbias[1:mid]
+        ypts=I[mid:len(self.vbias)]
+        xpts=self.vbias[mid:len(self.vbias)]
         npts=len(xpts)
     else:
         ypts=I
@@ -236,7 +245,6 @@ def draw_iv(self,I,colour='blue',axis=plt):
     '''
 
     npts=len(I)
-    print('npts=%i' % npts)
     if npts<len(self.vbias) and npts>0:
         # this is a partial curve
         plt.cla()
@@ -466,7 +474,7 @@ def get_IV_data(self,replay=False,TES=None,monitor=False):
     
     return v_tes
 
-def filter_Vtes(self,residual_limit=1e-3,amplitude_limit=1.0):
+def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1):
     '''
     find which TES are good
     '''
@@ -491,18 +499,30 @@ def filter_Vtes(self,residual_limit=1e-3,amplitude_limit=1.0):
         I=self.ADU2I(self.v_tes[TES_index,max_bias_position])
         offset=self.find_offset(I,Vbias)
         Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset)
-        fit=self.fit_iv(Iavg)
+        fit=self.fit_iv(Iavg) # the fit will be for the second half if it's cycled bias
         residual=fit[1][0]
         if residual>residual_limit:
             is_good[TES_index]=False
         else:
             # second filter: small amplitude is rejected
-            meanval=self.v_tes[TES_index,:].mean()
-            maxval=max(self.v_tes[TES_index,:])
-            minval=min(self.v_tes[TES_index,:])
-            rel_amplitude=abs(meanval/(maxval-minval))
-            if rel_amplitude<amplitude_limit:
+            # consider only the second half if it's cycled bias
+            if self.cycle_vbias:
+                mid=int(len(self.vbias)/2)
+                meanval=Iavg[mid:len(self.vbias)].mean()
+                maxval=max(Iavg[mid:len(self.vbias)])
+                minval=min(Iavg[mid:len(self.vbias)])
+            else:
+                meanval=Iavg.mean()
+                maxval=max(Iavg)
+                minval=min(Iavg)
+            spread=abs(maxval-minval)
+            if spread<abs_amplitude_limit:
                 is_good[TES_index]=False
+            else:
+                rel_amplitude=abs(spread/meanval)
+                if rel_amplitude<rel_amplitude_limit:
+                    is_good[TES_index]=False
+                    
         if is_good[TES_index]: good_index.append(TES_index)
     return is_good, good_index
 
