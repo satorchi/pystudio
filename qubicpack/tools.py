@@ -151,7 +151,7 @@ def read_fits(self,filename):
     self.observer=h[0].header['OBSERVER']
     self.obsdate=dt.datetime.strptime(h[0].header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC')
     self.nsamples=h[0].header['NSAMPLES']
-    if self.nsamples=='': self.nsamples=None
+    if self.nsamples=='': self.nsamples=100 # data from 12/13 July 2017
     self.tinteg=h[0].header['INT-TIME']
     self.NPIXELS=h[0].header['NPIXELS']
     self.asic=h[0].header['ASIC']
@@ -221,7 +221,7 @@ def get_amplitude(self,integration_time=None, asic=None):
     max_timeline = np.max(timeline, axis=-1)
     return max_timeline - min_timeline
 
-def get_mean(self,integration_time=None, asic=None):
+def get_mean(self):
     """
     Parameters
     ----------
@@ -231,18 +231,20 @@ def get_mean(self,integration_time=None, asic=None):
     ASIC number.
 
     """
-    timeline = self.integrate_scientific_data(integration_time, asic)
+    timeline = self.integrate_scientific_data()
     return timeline.mean(axis=-1)
 
-def integrate_scientific_data(self,integration_time=None, asic=None):
+def integrate_scientific_data(self,integration_time=None,asic=None):
     client = self.connect_QubicStudio()
     if client==None:return None
 
-    self.assign_integration_time(integration_time)
-    self.assign_asic(asic)
+    if not integrtion_time==None: self.assign_integration_time(integration_time)
+    if not asic==None: self.assign_asic(asic)
     
     nsample = client.fetch('QUBIC_Nsample')
     print('nsample=',nsample)
+    self.nsamples=nsample
+    
     period = 1 / (2e6 / self.NPIXELS / nsample)
     print('period=',period)
     print ('integration_time=',self.tinteg)
