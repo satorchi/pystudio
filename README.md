@@ -61,7 +61,7 @@ authors:
 
 QubicPack is implemented as a python class with a number of methods.
 It is intended to be used with your favourite python environment, such
-as ipython or jupiter.  A simple example of a qubicpack program is the
+as ipython or Jupyter.  A simple example of a qubicpack program is the
 following:
 
     >>> from qubicpack import qubicpack
