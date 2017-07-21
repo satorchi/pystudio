@@ -30,6 +30,10 @@ class qubicpack:
         assign_integration_time,\
         assign_Vtes,\
         assign_pausetime
+
+    from .pix2tes import\
+        assign_TES_grid,\
+        assign_pix2tes
     
     from .tools import\
         connect_QubicStudio,\
