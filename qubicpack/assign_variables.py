@@ -35,6 +35,8 @@ def assign_defaults(self):
     self.observer='APC LaboMM'
     self.nsamples=None
     self.timelines=None
+    self.assign_TES_grid()
+    self.assign_pix2tes()
     return
 
 def assign_observer(self,observer='APC LaboMM'):
