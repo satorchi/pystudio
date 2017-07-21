@@ -3,6 +3,7 @@
 /pystudio.egg-info
 /test
 /lib
+/src
 *.pyc
 pystudio.cpp
 *~
