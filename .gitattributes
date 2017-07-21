@@ -1,0 +1,4 @@
+QubicStudio.lib/* linguist-vendored
+include/* linguist-vendored
+*.pyx linguist-language=Python
+*.pxd linguist-language=Python
