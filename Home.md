@@ -26,12 +26,12 @@ authors:
 
 QubicPack is implemented as a python class with a number of methods.
 It is intended to be used with your favourite python environment, such
-as ipython or jupiter.  A simple example of a qubicpack program is the
+as ipython or jupyter.  A simple example of a qubicpack program is the
 following:
 
     >>> from qubicpack import qubicpack
     >>> go=qubipack()
-    >>> Vtes=go.get_Vavg_data()
+    >>> Vtes=go.get_IV_data()
 
 The above three lines will run the I-V curve measurements for all TES.
 Afterwards, you have all the data saved in the qubicpack object.  The
