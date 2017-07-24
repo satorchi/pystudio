@@ -99,12 +99,10 @@ def plot_Vavg(self,Vavg,Vbias,offset=None,axes=None):
 def plot_iv_all(self,selection=None):
     if self.vbias==None:
         self.vbias=make_Vbias()
-    min_bias=min(self.vbias)
-    max_bias=max(self.vbias)
     if isinstance(self.obsdate,dt.datetime):
         ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
-        ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (min_bias,max_bias))
+        ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
     if selection != None:
         nselection=0
         for val in selection:
@@ -122,9 +120,6 @@ def plot_iv_all(self,selection=None):
 
     nbias=self.v_tes.shape[1]
     Ntes=self.v_tes.shape[0]
-
-    max_bias=max(self.vbias)
-    max_bias_position=np.argmax(self.vbias)
     
     offset=[]
     colour_idx=0
@@ -132,14 +127,14 @@ def plot_iv_all(self,selection=None):
     for n in range(Ntes):
 
         if (selection==None) or (selection[n]):
-            I=self.ADU2I(self.v_tes[n,max_bias_position])
+            I=self.ADU2I(self.v_tes[n,self.max_bias_position])
             # offset the Current so that R=1 Ohm at the highest Vbias
-            offset=self.find_offset(I,max_bias)
+            offset=self.find_offset(I,self.max_bias)
             
             Iavg=self.ADU2I(self.v_tes[n,:],offset)
 
             if colour_idx >= ncolours:colour_idx=0
-            self.draw_iv(Iavg,colour=self.colours[colour_idx])
+            self.draw_iv(TES,colour=self.colours[colour_idx])
             colour_idx+=1
 
     pngname='I-V_all.png'
@@ -149,14 +144,17 @@ def plot_iv_all(self,selection=None):
 
 def setup_plot_iv_multi(self,nrows=16,ncols=8):
     if self.vbias==None: self.vbias=make_Vbias()
-    min_bias=min(self.vbias)
-    max_bias=max(self.vbias)
-    max_bias_position=np.argmax(self.vbias)
     if isinstance(self.obsdate,dt.datetime):
         ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
-        ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (min_bias,max_bias))
+        ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
 
+    nbad=0
+    if not self.is_good==None:
+        for val in self.is_good:
+            if not val:nbad+=1
+        ttl+=str('\n%i flagged as bad pixels' % nbad)
+    
     plt.ion()
     fig,axes=plt.subplots(nrows,ncols,sharex=True,sharey=False,figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl)
@@ -172,13 +170,10 @@ def plot_iv_multi(self,is_good=None):
     if present, a label will be shown on each curve indicating 
     whether that TES is considered good or not
     '''
-    self.assign_is_good(is_good)
+    ngood=self.assign_is_good(is_good)
     nrows=16
     ncols=8
     fig,axes=self.setup_plot_iv_multi(nrows,ncols)
-    min_bias=min(self.vbias)
-    max_bias=max(self.vbias)
-    max_bias_position=np.argmax(self.vbias)
     
     tes_index=0
     for row in range(nrows):
@@ -186,21 +181,21 @@ def plot_iv_multi(self,is_good=None):
             axes[row,col].get_xaxis().set_visible(False)
             axes[row,col].get_yaxis().set_visible(False)
 
-            I=self.ADU2I(self.v_tes[tes_index,max_bias_position])
+            I=self.ADU2I(self.v_tes[tes_index,self.max_bias_position])
             # offset the Current so that R=1 Ohm at the highest Vbias
-            offset=self.find_offset(I,max_bias)
+            offset=self.find_offset(I,self.max_bias)
             Iavg=self.ADU2I(self.v_tes[tes_index,:],offset)            
             self.draw_iv(Iavg,colour='blue',axis=axes[row,col])
-            # axes[row,col].plot(self.vbias,Iavg,color='blue')
             text_y=min(Iavg)
-            axes[row,col].text(max_bias,text_y,str('%i' % (tes_index+1)),va='bottom',ha='right',color='black')
+            axes[row,col].text(self.max_bias,text_y,str('%i' % (tes_index+1)),va='bottom',ha='right',color='black')
 
             if (not self.is_good==None) and (not self.is_good[tes_index]):
-                axes[row,col].text(min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
-                
+                # axes[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
+                axes[row,col].set_axis_bgcolor('red')
+
             tes_index+=1
 
-    pngname='I-V_all_multi.png'
+    pngname=str('TES_IV_ASIC%i_thumbnail_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     plt.show()
     
@@ -212,18 +207,16 @@ def plot_iv_physical_layout(self,is_good=None):
     '''
     ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
 
-    self.assign_is_good(is_good)
+    ngood=self.assign_is_good(is_good)
     
-    max_bias=max(self.vbias)
-    min_bias=min(self.vbias)
-    max_bias_position=np.argmax(self.vbias)    
-
     nrows=self.pix_grid.shape[0]
     ncols=self.pix_grid.shape[1]
 
     plt.ion()
     fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
     subttl=str('ASIC #%i' % self.asic)
+    if not ngood==None:
+        subttl+=str(': %i flagged as bad pixels' % (self.NPIXELS-ngood))
     pngname=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     fig.canvas.set_window_title('plt:  '+ttl)
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
@@ -237,8 +230,9 @@ def plot_iv_physical_layout(self,is_good=None):
             TES=0
             ax[row,col].get_xaxis().set_visible(False)
             ax[row,col].get_yaxis().set_visible(False)
-            ax[row,col].set_xlim([min_bias,max_bias])
-            # ax[row,col].set_aspect('equal')
+            ax[row,col].set_xlim([self.min_bias,self.max_bias])
+            # ax[row,col].set_ylim([self.min_bias,self.max_bias])
+            # ax[row,col].set(aspect=1)
 
             # the pixel identity associated with its physical location in the array
             physpix=self.pix_grid[row,col]
@@ -255,9 +249,9 @@ def plot_iv_physical_layout(self,is_good=None):
                 label_colour='black'
                 face_colour='white'
                 TES_index=self.TES_index(TES)
-                I=self.ADU2I(self.v_tes[TES_index,max_bias_position])
+                I=self.ADU2I(self.v_tes[TES_index,self.max_bias_position])
                 # offset the Current so that R=1 Ohm at the highest Vbias
-                offset=self.find_offset(I,max_bias)
+                offset=self.find_offset(I,self.max_bias)
                 Iavg=self.ADU2I(self.v_tes[TES_index,:],offset)            
                 text_y=min(Iavg)
                 self.draw_iv(Iavg,colour='blue',axis=ax[row,col])
@@ -265,14 +259,14 @@ def plot_iv_physical_layout(self,is_good=None):
                 if (not self.is_good==None) and (not self.is_good[TES_index]):
                     face_colour='red'
                     label_colour='white'
-                    ax[row,col].text(min_bias,text_y,'BAD',va='bottom',ha='left',color=label_colour)
+                    # ax[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color=label_colour)
             else:
                 pix_label='other\nASIC'
                 label_colour='yellow'
                 face_colour='blue'
                 
             ax[row,col].set_axis_bgcolor(face_colour)
-            ax[row,col].text(max_bias,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
+            ax[row,col].text(self.max_bias,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
             
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     plt.show()
@@ -314,6 +308,7 @@ def fit_iv(self,I):
     ret=np.polyfit(xpts,ypts,3,full=True)
     return ret
 
+
 def draw_iv(self,I,colour='blue',axis=plt):
     '''
     draw an individual I-V curve
@@ -324,6 +319,7 @@ def draw_iv(self,I,colour='blue',axis=plt):
         # this is a partial curve
         plt.cla()
         axis.set_xlim([min(self.vbias),max(self.vbias)])
+        # axis.set_ylim([min(self.vbias),max(self.vbias)])
 
         # we mark the last point
         axis.plot(self.vbias[0:npts],I,color=colour)
@@ -345,7 +341,7 @@ def setup_plot_iv(self,TES,offset):
     if isinstance(self.obsdate,dt.datetime):
         ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
-        ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,min_bias,max_bias))
+        ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,self.min_bias,self.max_bias))
     subttl=str('offset I=%.4e' % offset)
     plt.ion()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
@@ -353,9 +349,8 @@ def setup_plot_iv(self,TES,offset):
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
     ax.set_xlabel('Bias Voltage  /  V')
     ax.set_ylabel('Current  /  $\mu$A')
-    min_bias=min(self.vbias)
-    max_bias=max(self.vbias)
-    ax.set_xlim([min_bias,max_bias])
+    ax.set_xlim([self.min_bias,self.max_bias])
+    # ax.set_ylim([self.min_bias,self.max_bias])
     return fig,ax
 
 def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
@@ -366,13 +361,10 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     TES_index=self.TES_index(TES)
     
     if self.vbias==None: self.vbias=make_Vbias()
-    min_bias=min(self.vbias)
-    max_bias=max(self.vbias)
-    max_bias_position=np.argmax(self.vbias)
     
     # normalize the Current so that R=1 Ohm at the highest Voffset
-    Vbias=self.vbias[max_bias_position]
-    I=self.ADU2I(self.v_tes[TES_index,max_bias_position])
+    Vbias=self.vbias[self.max_bias_position]
+    I=self.ADU2I(self.v_tes[TES_index,self.max_bias_position])
     if offset==None: offset=self.find_offset(I,Vbias)
 
     fig,ax=self.setup_plot_iv(TES,offset)
@@ -386,22 +378,22 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     print(fitinfo)
     f=np.poly1d(fit[0])
     plt.plot(self.vbias,f(self.vbias),linestyle='dashed',color='red')
-    text_x=min_bias + 0.5*(max_bias-min_bias)
+    text_x=self.min_bias + 0.5*(self.max_bias-self.min_bias)
     text_y=min(Iavg) + 0.8*(max(Iavg)-min(Iavg))
     plt.text(text_x,text_y,fitinfo,fontsize=14,horizontalalignment='center')
     
     # draw a line tangent to the final points
-    I1=self.ADU2I(self.v_tes[TES_index,max_bias_position],offset=offset,fudge=fudge)
-    bias1=max_bias
-    pos2=max_bias_position-2
-    if pos2<0: pos2=max_bias_position+2
+    I1=self.ADU2I(self.v_tes[TES_index,self.max_bias_position],offset=offset,fudge=fudge)
+    bias1=self.max_bias
+    pos2=self.max_bias_position-2
+    if pos2<0: pos2=self.max_bias_position+2
         
     bias2=self.vbias[pos2]
     I2=self.ADU2I(self.v_tes[TES_index,pos2],offset=offset,fudge=fudge)
     pt1=[bias1,I1]
     pt2=[bias2,I2]
-    I_R1=self.make_line(pt1,pt2,min_bias,max_bias)
-    plt.plot([min_bias,max_bias],I_R1,linestyle='dashed',color='green')
+    I_R1=self.make_line(pt1,pt2,self.min_bias,self.max_bias)
+    plt.plot([self.min_bias,self.max_bias],I_R1,linestyle='dashed',color='green')
 
     pngname=str('IV_TES%0i.png' % TES)
     plt.show()
@@ -429,6 +421,9 @@ def make_Vbias(self,cycle_voltage=None,vmin=5.0,vmax=8.0,dv=0.04,lowhigh=True):
             
     self.vbias=vbias
     self.cycle_vbias=cycle_voltage
+    self.min_bias=min(self.vbias)
+    self.max_bias=max(self.vbias)
+    self.max_bias_position=np.argmax(self.vbias)
     return vbias
 
 def get_Vavg_data(self):
@@ -557,10 +552,6 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
         print('No data!  Please read a file, or run a measurement.')
         return None
 
-    min_bias=min(self.vbias)
-    max_bias=max(self.vbias)
-    max_bias_position=np.argmax(self.vbias)
-
     is_good=[]
     for TES_index in range(self.NPIXELS):
         is_good.append(True)
@@ -570,8 +561,8 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
     good_index=[]
     for TES_index in range(self.NPIXELS):
         # normalize the Current so that R=1 Ohm at the highest Voffset
-        Vbias=self.vbias[max_bias_position]
-        I=self.ADU2I(self.v_tes[TES_index,max_bias_position])
+        Vbias=self.vbias[self.max_bias_position]
+        I=self.ADU2I(self.v_tes[TES_index,self.max_bias_position])
         offset=self.find_offset(I,Vbias)
         Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset)
         fit=self.fit_iv(Iavg) # the fit will be for the second half if it's cycled bias
@@ -599,7 +590,7 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
                     is_good[TES_index]=False
                     
         if is_good[TES_index]: good_index.append(TES_index)
-        self.assign_is_good(is_good)
+        ngood=self.assign_is_good(is_good)
     return is_good, good_index
 
 def read_Vtes_file(self,filename):
@@ -649,14 +640,11 @@ def heres_one_I_made_earlier(self,filename=None, axes=None):
     nTES=v_tes.shape[0]
     nbias=v_tes.shape[1]
 
-    # offset the Current so that R=1 Ohm at the highest Vbias
-    max_bias=max(vbias)
-    max_bias_position=np.argmax(vbias)
-    
+    # offset the Current so that R=1 Ohm at the highest Vbias    
     offset=[]
     for TES in range(nTES):
-        I=self.ADU2I(v_tes[TES,max_bias_position])
-        offset_TES=self.find_offset(I,max_bias)
+        I=self.ADU2I(v_tes[TES,self.max_bias_position])
+        offset_TES=self.find_offset(I,self.max_bias)
         offset.append(offset_TES)
         I_offset[TES,:]=self.ADU2I(v_tes[TES,:], offset=offset_TES)
 

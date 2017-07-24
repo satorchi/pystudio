@@ -30,6 +30,9 @@ def assign_defaults(self):
     self.v_tes=None
     self.vbias=None
     self.cycle_vbias=True
+    self.max_bias=None
+    self.min_bias=None
+    self.max_bias_position=None
     self.pausetime=0.3
     self.obsdate=None
     self.observer='APC LaboMM'
@@ -113,21 +116,25 @@ def assign_is_good(self,is_good=None):
         for i in range(self.NPIXELS):
             is_good.append(True)
         self.is_good=is_good
-        return
+        return self.NPIXELS
 
     if (not isinstance(is_good,list)) and (not len(is_good)==self.NPIXELS):
         print('The is_good vector should be a list of True/False of length %i' % self.NPIXELS)
         print('*Not* assigning is_good')
         self.is_good=None
-        return
+        return None
 
     for val in is_good:
         if not isinstance(val,bool):
             print('The is_good vector should be a list of True/False of length %i' % self.NPIXELS)
             print('*Not* assigning is_good')
             self.is_good=None
-            return
+            return None
 
+    # count the number of good
+    ngood=0
+    for val in is_good:
+        if val:ngood+=1
     self.is_good=is_good
-    return
+    return ngood
 
