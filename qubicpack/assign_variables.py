@@ -42,6 +42,7 @@ def assign_defaults(self):
     self.assign_pix2tes()
     self.assign_is_good()
     self.is_good=None
+    self.filterinfo=None
     return
 
 def assign_observer(self,observer='APC LaboMM'):

@@ -21,6 +21,7 @@ import sys,os,time
 import datetime as dt
 import matplotlib.pyplot as plt
 from glob import glob
+import math
 
 def wait_a_bit(self,pausetime=None):
     if pausetime==None:
@@ -134,7 +135,7 @@ def plot_iv_all(self,selection=None):
             Iavg=self.ADU2I(self.v_tes[n,:],offset)
 
             if colour_idx >= ncolours:colour_idx=0
-            self.draw_iv(TES,colour=self.colours[colour_idx])
+            self.draw_iv(Iavg,colour=self.colours[colour_idx])
             colour_idx+=1
 
     pngname='I-V_all.png'
@@ -290,8 +291,12 @@ def make_line(self,pt1,pt2,xmin,xmax):
 
 def fit_iv(self,I):
     '''
-    fit the I-V curve to a parabola
+    fit the I-V curve to a polynomial
     '''
+
+    # return is a dictionary with various info
+    ret={}
+
     if self.cycle_vbias:
         # only fit half the points
         # fit the second half which is often better
@@ -304,8 +309,31 @@ def fit_iv(self,I):
         xpts=self.vbias
         npts=len(I)
 
-    # fit to polynomial degree 3 (?)
-    ret=np.polyfit(xpts,ypts,3,full=True)
+    # fit to polynomial degree 3
+    fitinfo=np.polyfit(xpts,ypts,3,full=True)
+    ret['fitinfo']=fitinfo
+
+    # find inflection where polynomial tangent is zero (i.e. first derivative is zero)
+    a3=fitinfo[0][0]
+    a2=fitinfo[0][1]
+    a1=fitinfo[0][2]
+    a0=fitinfo[0][3]
+
+    t1=-a2/(3*a3)
+    discriminant=a2**2 - 3*a1*a3
+    if discriminant<0.0:
+        ret['inflection']=[None,None]
+        ret['concavity']=[None,None]
+        return ret
+
+    t2=math.sqrt(discriminant)/(3*a3)
+    x0_0=t1+t2
+    x0_1=t1-t2
+    ret['inflection']=[x0_0,x0_1]
+
+    # check the concavity of the inflection: up or down (+ve is up)
+    ret['concavity']=[2*a2 + 6*a3*x0_0, 2*a2 + 6*a3*x0_1]
+    
     return ret
 
 
@@ -337,16 +365,15 @@ def draw_iv(self,I,colour='blue',axis=plt):
     axis.plot(self.vbias,I,color=colour)
     return
 
-def setup_plot_iv(self,TES,offset):
+def setup_plot_iv(self,TES):
     if isinstance(self.obsdate,dt.datetime):
         ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
         ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,self.min_bias,self.max_bias))
-    subttl=str('offset I=%.4e' % offset)
     plt.ion()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
-    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    fig.suptitle(ttl,fontsize=16)
     ax.set_xlabel('Bias Voltage  /  V')
     ax.set_ylabel('Current  /  $\mu$A')
     ax.set_xlim([self.min_bias,self.max_bias])
@@ -366,21 +393,33 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     Vbias=self.vbias[self.max_bias_position]
     I=self.ADU2I(self.v_tes[TES_index,self.max_bias_position])
     if offset==None: offset=self.find_offset(I,Vbias)
+    txt=str('offset=%.4e' % offset)
 
-    fig,ax=self.setup_plot_iv(TES,offset)
+    fig,ax=self.setup_plot_iv(TES)
     
     Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset,fudge=fudge)
     self.draw_iv(Iavg)
 
     # draw a polynomial fit to the I-V curve
     fit=self.fit_iv(Iavg)
-    fitinfo=str('polynomial fit residual: %.4e' % fit[1][0])
-    print(fitinfo)
-    f=np.poly1d(fit[0])
+    txt+=str('\npolynomial fit residual: %.4e' % fit['fitinfo'][1][0])
+    f=np.poly1d(fit['fitinfo'][0])
     plt.plot(self.vbias,f(self.vbias),linestyle='dashed',color='red')
-    text_x=self.min_bias + 0.5*(self.max_bias-self.min_bias)
-    text_y=min(Iavg) + 0.8*(max(Iavg)-min(Iavg))
-    plt.text(text_x,text_y,fitinfo,fontsize=14,horizontalalignment='center')
+
+    # note the turnover point
+    found_turnover=False
+    for n in range(2):
+        v0=fit['inflection'][n]
+        concavity=fit['concavity'][n]
+        if (not v0==None) and v0>self.min_bias and v0<self.max_bias and concavity>0:
+            xpts=[v0,v0]
+            ypts=[min(Iavg),max(Iavg)]
+            plt.plot(xpts,ypts,linestyle='dashed',color='green')
+            found_turnover=True
+            txt+=str('\nturnover Vbias=%.2fV' % v0)
+    if not found_turnover:
+        txt+='\nNo turnover!'
+        
     
     # draw a line tangent to the final points
     I1=self.ADU2I(self.v_tes[TES_index,self.max_bias_position],offset=offset,fudge=fudge)
@@ -395,7 +434,16 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     I_R1=self.make_line(pt1,pt2,self.min_bias,self.max_bias)
     plt.plot([self.min_bias,self.max_bias],I_R1,linestyle='dashed',color='green')
 
-    pngname=str('IV_TES%0i.png' % TES)
+
+    # if we've already run the filter, add a comment if flagged bad
+    if not self.filterinfo==None:
+        if not self.filterinfo['is_good'][TES_index]:
+            txt+=str('\nFlagged as BAD:  %s' % self.filterinfo['comment'][TES_index])
+    # write out the comments
+    text_x=self.min_bias + 0.95*(self.max_bias-self.min_bias)
+    text_y=min(Iavg) + 0.98*(max(Iavg)-min(Iavg))
+    plt.text(text_x,text_y,txt,va='top',ha='right',fontsize=12)
+    pngname=str('IV_TES%03i.png' % TES)
     plt.show()
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     return fig
@@ -495,7 +543,7 @@ def get_IV_data(self,replay=False,TES=None,monitor=False):
     nbias=len(vbias)
 
     figavg=self.setup_plot_Vavg()
-    if monitor_iv:figiv,axiv=self.setup_plot_iv(TES,0.0)
+    if monitor_iv:figiv,axiv=self.setup_plot_iv(TES)
     if monitor:
         nrows=16
         ncols=8
@@ -552,46 +600,99 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
         print('No data!  Please read a file, or run a measurement.')
         return None
 
+    # a dictionary for returned stuff
+    ret={}
+    
+    I_offset=np.zeros(self.NPIXELS)
     is_good=[]
+    comment=[]
+    turnover=[]
     for TES_index in range(self.NPIXELS):
         is_good.append(True)
+        comment.append('no comment')
+        turnover.append(None)
 
 
-    # first filter: fit to a polynomial
+    # go through each filter.  Jump out and examine the next I-V curve as soon as a bad I-V is found
     good_index=[]
     for TES_index in range(self.NPIXELS):
         # normalize the Current so that R=1 Ohm at the highest Voffset
         Vbias=self.vbias[self.max_bias_position]
         I=self.ADU2I(self.v_tes[TES_index,self.max_bias_position])
         offset=self.find_offset(I,Vbias)
+        I_offset[TES_index]=offset
         Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset)
-        fit=self.fit_iv(Iavg) # the fit will be for the second half if it's cycled bias
-        residual=fit[1][0]
+
+        # fit to a polynomial. The fit will be for the second half if it's cycled bias
+        fit=self.fit_iv(Iavg) 
+        residual=fit['fitinfo'][1][0]
+
+        # first filter:  is it a good fit?
         if residual>residual_limit:
             is_good[TES_index]=False
+            comment[TES_index]='bad poly fit'
+            continue
+    
+        # second filter: small amplitude is rejected
+        # consider only the second half if it's cycled bias
+        if self.cycle_vbias:
+            mid=int(len(self.vbias)/2)
+            meanval=Iavg[mid:len(self.vbias)].mean()
+            maxval=max(Iavg[mid:len(self.vbias)])
+            minval=min(Iavg[mid:len(self.vbias)])
         else:
-            # second filter: small amplitude is rejected
-            # consider only the second half if it's cycled bias
-            if self.cycle_vbias:
-                mid=int(len(self.vbias)/2)
-                meanval=Iavg[mid:len(self.vbias)].mean()
-                maxval=max(Iavg[mid:len(self.vbias)])
-                minval=min(Iavg[mid:len(self.vbias)])
-            else:
-                meanval=Iavg.mean()
-                maxval=max(Iavg)
-                minval=min(Iavg)
-            spread=abs(maxval-minval)
-            if spread<abs_amplitude_limit:
-                is_good[TES_index]=False
-            else:
-                rel_amplitude=abs(spread/meanval)
-                if rel_amplitude<rel_amplitude_limit:
-                    is_good[TES_index]=False
-                    
-        if is_good[TES_index]: good_index.append(TES_index)
-        ngood=self.assign_is_good(is_good)
-    return is_good, good_index
+            meanval=Iavg.mean()
+            maxval=max(Iavg)
+            minval=min(Iavg)
+        spread=abs(maxval-minval)
+        if spread<abs_amplitude_limit:
+            is_good[TES_index]=False
+            comment[TES_index]='current too low'
+            continue
+        
+        # third filter: peak to peak amplitude
+        rel_amplitude=abs(spread/meanval)
+        if rel_amplitude<rel_amplitude_limit:
+            is_good[TES_index]=False
+            comment[TES_index]='current peak-to-peak to small'
+            continue
+
+        # fourth filter: do we find a valid turnover for the Vbias?
+        found_turnover=False
+        n_inflections_within_range=0
+        for n in range(len(fit['inflection'])):
+            V0=fit['inflection'][n]
+            concavity=fit['concavity'][n]
+            if (not V0==None) and V0>self.min_bias and V0<self.max_bias:
+                n_inflections_within_range+=1
+                if concavity>0:
+                    found_turnover=True
+                    turnover[TES_index]=V0
+        if not found_turnover:
+            is_good[TES_index]=False
+            comment[TES_index]='no turnover'
+            continue
+
+        # fifth filter:  do we have both inflection points within the bias range?
+        if n_inflections_within_range>1:
+            is_good[TES_index]=False
+            comment[TES_index]='bad I-V profile'
+            continue
+            
+
+            
+        # we only get this far if it's a good I-V
+        good_index.append(TES_index)
+
+
+    ret['offset']=I_offset
+    ret['is_good']=is_good
+    ret['good_index']=good_index
+    ret['ngood']=self.assign_is_good(is_good)
+    ret['turnover']=turnover
+    ret['comment']=comment
+    self.filterinfo=ret
+    return ret
 
 def read_Vtes_file(self,filename):
     if not os.path.exists(filename):

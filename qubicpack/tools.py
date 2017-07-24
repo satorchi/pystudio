@@ -190,6 +190,10 @@ def read_fits(self,filename):
                 self.cycle_vbias=True
             else:
                 self.cycle_vbias=False
+            self.max_bias=max(self.vbias)
+            self.min_bias=min(self.vbias)
+            self.max_bias_position=np.argmax(self.vbias)
+            
 
         if hdrtype=='timelines':
             '''
