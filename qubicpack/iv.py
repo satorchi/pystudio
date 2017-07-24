@@ -172,6 +172,7 @@ def plot_iv_multi(self,is_good=None):
     if present, a label will be shown on each curve indicating 
     whether that TES is considered good or not
     '''
+    self.assign_is_good(is_good)
     nrows=16
     ncols=8
     fig,axes=self.setup_plot_iv_multi(nrows,ncols)
@@ -194,7 +195,7 @@ def plot_iv_multi(self,is_good=None):
             text_y=min(Iavg)
             axes[row,col].text(max_bias,text_y,str('%i' % (tes_index+1)),va='bottom',ha='right',color='black')
 
-            if (not is_good==None) and (not is_good[tes_index]):
+            if (not self.is_good==None) and (not self.is_good[tes_index]):
                 axes[row,col].text(min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
                 
             tes_index+=1
@@ -204,6 +205,80 @@ def plot_iv_multi(self,is_good=None):
     plt.show()
     
     return fig
+
+def plot_iv_physical_layout(self,is_good=None):
+    '''
+    plot the I-V curves in thumbnails mapped to the physical location of each detector
+    '''
+    ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+
+    self.assign_is_good(is_good)
+    
+    max_bias=max(self.vbias)
+    min_bias=min(self.vbias)
+    max_bias_position=np.argmax(self.vbias)    
+
+    nrows=self.pix_grid.shape[0]
+    ncols=self.pix_grid.shape[1]
+
+    plt.ion()
+    fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
+    subttl=str('ASIC #%i' % self.asic)
+    pngname=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    fig.canvas.set_window_title('plt:  '+ttl)
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    
+
+    # the pixel number is between 1 and 248
+    TES_translation_table=self.tes2pix[self.asic_index()]
+
+    for row in range(nrows):
+        for col in range(ncols):
+            TES=0
+            ax[row,col].get_xaxis().set_visible(False)
+            ax[row,col].get_yaxis().set_visible(False)
+            ax[row,col].set_xlim([min_bias,max_bias])
+            # ax[row,col].set_aspect('equal')
+
+            # the pixel identity associated with its physical location in the array
+            physpix=self.pix_grid[row,col]
+            pix_index=physpix-1
+            
+            text_y=0.0
+            if physpix==0:
+                pix_label='EMPTY'
+                label_colour='white'
+                face_colour='black'
+            elif physpix in TES_translation_table:
+                TES=self.pix2tes[self.asic_index(),pix_index]
+                pix_label=str('%i' % TES)
+                label_colour='black'
+                face_colour='white'
+                TES_index=self.TES_index(TES)
+                I=self.ADU2I(self.v_tes[TES_index,max_bias_position])
+                # offset the Current so that R=1 Ohm at the highest Vbias
+                offset=self.find_offset(I,max_bias)
+                Iavg=self.ADU2I(self.v_tes[TES_index,:],offset)            
+                text_y=min(Iavg)
+                self.draw_iv(Iavg,colour='blue',axis=ax[row,col])
+
+                if (not self.is_good==None) and (not self.is_good[TES_index]):
+                    face_colour='red'
+                    label_colour='white'
+                    ax[row,col].text(min_bias,text_y,'BAD',va='bottom',ha='left',color=label_colour)
+            else:
+                pix_label='other\nASIC'
+                label_colour='yellow'
+                face_colour='blue'
+                
+            ax[row,col].set_axis_bgcolor(face_colour)
+            ax[row,col].text(max_bias,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
+            
+    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    plt.show()
+
+    return
+
 
 def make_line(self,pt1,pt2,xmin,xmax):
     '''
@@ -524,6 +599,7 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
                     is_good[TES_index]=False
                     
         if is_good[TES_index]: good_index.append(TES_index)
+        self.assign_is_good(is_good)
     return is_good, good_index
 
 def read_Vtes_file(self,filename):
