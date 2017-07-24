@@ -66,7 +66,7 @@ following:
 
     >>> from qubicpack import qubicpack
     >>> go=qubipack()
-    >>> Vtes=go.get_Vavg_data()
+    >>> Vtes=go.get_IV_data()
 
 The above three lines will run the I-V curve measurements for all TES.
 Afterwards, you have all the data saved in the qubicpack object.  The
