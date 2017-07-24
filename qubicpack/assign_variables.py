@@ -35,8 +35,10 @@ def assign_defaults(self):
     self.observer='APC LaboMM'
     self.nsamples=None
     self.timelines=None
-    self.assign_TES_grid()
+    self.assign_pix_grid()
     self.assign_pix2tes()
+    self.assign_is_good()
+    self.is_good=None
     return
 
 def assign_observer(self,observer='APC LaboMM'):
@@ -102,4 +104,30 @@ def assign_ip(self,ip):
     self.QubicStudio_ip=ip
     return
 
-        
+def assign_is_good(self,is_good=None):
+    if is_good==None:
+        '''
+        initialize the is_good vector
+        '''
+        is_good=[]
+        for i in range(self.NPIXELS):
+            is_good.append(True)
+        self.is_good=is_good
+        return
+
+    if (not isinstance(is_good,list)) and (not len(is_good)==self.NPIXELS):
+        print('The is_good vector should be a list of True/False of length %i' % self.NPIXELS)
+        print('*Not* assigning is_good')
+        self.is_good=None
+        return
+
+    for val in is_good:
+        if not isinstance(val,bool):
+            print('The is_good vector should be a list of True/False of length %i' % self.NPIXELS)
+            print('*Not* assigning is_good')
+            self.is_good=None
+            return
+
+    self.is_good=is_good
+    return
+

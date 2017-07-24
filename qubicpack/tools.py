@@ -125,7 +125,7 @@ def write_fits(self):
             
         thdulist = pyfits.HDUList(hdulist)
         thdulist.writeto(fitsfile)
-    
+
     return
 
 def read_fits(self,filename):

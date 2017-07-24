@@ -29,10 +29,11 @@ class qubicpack:
         TES_index,\
         assign_integration_time,\
         assign_Vtes,\
-        assign_pausetime
+        assign_pausetime,\
+        assign_is_good
 
     from .pix2tes import\
-        assign_TES_grid,\
+        assign_pix_grid,\
         assign_pix2tes
     
     from .tools import\
@@ -57,6 +58,7 @@ class qubicpack:
         plot_iv_all,\
         setup_plot_iv_multi,\
         plot_iv_multi,\
+        plot_iv_physical_layout,\
         make_line,\
         fit_iv,\
         draw_iv,\
