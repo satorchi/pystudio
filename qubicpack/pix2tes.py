@@ -61,7 +61,7 @@ def assign_pix2tes(self):
 
     pix2tes_asic2=np.zeros(2*self.NPIXELS,dtype=int)
     for i in range(self.NPIXELS):
-        pix=self.tes2pix[0][i]
+        pix=self.tes2pix[1][i]
         if pix<=2*self.NPIXELS: # we ignore the unused pixels labelled 1000 etc
             pix2tes_asic2[pix-1]=i+1
     
