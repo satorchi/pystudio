@@ -208,7 +208,7 @@ def read_fits(self,filename):
             timelines.append(timeline)
             
 
-    print('hdrtype=%s' % hdrtype)
+    # print('hdrtype=%s' % hdrtype)
     if hdrtype=='timelines':
         print('assigning timeline data')
         self.timelines=np.array(timelines)
