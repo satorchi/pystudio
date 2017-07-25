@@ -138,7 +138,7 @@ def plot_iv_all(self,selection=None):
             self.draw_iv(Iavg,colour=self.colours[colour_idx])
             colour_idx+=1
 
-    pngname='I-V_all.png'
+    pngname=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     plt.show()
     return fig
@@ -151,8 +151,8 @@ def setup_plot_iv_multi(self,nrows=16,ncols=8):
         ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
 
     nbad=0
-    if not self.is_good==None:
-        for val in self.is_good:
+    if not self.filterinfo==None:
+        for val in self.filterinfo['is_good']:
             if not val:nbad+=1
         ttl+=str('\n%i flagged as bad pixels' % nbad)
     
@@ -164,14 +164,14 @@ def setup_plot_iv_multi(self,nrows=16,ncols=8):
     plt.ylabel('Current  /  $\mu$A')
     return fig,axes
 
-def plot_iv_multi(self,is_good=None):
+def plot_iv_multi(self):
     '''
     plot all TES I-V curves on a grid
     the optional list "is_good" is boolean for each TES
     if present, a label will be shown on each curve indicating 
     whether that TES is considered good or not
     '''
-    ngood=self.assign_is_good(is_good)
+    if not self.filterinfo==None: ngood=self.filterinfo['ngood']
     nrows=16
     ncols=8
     fig,axes=self.setup_plot_iv_multi(nrows,ncols)
@@ -190,7 +190,9 @@ def plot_iv_multi(self,is_good=None):
             text_y=min(Iavg)
             axes[row,col].text(self.max_bias,text_y,str('%i' % (tes_index+1)),va='bottom',ha='right',color='black')
 
-            if (not self.is_good==None) and (not self.is_good[tes_index]):
+            if (not self.filterinfo==None)\
+               and (not self.filterinfo['is_good']==None)\
+               and (not self.filterinfo['is_good'][tes_index]):
                 # axes[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
                 axes[row,col].set_axis_bgcolor('red')
 
@@ -202,13 +204,16 @@ def plot_iv_multi(self,is_good=None):
     
     return fig
 
-def plot_iv_physical_layout(self,is_good=None):
+def plot_iv_physical_layout(self):
     '''
     plot the I-V curves in thumbnails mapped to the physical location of each detector
     '''
     ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
 
-    ngood=self.assign_is_good(is_good)
+    if not self.filterinfo==None:
+        ngood=self.filterinfo['ngood']
+    else:
+        ngood=None
     
     nrows=self.pix_grid.shape[0]
     ncols=self.pix_grid.shape[1]
@@ -257,7 +262,7 @@ def plot_iv_physical_layout(self,is_good=None):
                 text_y=min(Iavg)
                 self.draw_iv(Iavg,colour='blue',axis=ax[row,col])
 
-                if (not self.is_good==None) and (not self.is_good[TES_index]):
+                if (not self.filterinfo['is_good']==None) and (not self.filterinfo['is_good'][TES_index]):
                     face_colour='red'
                     label_colour='white'
                     # ax[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color=label_colour)
@@ -346,7 +351,7 @@ def draw_iv(self,I,colour='blue',axis=plt):
     if npts<len(self.vbias) and npts>0:
         # this is a partial curve
         plt.cla()
-        axis.set_xlim([min(self.vbias),max(self.vbias)])
+        axis.set_xlim([self.min_bias,self.max_bias])
         # axis.set_ylim([min(self.vbias),max(self.vbias)])
 
         # we mark the last point
@@ -365,22 +370,24 @@ def draw_iv(self,I,colour='blue',axis=plt):
     axis.plot(self.vbias,I,color=colour)
     return
 
-def setup_plot_iv(self,TES):
+def setup_plot_iv(self,TES,xwin=True):
     if isinstance(self.obsdate,dt.datetime):
         ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
         ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,self.min_bias,self.max_bias))
-    plt.ion()
+    subttl=str('ASIC #%i' % self.asic)
+    if xwin: plt.ion()
+    else: plt.ioff()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
-    fig.suptitle(ttl,fontsize=16)
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
     ax.set_xlabel('Bias Voltage  /  V')
     ax.set_ylabel('Current  /  $\mu$A')
     ax.set_xlim([self.min_bias,self.max_bias])
     # ax.set_ylim([self.min_bias,self.max_bias])
     return fig,ax
 
-def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
+def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,xwin=True):
     if multi:return self.plot_iv_multi()
     if TES==None:return self.plot_iv_all()
     if not isinstance(TES,int): return self.plot_iv_all()
@@ -395,7 +402,7 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     if offset==None: offset=self.find_offset(I,Vbias)
     txt=str('offset=%.4e' % offset)
 
-    fig,ax=self.setup_plot_iv(TES)
+    fig,ax=self.setup_plot_iv(TES,xwin)
     
     Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset,fudge=fudge)
     self.draw_iv(Iavg)
@@ -443,9 +450,13 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False):
     text_x=self.min_bias + 0.95*(self.max_bias-self.min_bias)
     text_y=min(Iavg) + 0.98*(max(Iavg)-min(Iavg))
     plt.text(text_x,text_y,txt,va='top',ha='right',fontsize=12)
-    pngname=str('IV_TES%03i.png' % TES)
-    plt.show()
+    pngname=str('TES%03i_IV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    if xwin:
+        plt.show()
+    else:
+        plt.clf()
+        plt.close()
     return fig
 
 def make_Vbias(self,cycle_voltage=None,vmin=5.0,vmax=8.0,dv=0.04,lowhigh=True):
@@ -592,7 +603,7 @@ def get_IV_data(self,replay=False,TES=None,monitor=False):
     
     return v_tes
 
-def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1):
+def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2):
     '''
     find which TES are good
     '''
@@ -678,6 +689,12 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
             is_good[TES_index]=False
             comment[TES_index]='bad I-V profile'
             continue
+
+        # sixth filter: is the operational point (the turnover) within the acceptable range?
+        if turnover[TES_index]<self.min_bias+bias_margin or turnover[TES_index]>self.max_bias-bias_margin:
+            is_good[TES_index]=False
+            comment[TES_index]='Vbias operation point outside acceptable range'
+            continue
             
 
             
@@ -688,7 +705,7 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
     ret['offset']=I_offset
     ret['is_good']=is_good
     ret['good_index']=good_index
-    ret['ngood']=self.assign_is_good(is_good)
+    ret['ngood']=len(good_index)
     ret['turnover']=turnover
     ret['comment']=comment
     self.filterinfo=ret

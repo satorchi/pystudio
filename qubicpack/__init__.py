@@ -29,8 +29,7 @@ class qubicpack:
         TES_index,\
         assign_integration_time,\
         assign_Vtes,\
-        assign_pausetime,\
-        assign_is_good
+        assign_pausetime
 
     from .pix2tes import\
         assign_pix_grid,\

@@ -40,8 +40,6 @@ def assign_defaults(self):
     self.timelines=None
     self.assign_pix_grid()
     self.assign_pix2tes()
-    self.assign_is_good()
-    self.is_good=None
     self.filterinfo=None
     return
 
@@ -108,34 +106,4 @@ def assign_ip(self,ip):
     self.QubicStudio_ip=ip
     return
 
-def assign_is_good(self,is_good=None):
-    if is_good==None:
-        '''
-        initialize the is_good vector
-        '''
-        is_good=[]
-        for i in range(self.NPIXELS):
-            is_good.append(True)
-        self.is_good=is_good
-        return self.NPIXELS
-
-    if (not isinstance(is_good,list)) and (not len(is_good)==self.NPIXELS):
-        print('The is_good vector should be a list of True/False of length %i' % self.NPIXELS)
-        print('*Not* assigning is_good')
-        self.is_good=None
-        return None
-
-    for val in is_good:
-        if not isinstance(val,bool):
-            print('The is_good vector should be a list of True/False of length %i' % self.NPIXELS)
-            print('*Not* assigning is_good')
-            self.is_good=None
-            return None
-
-    # count the number of good
-    ngood=0
-    for val in is_good:
-        if val:ngood+=1
-    self.is_good=is_good
-    return ngood
 
