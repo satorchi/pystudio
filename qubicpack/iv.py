@@ -741,4 +741,70 @@ def read_Vtes_file(self,filename):
     self.assign_Vtes(v_tes)
     return v_tes
 
+def make_iv_tex_report(self):
+    thumbnailplot=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    allplot=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pattern=str('TES???_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    iv_plots=glob(pattern)
+    iv_plots.sort()
+
+    observer=self.observer.replace('<','$<$').replace('>','$>$')
+    
+    texfilename=str('TES_IV_ASIC%i_%s.tex' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    h=open(texfilename,'w')
+    h.write('\\documentclass[a4paper,12pt]{article}\n')
+    h.write('\\usepackage{graphicx}\n')
+    h.write('\\usepackage{hyperref}\n')
+    h.write('\\begin{document}\n')
+    h.write('\\begin{center}\n')
+    h.write('QUBIC TES Report\\\\\n')
+    h.write(self.obsdate.strftime('data from %Y-%m-%d %H:%M UTC\\\\\n'))
+    h.write('compiled by %s\\\\\nusing PyStudio/QubicPack: \\url{https://github.com/satorchi/pystudio}\n' % observer)
+    h.write('\\end{center}\n')
+
+    h.write('\\noindent Summary:\n')
+    h.write('\\noindent\\begin{itemize}\n')
+    h.write('\\item ASIC %i\n' % self.asic)
+    h.write('\\item %i pixels are flagged as bad.\n\\item %.1f\\%s of the array is selfod\n'\
+            % ( self.NPIXELS-self.filterinfo['ngood'], 100.0*self.filterinfo['ngood']/self.NPIXELS, '%' ))
+    h.write('\\end{itemize}\n')
+    
+    h.write('\n\\vspace*{3ex}\n\\noindent This document includes the following:\n')
+    h.write('\\begin{itemize}\n')
+    h.write('\\item Table of turnover points for each TES\n')
+    h.write('\\item Plot of all the I-V curves, each in its corresponding location in the focal plane\n')
+    h.write('\\item Plot of all the good I-V curves on a single plot\n')
+    h.write('\\item Plot of each TES I-V curve (%i plots)\n' % self.NPIXELS)
+    h.write('\\end{itemize}\n\\clearpage\n')
+
+    h.write('\\begin{table}[h]\n')
+    h.write('\\caption{List of turnover (operation) points for each TES}\n')
+    h.write('\\begin{tabular}{|r|r||||r|r||||r|r||||r|r|}\n')
+    h.write('\\hline\n')
+    ncols=4
+    nrows=int(self.NPIXELS/ncols)
+    for i in range(nrows):
+        for j in range(ncols):
+            if self.filterinfo['turnover'][i+j*nrows]==None:
+                turnover='bad pixel'
+            else:
+                turnover=str('%.2f' % self.filterinfo['turnover'][i+j*nrows])
+            h.write('%3i & %s' % (i+1+j*nrows, turnover))
+            if j<3: h.write(' &')
+            else: h.write('\\\\\n')
+    h.write('\\hline\n')
+    h.write('\\end{tabular}\n')
+    h.write('\\end{table}\n\\clearpage\n')
+    
+    h.write('\n\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % thumbnailplot)
+    h.write('\n\\includegraphics[width=0.8\\linewidth,clip]{%s}\n\\clearpage\n' % allplot)
+    for png in iv_plots:
+        h.write('\n\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % png)
+
+    
+    
+    h.write('\n\n\\end{document}\n')
+    h.close()
+    return
+
 
