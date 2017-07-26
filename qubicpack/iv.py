@@ -765,7 +765,7 @@ def make_iv_tex_report(self):
     h.write('\\noindent Summary:\n')
     h.write('\\noindent\\begin{itemize}\n')
     h.write('\\item ASIC %i\n' % self.asic)
-    h.write('\\item %i pixels are flagged as bad.\n\\item %.1f\\%s of the array is selfod\n'\
+    h.write('\\item %i pixels are flagged as bad.\n\\item %.1f\\%s of the array is good\n'\
             % ( self.NPIXELS-self.filterinfo['ngood'], 100.0*self.filterinfo['ngood']/self.NPIXELS, '%' ))
     h.write('\\end{itemize}\n')
     
