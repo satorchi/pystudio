@@ -67,8 +67,7 @@ class qubicpack:
         get_Vavg_data,\
         get_IV_data,\
         filter_Vtes,\
-        read_Vtes_file,\
-        heres_one_I_made_earlier
+        read_Vtes_file
 
     from .ASD import\
         plot_ASD

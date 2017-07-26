@@ -741,47 +741,4 @@ def read_Vtes_file(self,filename):
     self.assign_Vtes(v_tes)
     return v_tes
 
-def heres_one_I_made_earlier(self,filename=None, axes=None):
-    '''
-    loop through a saved file as if it's a real time measurement
-    '''
-    if filename==None:
-        flist=glob('test_vi*')
-        if len(flist)>0:
-            filename=flist[0]            
-    
-    v_tes=self.read_Vtes_file(filename)
-    if v_tes==None:return None
-
-    if self.vbias==None: vbias=make_Vbias()
-
-    nTES=v_tes.shape[0]
-    nbias=v_tes.shape[1]
-
-    # offset the Current so that R=1 Ohm at the highest Vbias    
-    offset=[]
-    for TES in range(nTES):
-        I=self.ADU2I(v_tes[TES,self.max_bias_position])
-        offset_TES=self.find_offset(I,self.max_bias)
-        offset.append(offset_TES)
-        I_offset[TES,:]=self.ADU2I(v_tes[TES,:], offset=offset_TES)
-
-
-    # try to find reasonable axes: 5sigma to cut off outliers
-    # this can be overrode by the axes keyword
-    sigma=I_offset.std()
-    I_mean=I_offset.mean()
-    iv_axes=[-1,self.NPIXELS,I_mean-5*sigma,I_mean+5*sigma]
-    if axes==None:axes=self.iv_axes
-    fig=self.setup_plot_Vavg(axes=axes)
-    
-    for j in range(nbias) :
-        print("measures at Voffset=%gV " % vbias[j])
-        
-        ADUavg = v_tes[:,j] 
-        print ("a sample of ADU averages :  %g %g %g " %(ADUavg[0], ADUavg[43], ADUavg[73]) )        
-        self.plot_Vavg(ADUavg,vbias[j],offset,axes)
-    
-    plt.show()            
-    return v_tes
 
