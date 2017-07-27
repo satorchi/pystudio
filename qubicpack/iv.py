@@ -755,6 +755,7 @@ def make_iv_tex_report(self):
     h.write('\\documentclass[a4paper,12pt]{article}\n')
     h.write('\\usepackage{graphicx}\n')
     h.write('\\usepackage{hyperref}\n')
+    h.write('\\usepackage{longtable}\n')
     h.write('\\begin{document}\n')
     h.write('\\begin{center}\n')
     h.write('QUBIC TES Report\\\\\n')
@@ -762,6 +763,7 @@ def make_iv_tex_report(self):
     h.write('compiled by %s\\\\\nusing PyStudio/QubicPack: \\url{https://github.com/satorchi/pystudio}\n' % observer)
     h.write('\\end{center}\n')
 
+    h.write('\\vspace*{3ex}\n')
     h.write('\\noindent Summary:\n')
     h.write('\\noindent\\begin{itemize}\n')
     h.write('\\item ASIC %i\n' % self.asic)
@@ -777,24 +779,35 @@ def make_iv_tex_report(self):
     h.write('\\item Plot of each TES I-V curve (%i plots)\n' % self.NPIXELS)
     h.write('\\end{itemize}\n\\clearpage\n')
 
-    h.write('\\begin{table}[h]\n')
-    h.write('\\caption{List of turnover (operation) points for each TES}\n')
-    h.write('\\begin{tabular}{|r|r||||r|r||||r|r||||r|r|}\n')
-    h.write('\\hline\n')
-    ncols=4
+    ncols=2
     nrows=int(self.NPIXELS/ncols)
+    colfmt='|r|r|'
+    headline1='\\multicolumn{1}{|c}{pix} & \\multicolumn{1}{|c|}{V$_{\\rm turnover}$}'
+    headline=''
+    headline+=headline1
+    if ncols>1:
+        for j in range(ncols-1):
+            colfmt+='|||r|r|'
+            headline+=' & '+headline1 
+    h.write('\\begin{longtable}{%s}\n' % colfmt)
+    h.write('\\caption{List of turnover (operation) points for each TES}\\\\\n')
+    # h.write('\\begin{tabular}{%s}\n' % colfmt)
+    h.write('\\hline\n')
+    h.write(headline+'\\\\ \n')
+    h.write('\\hline\\endhead\n')
     for i in range(nrows):
         for j in range(ncols):
-            if self.filterinfo['turnover'][i+j*nrows]==None:
-                turnover='bad pixel'
+            TES_index=i+j*nrows
+            if self.filterinfo['turnover'][TES_index]==None:
+                turnover=self.filterinfo['comment'][TES_index]
             else:
-                turnover=str('%.2f' % self.filterinfo['turnover'][i+j*nrows])
-            h.write('%3i & %s' % (i+1+j*nrows, turnover))
-            if j<3: h.write(' &')
+                turnover=str('%.2f' % self.filterinfo['turnover'][TES_index])
+            h.write('%3i & %s' % (TES_index+1, turnover))
+            if j<ncols-1: h.write(' &')
             else: h.write('\\\\\n')
     h.write('\\hline\n')
-    h.write('\\end{tabular}\n')
-    h.write('\\end{table}\n\\clearpage\n')
+    # h.write('\\end{tabular}\n')
+    h.write('\\end{longtable}\n\\clearpage\n')
     
     h.write('\n\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % thumbnailplot)
     h.write('\n\\includegraphics[width=0.8\\linewidth,clip]{%s}\n\\clearpage\n' % allplot)
@@ -805,6 +818,6 @@ def make_iv_tex_report(self):
     
     h.write('\n\n\\end{document}\n')
     h.close()
-    return
+    return texfilename
 
 
