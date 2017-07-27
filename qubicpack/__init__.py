@@ -60,6 +60,7 @@ class qubicpack:
         plot_iv_physical_layout,\
         make_line,\
         fit_iv,\
+        draw_tangent,\
         draw_iv,\
         setup_plot_iv,\
         plot_iv,\

@@ -293,12 +293,45 @@ def make_line(self,pt1,pt2,xmin,xmax):
     print('straight line should go through the origin: b=%.5e =  0?' % b)
     return [ymin,ymax]
 
+def draw_tangent(self,TES):
+    '''
+    make a tangent line of the I-V curve fit at the maximum bias
+    '''
+    if self.filterinfo==None:return None
+    TES_index=self.TES_index(TES)
+
+    
+    # tangent is the first derivative of the polyfit
+    a3=self.filterinfo['fitinfo'][TES_index]['fitinfo'][0][0]
+    a2=self.filterinfo['fitinfo'][TES_index]['fitinfo'][0][1]
+    a1=self.filterinfo['fitinfo'][TES_index]['fitinfo'][0][2]
+    a0=self.filterinfo['fitinfo'][TES_index]['fitinfo'][0][3]
+
+    R1=self.filterinfo['fitinfo'][TES_index]['R1']
+    slope=1/R1
+    
+    V=self.vbias[self.max_bias_position]
+    Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
+
+    # The line is described by: y=mx + I0
+    I0=Imax-slope*V
+
+    V2=self.min_bias
+    I2=slope*V2 + I0
+
+    xpts=[V2,V]
+    ypts=[I2,Imax]
+    plt.plot(xpts,ypts,linestyle='dashed',color='green')
+    
+    return R1,I0
 
 def fit_iv(self,I):
     '''
     fit the I-V curve to a polynomial
     '''
-
+    # a small number
+    zero=1e-9
+    
     # return is a dictionary with various info
     ret={}
 
@@ -318,12 +351,27 @@ def fit_iv(self,I):
     fitinfo=np.polyfit(xpts,ypts,3,full=True)
     ret['fitinfo']=fitinfo
 
-    # find inflection where polynomial tangent is zero (i.e. first derivative is zero)
+    # the coefficients of the polynomial fit
     a3=fitinfo[0][0]
     a2=fitinfo[0][1]
     a1=fitinfo[0][2]
     a0=fitinfo[0][3]
+    
+    # find the tangent line of the fit to the I-V curve at the maximum bias
+    # this should be equivalent to a circuit with resistance 1 Ohm
+    # tangent is the first derivative of the polyfit
+    V=self.vbias[self.max_bias_position]
+    Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
+    slope=a1 + 2*a2*V + 3*a3*(V**2)
+        
+    # The line should have a slope equal to a circuit with resistance 1 Ohm
+    if abs(slope)>zero:
+        R1 = 1/slope
+    else:
+        R1=1/zero
+    ret['R1']=R1
 
+    # find inflection where polynomial tangent is zero (i.e. first derivative is zero)
     t1=-a2/(3*a3)
     discriminant=a2**2 - 3*a1*a3
     if discriminant<0.0:
@@ -428,19 +476,9 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,xwin=True):
         txt+='\nNo turnover!'
         
     
-    # draw a line tangent to the final points
-    I1=self.ADU2I(self.v_tes[TES_index,self.max_bias_position],offset=offset,fudge=fudge)
-    bias1=self.max_bias
-    pos2=self.max_bias_position-2
-    if pos2<0: pos2=self.max_bias_position+2
-        
-    bias2=self.vbias[pos2]
-    I2=self.ADU2I(self.v_tes[TES_index,pos2],offset=offset,fudge=fudge)
-    pt1=[bias1,I1]
-    pt2=[bias2,I2]
-    I_R1=self.make_line(pt1,pt2,self.min_bias,self.max_bias)
-    plt.plot([self.min_bias,self.max_bias],I_R1,linestyle='dashed',color='green')
-
+    # draw a line tangent to the fit at the highest Vbias
+    R1,I0=self.draw_tangent(TES)
+    txt+=str('\nasymptotic equivalent resistance:  R$_1$=%.4f $\Omega$' % R1)
 
     # if we've already run the filter, add a comment if flagged bad
     if not self.filterinfo==None:
@@ -611,6 +649,9 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
         print('No data!  Please read a file, or run a measurement.')
         return None
 
+    # a small number
+    zero=1e-9
+    
     # a dictionary for returned stuff
     ret={}
     
@@ -618,6 +659,8 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
     is_good=[]
     comment=[]
     turnover=[]
+    fitinfo=[]
+    R1=[]
     for TES_index in range(self.NPIXELS):
         is_good.append(True)
         comment.append('no comment')
@@ -635,7 +678,8 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
         Iavg=self.ADU2I(self.v_tes[TES_index,:],offset=offset)
 
         # fit to a polynomial. The fit will be for the second half if it's cycled bias
-        fit=self.fit_iv(Iavg) 
+        fit=self.fit_iv(Iavg)
+        fitinfo.append(fit)
         residual=fit['fitinfo'][1][0]
 
         # first filter:  is it a good fit?
@@ -708,6 +752,7 @@ def filter_Vtes(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_l
     ret['ngood']=len(good_index)
     ret['turnover']=turnover
     ret['comment']=comment
+    ret['fitinfo']=fitinfo
     self.filterinfo=ret
     return ret
 
