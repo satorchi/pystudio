@@ -20,9 +20,10 @@ import matplotlib.pyplot as plt
 from glob import glob
 
 def assign_defaults(self):
+    self.debuglevel=0
+    self.zero=1e-9
     self.QubicStudio_ip='134.158.186.233'
     self.NPIXELS=128
-    self.iv_axes=[-1,self.NPIXELS,-2.0,+2.0]
     self.figsize=(12.80,7.68)
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
     self.asic=1
@@ -30,6 +31,7 @@ def assign_defaults(self):
     self.v_tes=None
     self.vbias=None
     self.cycle_vbias=True
+    self.nbiascycles=None
     self.max_bias=None
     self.min_bias=None
     self.max_bias_position=None

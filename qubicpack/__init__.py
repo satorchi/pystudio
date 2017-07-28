@@ -79,6 +79,10 @@ class qubicpack:
         return
 
     def verdate(self):
-        print("Thu 20 Jul 2017 15:20:25 CEST")
+        print("Fri 28 Jul 2017 07:55:36 CEST")
         return
 
+    def debugmsg(self,msg):
+        if self.debuglevel>0: print('DEBUG: %s' % msg)
+        return
+    

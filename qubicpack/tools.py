@@ -80,6 +80,8 @@ def write_fits(self):
     prihdr['NPIXELS']=(self.NPIXELS,'number of TES detectors in the array')
     prihdr['ASIC']=(self.asic,'ASIC id (one quarter of the full QUBIC array)')
     prihdr['QUBIC-IP']=(self.QubicStudio_ip,'address of the QUBIC Local Control Computer')
+    prihdr['NCYCLES']=(self.nbiascycles,'number of cycles of the Bias voltage')
+    prihdr['CYCBIAS']=(self.cycle_vbias,'ramp return Bias, yes or no')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
     if self.v_tes != None:
@@ -157,6 +159,11 @@ def read_fits(self,filename):
     self.asic=h[0].header['ASIC']
     self.QubicStudio_ip=h[0].header['QUBIC-IP']
 
+    if 'NCYCLES' in h[0].header.keys():
+        self.nbiascycles=h[0].header['NCYCLES']
+
+    if 'CYCBIAS' in h[0].header.keys():
+        self.cycle_vbias=h[0].header['CYCBIAS']
 
     timelines=[]
     for hdu in h[1:]:
@@ -186,7 +193,7 @@ def read_fits(self,filename):
             for n in range(nbias):
                 self.vbias[n]=data[n][0]
             # check if this is cycled bias
-            if self.vbias[0]==self.vbias[-1]:
+            if self.nbiascycles>1:
                 self.cycle_vbias=True
             else:
                 self.cycle_vbias=False
