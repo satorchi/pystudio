@@ -160,10 +160,14 @@ def read_fits(self,filename):
     self.QubicStudio_ip=h[0].header['QUBIC-IP']
 
     if 'NCYCLES' in h[0].header.keys():
+        self.debugmsg('reading ncycles')
         self.nbiascycles=h[0].header['NCYCLES']
 
     if 'CYCBIAS' in h[0].header.keys():
+        self.debugmsg('reading cycle_vbias')
+        self.debugmsg(str(h[0].header.cards[13]))
         self.cycle_vbias=h[0].header['CYCBIAS']
+        self.debugmsg('cycle_vbias is %s' % str(self.cycle_vbias))
 
     timelines=[]
     for hdu in h[1:]:
@@ -192,11 +196,6 @@ def read_fits(self,filename):
             self.vbias=np.empty(nbias)
             for n in range(nbias):
                 self.vbias[n]=data[n][0]
-            # check if this is cycled bias
-            if self.nbiascycles>1:
-                self.cycle_vbias=True
-            else:
-                self.cycle_vbias=False
             self.max_bias=max(self.vbias)
             self.min_bias=min(self.vbias)
             self.max_bias_position=np.argmax(self.vbias)
