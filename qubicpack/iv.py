@@ -104,7 +104,7 @@ def plot_iv_all(self,selection=None,xwin=True):
     for TES_index in range(self.NPIXELS):
         TES=TES_index+1
 
-        if (selection==None) or (selection[n]):
+        if (selection==None) or (selection[TES_index]):
             if self.filterinfo==None:
                 filterinfo=self.filter_iv(TES)
                 offset=filterinfo['offset']
