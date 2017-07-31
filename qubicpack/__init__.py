@@ -51,7 +51,6 @@ class qubicpack:
         wait_a_bit,\
         ADU2I,\
         find_normalization,\
-        find_offset,\
         setup_plot_Vavg,\
         plot_Vavg,\
         plot_iv_all,\
@@ -59,6 +58,7 @@ class qubicpack:
         plot_iv_multi,\
         plot_iv_physical_layout,\
         make_line,\
+        filter_jumps,\
         fit_iv,\
         draw_tangent,\
         draw_iv,\
@@ -66,10 +66,12 @@ class qubicpack:
         plot_iv,\
         make_Vbias,\
         get_Vavg_data,\
-        get_IV_data,\
-        filter_Vtes,\
+        get_iv_data,\
+        filter_iv,\
+        filter_iv_all,\
         read_Vtes_file,\
-        make_iv_tex_report
+        make_iv_tex_report,\
+        make_iv_report
 
     from .ASD import\
         plot_ASD
@@ -79,7 +81,7 @@ class qubicpack:
         return
 
     def verdate(self):
-        print("Fri 28 Jul 2017 07:55:36 CEST")
+        print("Mon 31 Jul 2017 15:48:39 CEST")
         return
 
     def debugmsg(self,msg):

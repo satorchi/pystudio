@@ -127,9 +127,6 @@ wait_a_bit(pausetime)
 ADU2I(ADU, offset=None, fudge=1.0)
  - conversion from the Analogue Digital Units returned by QubicStudio to current in micro Ampere
 
-find_offset(I,Vbias)
- - find the offset required to make the I-V curve have an equivalent circuit of 1 Ohm
-
 setup_plot_Vavg(axes=None)
  - setup the window, axes, etc for a running plot during I-V measurement
  
