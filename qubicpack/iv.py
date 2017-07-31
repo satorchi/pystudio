@@ -46,16 +46,6 @@ def ADU2I(self,ADU, offset=None, fudge=1.0):
     if offset!=None: return I+offset
     return I
 
-def find_normalization(self,I,Vbias):
-    '''
-    The normalization forces the equivalent circuit to have a resistance of 1 Ohm
-    We do this at the maximum Vbias.
-    Ohm's law: V=IR
-    '''
-    R=Vbias/(I/1.0e6) # I in uA
-    K=1./R
-    return abs(K)
-
 def setup_plot_Vavg(self,axes=None):
     ttl=str('Average Current per TES with different Vbias')
     plt.ion()

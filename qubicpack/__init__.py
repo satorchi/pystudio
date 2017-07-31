@@ -50,7 +50,6 @@ class qubicpack:
     from .iv import\
         wait_a_bit,\
         ADU2I,\
-        find_normalization,\
         setup_plot_Vavg,\
         plot_Vavg,\
         plot_iv_all,\
