@@ -218,7 +218,7 @@ def plot_iv_physical_layout(self,xwin=True):
     
 
     # the pixel number is between 1 and 248
-    TES_translation_table=self.tes2pix[self.asic_index()]
+    TES_translation_table=self.TES2PIX[self.asic_index()]
 
     for row in range(nrows):
         for col in range(ncols):
@@ -239,7 +239,7 @@ def plot_iv_physical_layout(self,xwin=True):
                 label_colour='white'
                 face_colour='black'
             elif physpix in TES_translation_table:
-                TES=self.pix2tes[self.asic_index(),pix_index]
+                TES=self.pix2tes(physpix)
                 pix_label=str('%i' % TES)
                 label_colour='black'
                 face_colour='white'
@@ -523,7 +523,7 @@ def setup_plot_iv(self,TES,xwin=True):
         ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
         ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,self.min_bias,self.max_bias))
-    subttl=str('ASIC #%i, Pixel #%i' % (self.asic,self.tes2pix[self.asic_index(),self.TES_index(TES)]))
+    subttl=str('ASIC #%i, Pixel #%i' % (self.asic,self.tes2pix(TES)))
     if xwin: plt.ion()
     else: plt.ioff()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
@@ -983,7 +983,7 @@ def make_iv_tex_report(self):
         for j in range(ncols):
             TES_index=i+j*nrows
             TES=TES_index+1
-            PIX=self.tes2pix[self.asic_index(),TES_index] 
+            PIX=self.tes2pix(TES)
 
             if self.filterinfo['turnover'][TES_index]==None:
                 turnover='-'

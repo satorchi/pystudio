@@ -33,7 +33,9 @@ class qubicpack:
 
     from .pix2tes import\
         assign_pix_grid,\
-        assign_pix2tes
+        assign_pix2tes,\
+        tes2pix,\
+        pix2tes
     
     from .tools import\
         connect_QubicStudio,\
