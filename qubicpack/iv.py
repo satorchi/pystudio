@@ -90,6 +90,7 @@ def plot_iv_all(self,selection=None,xwin=True):
                 
     subttl=str('plotting curves for %i TES out of %i' % (nselection,self.NPIXELS))
     if xwin: plt.ion()
+    else: plt.ioff()
     fig=plt.figure(figsize=self.figsize)
     if xwin: fig.canvas.set_window_title('plt: '+ttl) 
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
@@ -120,6 +121,7 @@ def plot_iv_all(self,selection=None,xwin=True):
     pngname=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
+    else: plt.close('all')
     return fig
 
 def setup_plot_iv_multi(self,nrows=16,ncols=8,xwin=True):
@@ -136,6 +138,7 @@ def setup_plot_iv_multi(self,nrows=16,ncols=8,xwin=True):
         ttl+=str('\n%i flagged as bad pixels' % nbad)
     
     if xwin: plt.ion()
+    else: plt.ioff()
     fig,axes=plt.subplots(nrows,ncols,sharex=True,sharey=False,figsize=self.figsize)
     if xwin: fig.canvas.set_window_title('plt: '+ttl)
     fig.suptitle(ttl,fontsize=16)
@@ -185,6 +188,7 @@ def plot_iv_multi(self, xwin=True):
     pngname=str('TES_IV_ASIC%i_thumbnail_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
+    else: plt.close('all')
     
     return fig
 
@@ -203,6 +207,7 @@ def plot_iv_physical_layout(self,xwin=True):
     ncols=self.pix_grid.shape[1]
 
     if xwin: plt.ion()
+    else: plt.ioff()
     fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
     subttl=str('ASIC #%i' % self.asic)
     if not ngood==None:
@@ -263,6 +268,7 @@ def plot_iv_physical_layout(self,xwin=True):
             
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
+    else: plt.close('all')
 
     return
 
@@ -325,9 +331,9 @@ def filter_jumps(self,I,jumplimit=2.0):
     steps=[]
     for idx in np.arange(1,npts_curve):
         stepsize=I[idx]-I[idx-1]
-        if stepsize>self.zero:
+        if stepsize > self.zero:
             rel_stepsize = abs(stepsize/I[idx-1])
-        elif stepsize<self.zero:
+        elif stepsize < -self.zero:
             rel_stepsize = abs(stepsize/I[idx])
         else:
             rel_stepsize=1/self.zero
@@ -517,7 +523,7 @@ def setup_plot_iv(self,TES,xwin=True):
         ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
         ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,self.min_bias,self.max_bias))
-    subttl=str('ASIC #%i' % self.asic)
+    subttl=str('ASIC #%i, Pixel #%i' % (self.asic,self.tes2pix[self.asic_index(),self.TES_index(TES)]))
     if xwin: plt.ion()
     else: plt.ioff()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
@@ -536,7 +542,9 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=T
 
     TES_index=self.TES_index(TES)
     
-    if self.vbias==None: self.vbias=make_Vbias()
+    if self.vbias==None:
+        print('ERROR: No Vbias.')
+        return None
     
     fig,ax=self.setup_plot_iv(TES,xwin)
 
@@ -589,11 +597,8 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=T
     plt.text(text_x,text_y,txt,va='top',ha='right',fontsize=12)
     pngname=str('TES%03i_IV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
-    if xwin:
-        plt.show()
-    else:
-        plt.clf()
-        plt.close(fig.number)
+    if xwin: plt.show()
+    else: plt.close('all')
     return fig
 
 def make_Vbias(self,cycle=True,ncycles=2,vmin=5.0,vmax=9.0,dv=0.04,lowhigh=True):
@@ -954,8 +959,13 @@ def make_iv_tex_report(self):
 
     ncols=1
     nrows=int(self.NPIXELS/ncols)
-    colfmt='|r|r|r|l|'
-    headline1='\\multicolumn{1}{|c|}{pix} & \\multicolumn{1}{c|}{V$_{\\rm turnover}$} & \\multicolumn{1}{c|}{R$_1$} & \\multicolumn{1}{c|}{comment}'
+    colfmt='|r|r|r|r|r|l|'
+    headline1='\\multicolumn{1}{|c|}{TES} & '\
+               '\\multicolumn{1}{|c|}{pix} & '\
+               '\\multicolumn{1}{c|}{V$_{\\rm turnover}$} & '\
+               '\\multicolumn{1}{c|}{R$_1$} & '\
+               '\\multicolumn{1}{c|}{R$_{\\rm 300K}$} & '\
+               '\\multicolumn{1}{c|}{comment}'
     headline=''
     headline+=headline1
     if ncols>1:
@@ -972,18 +982,26 @@ def make_iv_tex_report(self):
     for i in range(nrows):
         for j in range(ncols):
             TES_index=i+j*nrows
+            TES=TES_index+1
+            PIX=self.tes2pix[self.asic_index(),TES_index] 
+
             if self.filterinfo['turnover'][TES_index]==None:
                 turnover='-'
             else:
                 turnover=str('%.2f' % self.filterinfo['turnover'][TES_index])
+
             R1=self.filterinfo['fitinfo'][TES_index]['R1']
             if R1>1000:
                 R1str='-'
             else:
                 R1str=str('%.2f' % R1)
+
             comment=self.filterinfo['comment'][TES_index]
             if comment=='no comment': comment='good'
-            h.write('%3i & %s & %s & %s' % (TES_index+1, turnover, R1str, comment))
+
+            R300str='--'
+            
+            h.write('%3i & %3i & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, comment))
             if j<ncols-1: h.write(' &')
             else: h.write('\\\\\n')
     h.write('\\hline\n')
