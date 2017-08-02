@@ -91,80 +91,9 @@ for example, will make the change available to all the methods which
 use integration time, so that you don't have to reset the parameter
 for every type of measurement.
 
-Here is a list of QubicPack methods:
+Detailed help
+------------
 
-
-assignment methods
-------------------
-
-Assignment methods are intended to assign valid values to various
-parameters.  It's good practice to use these methods rather than
-assigning through a back-door (knowing that Python does not have
-"private" variables).
-
-assign_defaults()
- - assign default values to parameters
- 
-assign_asic(asic)
- - assign which ASIC is in communication (which half of the 256 TES array)
- 
-assign_integration_time(tinteg)
- - integration time for data gathering
- 
-assign_pausetime(pausetime)
- - wait time between subsequent commands to QubicStudio
- 
-assign_ip(ip)
- - IP address of the QUBIC Local Control Computer (running QubicStudio)
-
-
-Data gathering and visualization
---------------------------------
-
-wait_a_bit(pausetime)
- - pause before continuing
- 
-ADU2I(ADU, offset=None, fudge=1.0)
- - conversion from the Analogue Digital Units returned by QubicStudio to current in micro Ampere
-
-setup_plot_Vavg(axes=None)
- - setup the window, axes, etc for a running plot during I-V measurement
- 
-plot_Vavg(Vavg,Vbias,offset=None,axes=None)
- - plot the current output for each TES.  This method is used by get_Vavg_data().  see below.
-
-make_line(pt1,pt2,xmin,xmax)
- - find the end points of a line at xmin and xmax given points pt1 and pt2
- 
-draw_iv(I,colour='blue')
- - draw the I-V curve on the plot
- 
-plot_iv(TES=None,offset=None,fudge=1.0,multi=False)
- - make a plot of an I-V curve, or multiple curves
- - if TES=None, all I-V curves are plotted on top of each other
- - if multi=True, a grid of plots is made, one for each TES
- 
-make_Vbias(cycle_voltage=True,vmin=5.0,vmax=8.0,dv=0.04,lowhigh=True):
- - make the list of bias voltages used during the I-V curve measurement
- 
-get_IV_data():
-
-filter_Vtes():
-
-connect_QubicStudio(client=None, ip=None):
-
-get_amplitude(integration_time=None, asic=None):
-
-get_mean(integration_time=None, asic=None):
-
-integrate_scientific_data(integration_time=None, asic=None):
-
-set_VoffsetTES(tension, amplitude):
-
-set_diffDAC(tension):
-
-set_slowDAC(tension):
-
-
-
+Help documentation can be found on the wiki hosted by GitHub:
+https://github.com/satorchi/pystudio/wiki
 
