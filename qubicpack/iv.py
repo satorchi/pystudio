@@ -671,7 +671,7 @@ def get_Vavg_data(self):
         print("measures at Voffset=%gV " % vbias[j])
         self.set_VoffsetTES(vbias[j],0.0,self.asic_index())
         self.wait_a_bit()
-        Vavg= self.get_mean(tinteg,asic)
+        Vavg= self.get_mean()
         print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
         v_tes[:,j]=Vavg
         self.plot_Vavg(Vavg,vbias[j])
@@ -816,7 +816,7 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     rel_amplitude=abs(spread/meanval)
     if rel_amplitude<rel_amplitude_limit:
         ret['is_good']=False
-        ret['comment']='current peak-to-peak to small'
+        ret['comment']='current peak-to-peak too small'
         return ret
     
     # fourth filter: do we find a valid turnover for the Vbias?

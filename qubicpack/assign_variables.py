@@ -26,7 +26,7 @@ def assign_defaults(self):
     self.NPIXELS=128
     self.figsize=(12.80,7.68)
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
-    self.asic=1
+    self.assign_asic(1)
     self.tinteg=0.1
     self.v_tes=None
     self.vbias=None
@@ -54,11 +54,22 @@ def assign_observer(self,observer='APC LaboMM'):
 
 def assign_asic(self,asic=1):
     if asic==None:asic=self.asic
-    if not isinstance(asic,int):
+    if not isinstance(asic,int) or asic<1 or asic>2:
         print('asic should have an integer value: 1 or 2.  assigning default asic=1')
         self.asic=1
     else:
         self.asic=asic
+
+    # QubicStudio has a reverse nomenclature for the ASIC index
+    # compared to the translation tables (eg. Correspondance.xlsx)
+    # so define here a specific QubicStudio ASIC index which should be used in the acquisition methods
+    # see integrate_scientific_data() in tools.py
+    asic_index=self.asic_index()
+    if asic_index==0:
+        self.QS_asic_index=1
+    else:
+        self.QS_asic_index=0
+    
     return
 
 def asic_index(self):

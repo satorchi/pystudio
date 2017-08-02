@@ -221,7 +221,7 @@ def read_fits(self,filename):
     h.close()
     return
 
-def get_amplitude(self,integration_time=None, asic=None):
+def get_amplitude(self):
     """
     Parameters
     ----------
@@ -231,7 +231,7 @@ def get_amplitude(self,integration_time=None, asic=None):
     ASIC number.
         
     """
-    timeline = self.integrate_scientific_data(integration_time, asic)
+    timeline = self.integrate_scientific_data()
     min_timeline = np.min(timeline, axis=-1)
     max_timeline = np.max(timeline, axis=-1)
     return max_timeline - min_timeline
@@ -249,24 +249,28 @@ def get_mean(self):
     timeline = self.integrate_scientific_data()
     return timeline.mean(axis=-1)
 
-def integrate_scientific_data(self,integration_time=None,asic=None):
+def integrate_scientific_data(self):
     client = self.connect_QubicStudio()
     if client==None:return None
 
-    if not integration_time==None: self.assign_integration_time(integration_time)
-    if not asic==None: self.assign_asic(asic)
+    integration_time=self.tinteg
+    asic=self.asic
+    
     
     nsample = client.fetch('QUBIC_Nsample')
-    print('nsample=',nsample)
+    # QubicStudio returns an array of integer of length 1.
+    # convert this to a simple integer
+    nsample = int(nsample)
+    self.debugmsg('nsample=%i' % nsample)
     self.nsamples=nsample
     
     period = 1 / (2e6 / self.NPIXELS / nsample)
-    print('period=',period)
-    print ('integration_time=',self.tinteg)
+    self.debugmsg('period=%.2f' % period)
+    self.debugmsg ('integration_time=%.2f' % self.tinteg)
     timeline_size = int(np.ceil(self.tinteg / period))
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
     timeline = np.empty((self.NPIXELS, timeline_size))
-    parameter = 'QUBIC_PixelScientificDataTimeLine_{}'.format(self.asic_index())
+    parameter = 'QUBIC_PixelScientificDataTimeLine_{}'.format(self.QS_asic_index)
     req = client.request(parameter)
     istart = 0
     for i in range(int(np.ceil(timeline_size / chunk_size))):
