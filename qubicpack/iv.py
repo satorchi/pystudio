@@ -842,7 +842,7 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     # sixth filter: is the operational point (the turnover) within the acceptable range?
     if ret['turnover']<self.min_bias+bias_margin or ret['turnover']>self.max_bias-bias_margin:
         ret['is_good']=False
-        ret['comment']='Vbias operation point outside acceptable range'
+        ret['comment']='operation point outside acceptable range'
         return ret
     
     # we only get this far if it's a good I-V
