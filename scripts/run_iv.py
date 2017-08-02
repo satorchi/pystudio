@@ -14,6 +14,6 @@ wrapper script to run the I-V curve data gathering
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 go=qp()
-go.make_Vbias(vmin=5,vmax=9)
-go.get_IV_data()
+go.make_Vbias(vmin=5,vmax=9,cycle=True,ncycles=3)
+go.get_iv_data()
 raw_input('Hit return to exit. ')
