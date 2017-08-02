@@ -57,6 +57,9 @@ use integration time, so that you don't have to reset the parameter
 for every type of measurement.
 
 # Help
-Here is a list of QubicPack methods:
-* [[assignment-methods|assignment methods]]
 
+## Example scripts
+Example scripts can be found in the [scripts folder](https://github.com/satorchi/pystudio/tree/master/scripts)
+
+Here is a list of QubicPack methods:
+* [assignment methods](assignment-methods)
