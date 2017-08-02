@@ -253,7 +253,7 @@ def integrate_scientific_data(self,integration_time=None,asic=None):
     client = self.connect_QubicStudio()
     if client==None:return None
 
-    if not integrtion_time==None: self.assign_integration_time(integration_time)
+    if not integration_time==None: self.assign_integration_time(integration_time)
     if not asic==None: self.assign_asic(asic)
     
     nsample = client.fetch('QUBIC_Nsample')
@@ -277,7 +277,7 @@ def integrate_scientific_data(self,integration_time=None,asic=None):
     return timeline
 
 def set_VoffsetTES(self,tension, amplitude):
-    client = connect_QubicStudio()
+    client = self.connect_QubicStudio()
     if client==None:return None
 
     # conversion constant DAC <- Volts
@@ -297,13 +297,13 @@ def set_VoffsetTES(self,tension, amplitude):
     DACamplitude = int(np.round(DACamplitude))
     client.sendSetCalibPolar(self.asic_index(), 1, 0, 99, DACamplitude, DACoffset)
     # wait and send the command again to make sure
-    wait_a_bit()
+    self.wait_a_bit()
     client.sendSetCalibPolar(self.asic_index(), 1, 0, 99, DACamplitude, DACoffset)
     return
 
 
 def set_diffDAC(self,tension):
-    client = connect_QubicStudio()
+    client = self.connect_QubicStudio()
     if client==None:return None
     
     if tension > 0 and tension <= 3.5:
@@ -318,7 +318,7 @@ def set_diffDAC(self,tension):
 
 
 def set_slowDAC(self,tension):
-    client = connect_QubicStudio()
+    client = self.connect_QubicStudio()
     if client==None:return None
     
     if tension > 0 and tension <=3.5:

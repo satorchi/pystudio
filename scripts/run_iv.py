@@ -15,5 +15,5 @@ from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 go=qp()
 go.make_Vbias(vmin=5,vmax=9,cycle=True,ncycles=3)
-go.get_iv_data()
+go.get_iv_data(TES=70)
 raw_input('Hit return to exit. ')

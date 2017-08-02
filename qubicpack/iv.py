@@ -640,15 +640,15 @@ def make_Vbias(self,cycle=True,ncycles=2,vmin=5.0,vmax=9.0,dv=0.04,lowhigh=True)
 
     self.cycle_vbias=cycle
     self.nbiascycles=ncycles
-    self.min_bias=min(self.vbias)
-    self.max_bias=max(self.vbias)
-    self.max_bias_position=np.argmax(self.vbias)
 
     vbias=onecycle
     for n in range(ncycles-1):
         vbias=np.concatenate((vbias,onecycle),0)
     
     self.vbias=vbias
+    self.min_bias=min(self.vbias)
+    self.max_bias=max(self.vbias)
+    self.max_bias_position=np.argmax(self.vbias)
     return vbias
 
 def get_Vavg_data(self):
@@ -713,11 +713,13 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         client = self.connect_QubicStudio()
         if client==None: return None
         self.obsdate=dt.datetime.utcnow()
-        if self.vbias==None: vbias=make_Vbias()
+        if self.vbias==None:
+            vbias=make_Vbias()
+        nbias=len(self.vbias)
         v_tes = np.empty((self.NPIXELS,nbias))
 
-        
-    nbias=len(vbias)
+    vbias=self.vbias
+    nbias=len(self.vbias)
 
     figavg=self.setup_plot_Vavg()
     if monitor_iv:figiv,axiv=self.setup_plot_iv(TES)
