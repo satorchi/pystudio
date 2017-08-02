@@ -58,5 +58,5 @@ for every type of measurement.
 
 # Help
 Here is a list of QubicPack methods:
-* assignment methods
+* [[assignment-methods|assignment methods]]
 
