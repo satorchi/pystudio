@@ -11,6 +11,8 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 translate the TES number to the physical location on focal plane grid
 '''
 import numpy as np
+import os
+import pickle
 
 def assign_pix_grid(self):
     '''
@@ -95,3 +97,31 @@ def pix2tes(self,PIX):
     
     TES=TES_index+1
     return TES    
+
+def assign_lookup_table(self):
+    filename='TES_translation_table.pickle'
+    if not os.path.exists(filename):
+        print('WARNING! Cannot find translation table file: %s' % filename)
+        print('Open loop and Room Temperature tests will not be noted in plots etc.')
+        self.transdic=None
+        return None
+
+    h=open(filename,'r')
+    self.transdic=pickle.load(h)
+    return self.transdic
+
+def lookup_TEStable(self,key='PIX',value=100):
+    if self.transdic==None:
+        print('No translation table.  Please load.')
+        return None
+    
+    if not key in self.transdic[0].keys():
+        print('Please enter a valid key.  Choose from:')
+        for k in transdic[0].keys():
+            print('    %s' % k)
+        return None
+    
+    ret=[entry for entry in self.transdic if entry[key]==value]
+    if len(ret)==1:
+        ret=ret[0]
+    return ret

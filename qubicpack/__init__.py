@@ -35,7 +35,9 @@ class qubicpack:
         assign_pix_grid,\
         assign_pix2tes,\
         tes2pix,\
-        pix2tes
+        pix2tes,\
+        assign_lookup_table,\
+        lookup_TEStable
     
     from .tools import\
         connect_QubicStudio,\

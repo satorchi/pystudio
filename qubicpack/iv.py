@@ -581,6 +581,20 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=T
     R1,I0=self.draw_tangent(fit)
     if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
 
+    # add room temp results, if loaded
+    if not self.transdic==None:
+        PIX=self.tes2pix(TES)
+        self.debugmsg('table lookup for PIX=%i' % PIX)
+        entry=self.lookup_TEStable(key='PIX',value=PIX)
+        R300=entry['R300']
+        if isinstance(R300,float):
+            R300str='%.2f $\Omega$' % R300
+        else:
+            R300str=R300
+        txt+='\nRoom Temperature Resistance: %s' % R300str
+        openloop=entry['OpenLoop']
+        txt+='\nOpen Loop Test:  %s' % openloop
+    
     # use the filter if we've already run it, otherwise do it here
     if self.filterinfo==None:
         filterinfo=self.filter_iv(TES)
@@ -912,9 +926,7 @@ def make_iv_tex_report(self):
     make a report in LaTeX.  
     This relies on the data in self.filterinfo.  See self.filter_iv_all() above
     '''
-    if self.filterinfo==None:
-        print('Please run filter_iv_all() first!')
-        return None
+    if self.filterinfo==None:f=self.filter_iv_all()
     
     thumbnailplot=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     allplot=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
@@ -929,6 +941,11 @@ def make_iv_tex_report(self):
     
     texfilename=str('TES_IV_ASIC%i_%s.tex' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     h=open(texfilename,'w')
+    h.write('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n')
+    h.write('%%%%% WARNING!  Automatically generated file.  Do not edit! %%%%%\n')
+    h.write('%%%%% This file could be overwritten                        %%%%%\n')
+    h.write(dt.datetime.utcnow().strftime('%%%%%%%%%% File generated %Y-%m-%d %H:%M:%S UTC                %%%%%%%%%%\n'))
+    h.write('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n')
     h.write('\\documentclass[a4paper,12pt]{article}\n')
     h.write('\\usepackage{graphicx}\n')
     h.write('\\usepackage{hyperref}\n')
@@ -959,12 +976,13 @@ def make_iv_tex_report(self):
 
     ncols=1
     nrows=int(self.NPIXELS/ncols)
-    colfmt='|r|r|r|r|r|l|'
+    colfmt='|r|r|r|r|r|l|l|'
     headline1='\\multicolumn{1}{|c|}{TES} & '\
                '\\multicolumn{1}{|c|}{pix} & '\
                '\\multicolumn{1}{c|}{V$_{\\rm turnover}$} & '\
                '\\multicolumn{1}{c|}{R$_1$} & '\
                '\\multicolumn{1}{c|}{R$_{\\rm 300K}$} & '\
+               '\\multicolumn{1}{c|}{open\\linebreak loop} &'\
                '\\multicolumn{1}{c|}{comment}'
     headline=''
     headline+=headline1
@@ -974,7 +992,6 @@ def make_iv_tex_report(self):
             headline+=' & '+headline1 
     h.write('\\noindent\\begin{longtable}{%s}\n' % colfmt)
     h.write('\\caption{List of turnover (operation) points for each TES}\\\\\n')
-    # h.write('\\begin{tabular}{%s}\n' % colfmt)
     h.write('\\hline\n')
     h.write(headline+'\\\\ \n')
     h.write('\\hline\\endhead\n')
@@ -988,24 +1005,34 @@ def make_iv_tex_report(self):
             if self.filterinfo['turnover'][TES_index]==None:
                 turnover='-'
             else:
-                turnover=str('%.2f' % self.filterinfo['turnover'][TES_index])
+                turnover=str('%.2f V' % self.filterinfo['turnover'][TES_index])
 
             R1=self.filterinfo['fitinfo'][TES_index]['R1']
             if R1>1000:
                 R1str='-'
             else:
-                R1str=str('%.2f' % R1)
+                R1str=str('%.2f $\Omega$' % R1)
 
             comment=self.filterinfo['comment'][TES_index]
             if comment=='no comment': comment='good'
 
-            R300str='--'
+            if self.transdic==None:
+                R300str='--'
+                openloop='--'
+            else:
+                self.debugmsg('table lookup for PIX=%i' % PIX)
+                entry=self.lookup_TEStable(key='PIX',value=PIX)
+                R300=entry['R300']
+                if isinstance(R300,float):
+                    R300str='%.2f $\Omega$' % R300
+                else:
+                    R300str=R300
+                openloop=entry['OpenLoop']
             
-            h.write('%3i & %3i & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, comment))
+            h.write('%3i & %3i & %s & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, openloop, comment))
             if j<ncols-1: h.write(' &')
             else: h.write('\\\\\n')
     h.write('\\hline\n')
-    # h.write('\\end{tabular}\n')
     h.write('\\end{longtable}\n\\clearpage\n')
     
     h.write('\n\\noindent\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % thumbnailplot)
@@ -1026,7 +1053,7 @@ def make_iv_report(self):
     '''
 
     # run filter
-    self.filter_iv_all()
+    if self.filterinfo==None:f=self.filter_iv_all()
 
     # plot all the I-V in the focal-plane map
     self.figsize=(14,14)
