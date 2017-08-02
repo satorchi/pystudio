@@ -55,3 +55,8 @@ default values.  Changing a parameter, such as the integration time,
 for example, will make the change available to all the methods which
 use integration time, so that you don't have to reset the parameter
 for every type of measurement.
+
+# Help
+Here is a list of QubicPack methods:
+* assignment methods
+
