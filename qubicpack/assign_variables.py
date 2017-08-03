@@ -82,13 +82,12 @@ def assign_asic(self,asic=1):
 def asic_index(self):
     return self.asic-1
 
-def TES_index(self,TES=1):
+def TES_index(self,TES):
     if (not isinstance(TES,int))\
        or TES<1\
        or TES>self.NPIXELS:
         print('TES should have a value between 1 and %i' % self.NPIXELS)
-        print('assigning default: TES=1')
-        TES=1
+        return None
     TES_idx=TES-1
     return TES_idx
         
