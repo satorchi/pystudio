@@ -68,7 +68,6 @@ class qubicpack:
         setup_plot_iv,\
         plot_iv,\
         make_Vbias,\
-        get_Vavg_data,\
         get_iv_data,\
         filter_iv,\
         filter_iv_all,\

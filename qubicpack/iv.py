@@ -291,26 +291,20 @@ def draw_tangent(self,fit=None):
     make a tangent line of the I-V curve fit at the maximum bias
     '''
     if fit==None: return None,None
+    if fit['R1']==None: return None,None
 
-    # coefficients of the polyfit
-    # we add the offset which moves the curve so that the equivalent circuit has R=1 Ohm at maximum Vbias 
-    a3=fit['fitinfo'][0][0]
-    a2=fit['fitinfo'][0][1]
-    a1=fit['fitinfo'][0][2]
-    a0=fit['fitinfo'][0][3] + fit['offset']
-
-    # tangent is the first derivative of the polyfit
+    # tangent is determined by the fit
     R1=fit['R1']
     slope=1/R1
     
     V=self.vbias[self.max_bias_position]
-    Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
+    Imax=V
 
-    # The line is described by: y=slope*x + I0
-    I0=Imax-slope*V
+    # The line is described by: y=slope*x + I0 + offset
+    I0=Imax - slope*V - fit['offset']
 
     V2=self.min_bias
-    I2=slope*V2 + I0
+    I2=slope*V2 + I0 + fit['offset']
 
     xpts=[V2,V]
     ypts=[I2,Imax]
@@ -389,7 +383,7 @@ def fit_iv(self,TES,jumplimit=2.0):
     zero=self.zero
     
     # return is a dictionary with various info
-    ret={}
+    fit={}
 
     I=self.ADU2I(self.v_tes[TES_index,:])
     npts=len(I)
@@ -399,8 +393,8 @@ def fit_iv(self,TES,jumplimit=2.0):
     else:
         ncurves=self.nbiascycles
     npts_curve=int(npts/ncurves)
-    ret['ncurves']=ncurves
-    ret['npts_curve']=npts_curve
+    fit['ncurves']=ncurves
+    fit['npts_curve']=npts_curve
     self.debugmsg('number of curves: %i' % ncurves)
     self.debugmsg('npts per curve: %i' % npts_curve)
     
@@ -429,18 +423,18 @@ def fit_iv(self,TES,jumplimit=2.0):
         
         # fit to polynomial degree 3
         # normalize the residual to the number of points in the fit
-        fit=np.polyfit(bias,curve,3,full=True)
-        residual=fit[1][0]/npts_span
-        allfits.append(fit)
+        polyfit=np.polyfit(bias,curve,3,full=True)
+        residual=polyfit[1][0]/npts_span
+        allfits.append(polyfit)
         if abs(residual)<best_residual:
             best_residual=abs(residual)
             best_curve_index=idx
         istart+=npts_curve
 
     # from now on we use the best curve fit
-    ret['best curve index']=best_curve_index
+    fit['best curve index']=best_curve_index
     fitinfo=allfits[best_curve_index]
-    ret['fitinfo']=fitinfo
+    fit['fitinfo']=fitinfo
     
     # the coefficients of the polynomial fit
     a3=fitinfo[0][0]
@@ -448,12 +442,100 @@ def fit_iv(self,TES,jumplimit=2.0):
     a1=fitinfo[0][2]
     a0=fitinfo[0][3]
 
+    # find turning where polynomial tangent is zero (i.e. first derivative is zero)
+    t1=-a2/(3*a3)
+    discriminant=a2**2 - 3*a1*a3
+    if discriminant<0.0:
+        fit['turning']=[None,None]
+        fit['concavity']=[None,None]
+        fit['turnover']=None
+        fit['inflection']=None
+        fit['offset']=0.0
+        fit['R1']=None
+        return fit
+
+    t2=math.sqrt(discriminant)/(3*a3)
+    x0_0=t1+t2
+    x0_1=t1-t2
+    fit['turning']=[x0_0,x0_1]
+
+    # check the concavity of the turning: up or down (+ve is up)
+    fit['concavity']=[2*a2 + 6*a3*x0_0, 2*a2 + 6*a3*x0_1]
+
+    # check if we have a valid turnover point within the range
+    found_turnover=False
+    n_turnings_within_range=0
+    idx=0
+    for V0 in fit['turning']:
+        concavity=fit['concavity'][idx]
+        if (not V0==None) and V0>self.min_bias and V0<self.max_bias:
+            n_turnings_within_range+=1
+            if concavity>0:
+                found_turnover=True
+                fit['turnover']=V0
+        idx+=1
+    if not found_turnover:
+        fit['turnover']=None
+
+    fit['turnings within range']=n_turnings_within_range
+
+    # find the inflection point between the turning points
+    inflection_V=-a2/(3*a3)
+    fit['inflection']=inflection_V
+
+    # if the inflection is between the turnover and the max bias,
+    # then we fit a straight line to the final points
+    # instead of using the fit all the way through
+    if (not fit['turnover']==None) \
+       and (inflection_V>fit['turnover']) \
+       and (inflection_V<self.max_bias):
+        # find the corresponding points to fit
+        istart=fit['best curve index']*fit['npts_curve']
+        iend=istart+fit['npts_curve']
+        xpts=self.vbias[istart:iend]
+        gotit=False
+        dv=xpts[1]-xpts[0]
+        idx=-1
+        while not gotit and idx<fit['npts_curve']:
+            idx+=1
+            if (dv>0.0 and xpts[idx]>=inflection_V)\
+               or (dv<0.0 and xpts[idx]<=inflection_V): 
+                gotit=True
+        if (dv>0.0):
+            ibeg=istart+idx
+            istop=iend
+        else:
+            ibeg=istart
+            istop=istart+idx+1
+
+        xpts=self.vbias[ibeg:istop]
+        ypts=I[ibeg:istop]
+        fit['linefit xpts']=xpts
+        fit['linefit ypts']=ypts
+        self.debugmsg('fit_iv(%i): ibeg=%i, istop=%i' % (TES,ibeg,istop))
+        linefit=np.polyfit(xpts,ypts,1,full=True)
+        slope=linefit[0][0]
+        b=linefit[0][1]
+        if abs(slope)>self.zero:
+            R1=1/slope
+        else:
+            R1=1/self.zero
+        # offset forces the line to have I(max_bias)=max_bias (i.e. R=1 Ohm)
+        Imax=slope*self.max_bias + b
+        offset=self.max_bias-Imax
+        fit['R1']=R1
+        fit['offset']=offset
+        return fit
+        
+
+        
+    # if the above didn't work, we use the original curve fit 
     # we shift the fit curve up/down to have I(max_bias)=max_bias
-    #   which puts the max bias position at a point on the R=1 Ohm line
+    # which puts the max bias position at a point on the R=1 Ohm line
     V=self.vbias[self.max_bias_position]
     Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
     offset=V-Imax
-    ret['offset']=offset
+    fit['offset']=offset
     
     # find the tangent line of the fit to the I-V curve at the maximum bias
     # this should be equivalent to a circuit with resistance 1 Ohm
@@ -465,29 +547,12 @@ def fit_iv(self,TES,jumplimit=2.0):
         R1 = 1/slope
     else:
         R1=1/zero
-    ret['R1']=R1
+    fit['R1']=R1
 
-    # find turning where polynomial tangent is zero (i.e. first derivative is zero)
-    ####### NOTE:  I don't think this is "inflection" ! I should change the word here.
-    t1=-a2/(3*a3)
-    discriminant=a2**2 - 3*a1*a3
-    if discriminant<0.0:
-        ret['turning']=[None,None]
-        ret['concavity']=[None,None]
-        return ret
-
-    t2=math.sqrt(discriminant)/(3*a3)
-    x0_0=t1+t2
-    x0_1=t1-t2
-    ret['turning']=[x0_0,x0_1]
-
-    # check the concavity of the turning: up or down (+ve is up)
-    ret['concavity']=[2*a2 + 6*a3*x0_0, 2*a2 + 6*a3*x0_1]
-    
     keys=''
-    for key in ret.keys():keys+=key+', '
+    for key in fit.keys():keys+=key+', '
     self.debugmsg('returning from fit_iv() with keys: %s' % keys)
-    return ret
+    return fit
 
 
 def draw_iv(self,I,colour='blue',axis=plt):
@@ -535,7 +600,7 @@ def setup_plot_iv(self,TES,xwin=True):
     # ax.set_ylim([self.min_bias,self.max_bias])
     return fig,ax
 
-def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
+def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
     if multi:return self.plot_iv_multi()
     if TES==None:return self.plot_iv_all()
     if not isinstance(TES,int): return self.plot_iv_all()
@@ -549,7 +614,10 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=T
     fig,ax=self.setup_plot_iv(TES,xwin)
 
     # normalize the Current so that R=1 Ohm at the highest Voffset
-    fit=self.fit_iv(TES,jumplimit)
+    if self.filterinfo==None:
+        fit=self.fit_iv(TES,jumplimit)
+    else:
+        fit=self.filterinfo['fitinfo'][TES_index]
     offset=fit['offset']
     txt=str('offset=%.4e' % offset)
 
@@ -563,18 +631,16 @@ def plot_iv(self,TES=None,offset=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=T
     plt.plot(self.vbias,f(self.vbias),linestyle='dashed',color='red')
 
     # note the turnover point
-    found_turnover=False
-    for n in range(2):
-        v0=fit['turning'][n]
-        concavity=fit['concavity'][n]
-        if (not v0==None) and v0>self.min_bias and v0<self.max_bias and concavity>0:
+    if fit['turnover']==None:
+        txt+='\nNo turnover!'
+    else:
+        v0=fit['turnover']
+        if v0>self.min_bias and v0<self.max_bias:
             xpts=[v0,v0]
             ypts=[min(Iadjusted),max(Iadjusted)]
             plt.plot(xpts,ypts,linestyle='dashed',color='green')
-            found_turnover=True
             txt+=str('\nturnover Vbias=%.2fV' % v0)
-    if not found_turnover:
-        txt+='\nNo turnover!'
+        
         
     
     # draw a line tangent to the fit at the highest Vbias
@@ -650,37 +716,6 @@ def make_Vbias(self,cycle=True,ncycles=2,vmin=5.0,vmax=9.0,dv=0.04,lowhigh=True)
     self.max_bias=max(self.vbias)
     self.max_bias_position=np.argmax(self.vbias)
     return vbias
-
-def get_Vavg_data(self):
-    '''
-    DEPRECATED! use get_IV_data() instead
-    '''
-    print('DEPRECATION WARNING! Please use get_IV_data().')
-    client = self.connect_QubicStudio()
-    if client==None: return None
-
-    ofilename = dt.datetime.utcnow().strftime("test_vi_%Y%m%dT%H%M%SUTC.txt")
-
-    if self.vbias==None: vbias=make_Vbias()
-    nbias=len(vbias)
-
-    v_tes = np.empty((self.NPIXELS,nbias))
-
-    fig,ax=self.setup_plot_Vavg()
-    for j in range(nbias) :
-        print("measures at Voffset=%gV " % vbias[j])
-        self.set_VoffsetTES(vbias[j],0.0,self.asic_index())
-        self.wait_a_bit()
-        Vavg= self.get_mean()
-        print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
-        v_tes[:,j]=Vavg
-        self.plot_Vavg(Vavg,vbias[j])
-
-
-    plt.show()
-    np.savetxt(ofilename, v_tes,delimiter="\t")
-    self.assign_Vtes(v_tes)
-    return v_tes
 
 def get_iv_data(self,replay=False,TES=None,monitor=False):
     '''
@@ -775,13 +810,12 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     '''
     determine if this is a good TES from the I-V curve
     '''
-    TES_index=self.TES_index()
+    TES_index=self.TES_index(TES)
     
     # dictionary to return stuff
     ret={}
     ret['is_good']=True
     ret['comment']='no comment'
-    ret['turnover']=None
 
     # fit to a polynomial. The fit will be for the best measured curve if it's cycled bias
     fit=self.fit_iv(TES,jumplimit)
@@ -790,7 +824,9 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     ret['residual']=residual
     offset=fit['offset']
     ret['offset']=offset
-    Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset=offset)
+    ADU=self.v_tes[TES_index,:]
+    Iadjusted=self.ADU2I(ADU,offset=offset,fudge=1.0)
+    ret['turnover']=fit['turnover']
 
     # first filter:  is it a good fit?
     if residual>residual_limit:
@@ -807,6 +843,8 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     maxval=max(Iadjusted[istart:iend])
     minval=min(Iadjusted[istart:iend])
     spread=abs(maxval-minval)
+    self.debugmsg('maxval=%f, minval=%f, abs amplitude=%f' % (maxval,minval,spread))
+    ret['abs_amplitude']=spread
     if spread<abs_amplitude_limit:
         ret['is_good']=False
         ret['comment']='current too low'
@@ -814,38 +852,32 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
         
     # third filter: peak to peak amplitude
     rel_amplitude=abs(spread/meanval)
+    ret['rel_amplitude']=rel_amplitude
     if rel_amplitude<rel_amplitude_limit:
         ret['is_good']=False
         ret['comment']='current peak-to-peak too small'
         return ret
     
     # fourth filter: do we find a valid turnover for the Vbias?
-    found_turnover=False
-    n_turnings_within_range=0
-    for n in range(len(fit['turning'])):
-        V0=fit['turning'][n]
-        concavity=fit['concavity'][n]
-        if (not V0==None) and V0>self.min_bias and V0<self.max_bias:
-            n_turnings_within_range+=1
-            if concavity>0:
-                found_turnover=True
-                ret['turnover']=V0
-    if not found_turnover:
+    ret['turnover']=fit['turnover']
+    if fit['turning']==None or fit['turnover']==None:
         ret['is_good']=False
         ret['comment']='no turnover'
         return ret
 
-    # fifth filter:  do we have both turning points within the bias range?
-    if n_turnings_within_range>1:
-        ret['is_good']=False
-        ret['comment']='bad I-V profile'
-        return ret
-    
-    # sixth filter: is the operational point (the turnover) within the acceptable range?
+    # fifth filter: is the operational point (the turnover) within the acceptable range?
     if ret['turnover']<self.min_bias+bias_margin or ret['turnover']>self.max_bias-bias_margin:
         ret['is_good']=False
         ret['comment']='operation point outside acceptable range'
         return ret
+
+    # sixth filter:  do we have both turning points within the bias range?
+    # maybe I should delete this filter
+    #if fit['turnings within range']>1:
+    #    ret['is_good']=False
+    #    ret['comment']='bad I-V profile'
+    #    return ret
+    
     
     # we only get this far if it's a good I-V
     return ret
