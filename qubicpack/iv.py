@@ -1042,7 +1042,7 @@ def make_iv_tex_report(self):
                 turnover=str('%.2f V' % self.filterinfo['turnover'][TES_index])
 
             R1=self.filterinfo['fitinfo'][TES_index]['R1']
-            if R1>1000:
+            if R1==None or R1>10000:
                 R1str='-'
             else:
                 R1str=str('%.2f $\Omega$' % R1)
