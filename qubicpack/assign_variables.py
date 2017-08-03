@@ -60,8 +60,10 @@ def assign_asic(self,asic=1):
     else:
         self.asic=asic
 
-    # QubicStudio has a reverse nomenclature for the ASIC index
-    # compared to the translation tables (eg. Correspondance.xlsx)
+
+    ######### Is this correct?
+    #### QubicStudio has a reverse nomenclature for the ASIC index
+    #### compared to the translation tables (eg. Correspondance.xlsx)
     # so define here a specific QubicStudio ASIC index which should be used in the acquisition methods
     # see integrate_scientific_data() in tools.py
     asic_index=self.asic_index()
@@ -69,6 +71,11 @@ def assign_asic(self,asic=1):
         self.QS_asic_index=1
     else:
         self.QS_asic_index=0
+
+    # Wed 02 Aug 2017 15:48:15 CEST
+    # during lab tests, QubicStudio is always using asic_index=0
+    # we change the asic by physically switching a cable to another connector
+    self.QS_asic_index=0
     
     return
 
