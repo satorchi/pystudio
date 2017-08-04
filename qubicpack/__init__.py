@@ -29,7 +29,8 @@ class qubicpack:
         TES_index,\
         assign_integration_time,\
         assign_Vtes,\
-        assign_pausetime
+        assign_pausetime,\
+        assign_temperature
 
     from .pix2tes import\
         assign_pix_grid,\
@@ -66,6 +67,7 @@ class qubicpack:
         draw_tangent,\
         draw_iv,\
         setup_plot_iv,\
+        oplot_iv,\
         plot_iv,\
         make_Vbias,\
         get_iv_data,\
