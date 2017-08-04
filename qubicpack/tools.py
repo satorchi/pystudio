@@ -82,6 +82,7 @@ def write_fits(self):
     prihdr['QUBIC-IP']=(self.QubicStudio_ip,'address of the QUBIC Local Control Computer')
     prihdr['NCYCLES']=(self.nbiascycles,'number of cycles of the Bias voltage')
     prihdr['CYCBIAS']=(self.cycle_vbias,'ramp return Bias, yes or no')
+    prihdr['TES_TEMP']=(self.temperature,'TES physical temperature in K')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
     if self.v_tes != None:
@@ -168,6 +169,11 @@ def read_fits(self,filename):
         self.debugmsg(str(h[0].header.cards[13]))
         self.cycle_vbias=h[0].header['CYCBIAS']
         self.debugmsg('cycle_vbias is %s' % str(self.cycle_vbias))
+
+    if 'TES_TEMP' in h[0].header.keys():
+        self.temperature=h[0].header['TES_TEMP']
+    else:
+        self.temperature=None
 
     timelines=[]
     for hdu in h[1:]:
