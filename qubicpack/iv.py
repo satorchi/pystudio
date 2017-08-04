@@ -984,6 +984,12 @@ def make_iv_tex_report(self):
     h.write('\\usepackage{graphicx}\n')
     h.write('\\usepackage{hyperref}\n')
     h.write('\\usepackage{longtable}\n')
+    h.write('\\usepackage{setspace}\n')
+    h.write('\\newcommand{\\comment}[1]{\n\\begin{minipage}[t]{20ex}\n\\setstretch{0.5}\\flushleft\\noindent\n#1\n\\vspace*{1ex}\n\\end{minipage}}\n')
+    h.write('\\newlength{\\openlooplen}\n')
+    h.write('\\settowidth{\\openlooplen}{ooop}\n')
+    h.write('\\newcommand{\\openloopheading}{\n\\begin{minipage}[t]{\\openlooplen}\nopen\\\\\nloop\n\\end{minipage}\n}\n')
+
     h.write('\\begin{document}\n')
     h.write('\\begin{center}\n')
     h.write('QUBIC TES Report\\\\\n')
@@ -1016,7 +1022,7 @@ def make_iv_tex_report(self):
                '\\multicolumn{1}{c|}{V$_{\\rm turnover}$} & '\
                '\\multicolumn{1}{c|}{R$_1$} & '\
                '\\multicolumn{1}{c|}{R$_{\\rm 300K}$} & '\
-               '\\multicolumn{1}{c|}{open\\linebreak loop} &'\
+               '\\multicolumn{1}{c|}{\\openloopheading} &'\
                '\\multicolumn{1}{c|}{comment}'
     headline=''
     headline+=headline1
@@ -1045,7 +1051,10 @@ def make_iv_tex_report(self):
             if R1==None or R1>10000:
                 R1str='-'
             else:
-                R1str=str('%.2f $\Omega$' % R1)
+                if abs(R1)<100:
+                    R1str=str('%.2f $\Omega$' % R1)
+                else:
+                    R1str=str('%.2e $\Omega$' % R1)
 
             comment=self.filterinfo['comment'][TES_index]
             if comment=='no comment': comment='good'
@@ -1058,12 +1067,16 @@ def make_iv_tex_report(self):
                 entry=self.lookup_TEStable(key='PIX',value=PIX)
                 R300=entry['R300']
                 if isinstance(R300,float):
-                    R300str='%.2f $\Omega$' % R300
+                    if abs(R300)<10000:
+                        R300str='%.1f $\Omega$' % R300
+                    else:
+                        R300str='%.2e $\Omega$' % R300
                 else:
                     R300str=R300
                 openloop=entry['OpenLoop']
-            
-            h.write('%3i & %3i & %s & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, openloop, comment))
+
+            comment_entry=str('\\comment{%s}' % comment)
+            h.write('%3i & %3i & %s & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, openloop, comment_entry))
             if j<ncols-1: h.write(' &')
             else: h.write('\\\\\n')
     h.write('\\hline\n')
