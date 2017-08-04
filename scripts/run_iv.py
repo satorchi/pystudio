@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 go=qp()
 go.debuglevel=1
 go.assign_asic(2)
-go.make_Vbias(vmin=5,vmax=9,cycle=True,ncycles=3)
+if go.vbias==None:
+    go.make_Vbias(vmin=5,vmax=9,cycle=True,ncycles=1,dv=0.01)
 go.get_iv_data(TES=70)
 raw_input('Hit return to exit. ')
