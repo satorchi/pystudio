@@ -44,6 +44,7 @@ def assign_defaults(self):
     self.assign_pix2tes()
     self.filterinfo=None
     self.assign_lookup_table()
+    self.temperature=None
     return
 
 def assign_observer(self,observer='APC LaboMM'):
@@ -130,3 +131,11 @@ def assign_ip(self,ip):
     return
 
 
+def assign_temperature(self,temp):
+    if (not isinstance(temp,int)) and (not isinstance(temp,float)):
+        print('ERROR! Temperature should be a number in Kelvin (not milliKelvin)')
+        self.temperature
+        return None
+    else:
+        self.temperature=temp
+    return
