@@ -67,6 +67,7 @@ class qubicpack:
         draw_tangent,\
         draw_iv,\
         setup_plot_iv,\
+        adjusted_iv,\
         oplot_iv,\
         plot_iv,\
         make_Vbias,\

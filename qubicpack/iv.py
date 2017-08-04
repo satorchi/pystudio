@@ -555,7 +555,7 @@ def fit_iv(self,TES,jumplimit=2.0):
     return fit
 
 
-def draw_iv(self,I,colour='blue',axis=plt):
+def draw_iv(self,I,colour='blue',axis=plt,label=None):
     '''
     draw an individual I-V curve
     '''
@@ -588,7 +588,11 @@ def setup_plot_iv(self,TES,xwin=True):
         ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
         ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,self.min_bias,self.max_bias))
-    subttl=str('ASIC #%i, Pixel #%i' % (self.asic,self.tes2pix(TES)))
+    if self.temperature==None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.1f mK' % (1000*self.temperature))
+    subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
     if xwin: plt.ion()
     else: plt.ioff()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
@@ -599,6 +603,27 @@ def setup_plot_iv(self,TES,xwin=True):
     ax.set_xlim([self.min_bias,self.max_bias])
     # ax.set_ylim([self.min_bias,self.max_bias])
     return fig,ax
+
+def adjusted_iv(self,TES,fit=None):
+    '''
+    return the adjusted I-V curve
+    '''
+    if fit==None:
+        if self.filterinfo==None:
+            fit=self.fit_iv(TES)
+        else:
+            fit=self.filterinfo['fitinfo'][self.TES_index(TES)]
+
+    offset=fit['offset']
+    Iadjusted=self.ADU2I(self.v_tes[self.TES_index(TES),:],offset=offset)
+    return Iadjusted
+
+def oplot_iv(self,TES,fit=None,label=None):
+
+    Iadjusted=self.adjusted_iv(TES,fit=fit)
+    self.draw_iv(Iadjusted,label=label)
+    
+    return
 
 def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
     if multi:return self.plot_iv_multi()
@@ -620,10 +645,14 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
         fit=self.filterinfo['fitinfo'][TES_index]
     offset=fit['offset']
     txt=str('offset=%.4e' % offset)
+    Iadjusted=self.adjusted_iv(TES,fit)
+    self.oplot_iv(TES,fit)
+        
+    # draw a line tangent to the fit at the highest Vbias
+    R1,I0=self.draw_tangent(fit)
 
-    
-    Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset=offset,fudge=fudge)
-    self.draw_iv(Iadjusted)
+    R1=fit['R1']
+    if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
 
     # draw a polynomial fit to the I-V curve
     txt+=str('\npolynomial fit residual: %.4e' % fit['fitinfo'][1][0])
@@ -641,11 +670,6 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
             plt.plot(xpts,ypts,linestyle='dashed',color='green')
             txt+=str('\nturnover Vbias=%.2fV' % v0)
         
-        
-    
-    # draw a line tangent to the fit at the highest Vbias
-    R1,I0=self.draw_tangent(fit)
-    if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
 
     # add room temp results, if loaded
     if not self.transdic==None:
@@ -1002,6 +1026,12 @@ def make_iv_tex_report(self):
     h.write('\\noindent Summary:\n')
     h.write('\\noindent\\begin{itemize}\n')
     h.write('\\item ASIC %i\n' % self.asic)
+    if self.temperature==None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.1f mK' % (1000*self.temperature))
+    h.write('\\item TES physical temperature: %s\n' % tempstr)
+
     h.write('\\item %i pixels are flagged as bad.\n\\item %.1f\\%s of the array is good\n'\
             % ( self.NPIXELS-self.filterinfo['ngood'], 100.0*self.filterinfo['ngood']/self.NPIXELS, '%' ))
     h.write('\\end{itemize}\n')
