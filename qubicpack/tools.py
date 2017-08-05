@@ -305,10 +305,10 @@ def set_VoffsetTES(self,tension, amplitude):
     else:
         DACamplitude = 65536 + amplitude / 0.001125
     DACamplitude = int(np.round(DACamplitude))
-    client.sendSetCalibPolar(self.asic_index(), 1, 0, 99, DACamplitude, DACoffset)
+    client.sendSetCalibPolar(self.QS_asic_index, 1, 0, 99, DACamplitude, DACoffset)
     # wait and send the command again to make sure
     self.wait_a_bit()
-    client.sendSetCalibPolar(self.asic_index(), 1, 0, 99, DACamplitude, DACoffset)
+    client.sendSetCalibPolar(self.QS_asic_index, 1, 0, 99, DACamplitude, DACoffset)
     return
 
 
@@ -322,7 +322,7 @@ def set_diffDAC(self,tension):
         diffDAC = 65536 * (1 + tension / 2 / 7)
     diffDAC = int(np.round(diffDAC))
     print('Setting diff DAC: ', diffDAC)
-    client.sendSetDiffDAC(self.asic_index(), diffDAC)
+    client.sendSetDiffDAC(self.QS_asic_index, diffDAC)
     return
 
 
@@ -338,7 +338,7 @@ def set_slowDAC(self,tension):
         
     slowDAC = int(np.round(slowDAC))
     print('Setting slow DAC: ', slowDAC)
-    client.sendSetSlowDAC(self.asic_index(), slowDAC)
+    client.sendSetSlowDAC(self.QS_asic_index, slowDAC)
     return
 
 
