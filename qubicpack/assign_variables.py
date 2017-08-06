@@ -42,7 +42,7 @@ def assign_defaults(self):
     self.timelines=None
     self.assign_pix_grid()
     self.assign_pix2tes()
-    self.filterinfo=None
+    self.filtersummary=None
     self.assign_lookup_table()
     self.temperature=None
     return

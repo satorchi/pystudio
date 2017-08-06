@@ -106,11 +106,11 @@ def plot_iv_all(self,selection=None,xwin=True):
         TES=TES_index+1
 
         if (selection==None) or (selection[TES_index]):
-            if self.filterinfo==None:
+            if self.filtersummary==None:
                 filterinfo=self.filter_iv(TES)
-                offset=filterinfo['offset']
+                offset=filterinfo['fit']['offset']
             else:
-                offset=self.filterinfo['offset'][TES_index]
+                offset=self.filtersummary[TES_index]['fit']['offset']
 
             Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset)
 
@@ -132,8 +132,8 @@ def setup_plot_iv_multi(self,nrows=16,ncols=8,xwin=True):
         ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
 
     nbad=0
-    if not self.filterinfo==None:
-        for val in self.filterinfo['is_good']:
+    if not self.filtersummary==None:
+        for val in self.is_good_iv():
             if not val:nbad+=1
         ttl+=str('\n%i flagged as bad pixels' % nbad)
     
@@ -153,7 +153,7 @@ def plot_iv_multi(self, xwin=True):
     if present, a label will be shown on each curve indicating 
     whether that TES is considered good or not
     '''
-    if not self.filterinfo==None: ngood=self.filterinfo['ngood']
+    ngood=self.ngood()
     nrows=16
     ncols=8
     fig,axes=self.setup_plot_iv_multi(nrows,ncols,xwin)
@@ -166,20 +166,20 @@ def plot_iv_multi(self, xwin=True):
             axes[row,col].get_xaxis().set_visible(False)
             axes[row,col].get_yaxis().set_visible(False)
 
-            if self.filterinfo==None:
+            if self.filtersummary==None:
                 filterinfo=self.filter_iv(TES)
-                offset=filterinfo['offset']
+                offset=filterinfo['fit']['offset']
             else:
-                offset=self.filterinfo['offset'][TES_index]
+                offset=self.filtersummary[TES_index]['fit']['offset']
 
             Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset)            
             self.draw_iv(Iadjusted,colour='blue',axis=axes[row,col])
             text_y=min(Iadjusted)
             axes[row,col].text(self.max_bias,text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
 
-            if (not self.filterinfo==None)\
-               and (not self.filterinfo['is_good']==None)\
-               and (not self.filterinfo['is_good'][TES_index]):
+            if (not self.filtersummary==None)\
+               and (not self.is_good_iv()==None)\
+               and (not self.is_good_iv()[TES_index]):
                 # axes[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
                 axes[row,col].set_axis_bgcolor('red')
 
@@ -198,11 +198,7 @@ def plot_iv_physical_layout(self,xwin=True):
     '''
     ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
 
-    if not self.filterinfo==None:
-        ngood=self.filterinfo['ngood']
-    else:
-        ngood=None
-    
+    ngood=self.ngood()
     nrows=self.pix_grid.shape[0]
     ncols=self.pix_grid.shape[1]
 
@@ -245,16 +241,16 @@ def plot_iv_physical_layout(self,xwin=True):
                 face_colour='white'
                 TES_index=self.TES_index(TES)
 
-                if self.filterinfo==None:
+                if self.filtersummary==None:
                     filterinfo=self.filter_iv(TES)
-                    offset=filterinfo['offset']
+                    offset=filterinfo['fit']['offset']
                 else:
-                    offset=self.filterinfo['offset'][TES_index]
+                    offset=self.filtersummary[TES_index]['fit']['offset']
                 Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset)            
                 text_y=min(Iadjusted)
                 self.draw_iv(Iadjusted,colour='blue',axis=ax[row,col])
 
-                if (not self.filterinfo['is_good']==None) and (not self.filterinfo['is_good'][TES_index]):
+                if (not self.is_good_iv(TES)==None) and (not self.is_good_iv(TES)):
                     face_colour='red'
                     label_colour='white'
                     # ax[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color=label_colour)
@@ -591,7 +587,7 @@ def setup_plot_iv(self,TES,xwin=True):
     if self.temperature==None:
         tempstr='unknown'
     else:
-        tempstr=str('%.1f mK' % (1000*self.temperature))
+        tempstr=str('%.0f mK' % (1000*self.temperature))
     subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
     if xwin: plt.ion()
     else: plt.ioff()
@@ -608,11 +604,10 @@ def adjusted_iv(self,TES,fit=None):
     '''
     return the adjusted I-V curve
     '''
-    if fit==None:
-        if self.filterinfo==None:
-            fit=self.fit_iv(TES)
-        else:
-            fit=self.filterinfo['fitinfo'][self.TES_index(TES)]
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+    
+    if fit==None:fit=filterinfo['fit']
 
     offset=fit['offset']
     Iadjusted=self.ADU2I(self.v_tes[self.TES_index(TES),:],offset=offset)
@@ -626,9 +621,12 @@ def oplot_iv(self,TES,fit=None,label=None):
     return
 
 def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+    
     if multi:return self.plot_iv_multi()
-    if TES==None:return self.plot_iv_all()
-    if not isinstance(TES,int): return self.plot_iv_all()
+    if TES==None:return self.plot_iv_physical_layout()
+    if not isinstance(TES,int): return self.plot_iv_physical_layout()
 
     TES_index=self.TES_index(TES)
     
@@ -639,10 +637,10 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
     fig,ax=self.setup_plot_iv(TES,xwin)
 
     # normalize the Current so that R=1 Ohm at the highest Voffset
-    if self.filterinfo==None:
+    if self.filtersummary==None:
         fit=self.fit_iv(TES,jumplimit)
     else:
-        fit=self.filterinfo['fitinfo'][TES_index]
+        fit=self.filtersummary[TES_index]['fit']
     offset=fit['offset']
     txt=str('offset=%.4e' % offset)
     Iadjusted=self.adjusted_iv(TES,fit)
@@ -686,13 +684,13 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
         txt+='\nOpen Loop Test:  %s' % openloop
     
     # use the filter if we've already run it, otherwise do it here
-    if self.filterinfo==None:
+    if self.filtersummary==None:
         filterinfo=self.filter_iv(TES)
         is_good=filterinfo['is_good']
         comment=filterinfo['comment']
     else:
-        is_good=self.filterinfo['is_good'][TES_index]
-        comment=self.filterinfo['comment'][TES_index]
+        is_good=self.is_good_iv(TES)
+        comment=self.filtersummary[TES_index]['comment']
     if not is_good:
         txt+=str('\nFlagged as BAD:  %s' % comment)
     # write out the comments
@@ -914,40 +912,17 @@ def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
         print('No data!  Please read a file, or run a measurement.')
         return None
 
-    # return a list with the filter info for each, and a list of the good indexes
-    ret={}
-
-    fitinfo=[]
-    offset=[]
-    is_good=[]
-    turnover=[]
-    comment=[]    
+    # return a list with the filter info for each TES
+    filtersummary=[]
 
     # go through each filter.  Jump out and examine the next I-V curve as soon as a bad I-V is found
-    good_index=[]
     for TES_index in range(self.NPIXELS):
         self.debugmsg('running filter on TES %03i' % (TES_index+1))
         filterinfo=self.filter_iv(TES_index+1,residual_limit,abs_amplitude_limit,rel_amplitude_limit,bias_margin,jumplimit)
-        if filterinfo['is_good']:good_index.append(TES_index)
+        filtersummary.append(filterinfo)
         
-        fitinfo.append(filterinfo['fit'])
-        offset.append(filterinfo['offset'])
-        is_good.append(filterinfo['is_good'])
-        turnover.append(filterinfo['turnover'])
-        comment.append(filterinfo['comment'])
-
-        
-    # these are recopied to a 'higher level' for historic compatibility.
-    # eventually I should fix all the methods which rely on this
-    ret['fitinfo']=fitinfo
-    ret['offset']=offset
-    ret['is_good']=is_good
-    ret['turnover']=turnover
-    ret['comment']=comment
-    ret['good_index']=good_index
-    ret['ngood']=len(good_index)
-    self.filterinfo=ret
-    return ret
+    self.filtersummary=filtersummary
+    return filtersummary
 
 def read_Vtes_file(self,filename):
     if not os.path.exists(filename):
@@ -982,9 +957,9 @@ def read_Vtes_file(self,filename):
 def make_iv_tex_report(self):
     '''
     make a report in LaTeX.  
-    This relies on the data in self.filterinfo.  See self.filter_iv_all() above
+    This relies on the data in self.filtersummary.  See self.filter_iv_all() above
     '''
-    if self.filterinfo==None:f=self.filter_iv_all()
+    if self.filtersummary==None:f=self.filter_iv_all()
     
     thumbnailplot=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     allplot=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
@@ -1029,11 +1004,11 @@ def make_iv_tex_report(self):
     if self.temperature==None:
         tempstr='unknown'
     else:
-        tempstr=str('%.1f mK' % (1000*self.temperature))
+        tempstr=str('%.0f mK' % (1000*self.temperature))
     h.write('\\item TES physical temperature: %s\n' % tempstr)
 
     h.write('\\item %i pixels are flagged as bad.\n\\item %.1f\\%s of the array is good\n'\
-            % ( self.NPIXELS-self.filterinfo['ngood'], 100.0*self.filterinfo['ngood']/self.NPIXELS, '%' ))
+            % ( self.NPIXELS-self.ngood(), 100.0*self.ngood()/self.NPIXELS, '%' ))
     h.write('\\end{itemize}\n')
     
     h.write('\n\\vspace*{3ex}\n\\noindent This document includes the following:\n')
@@ -1071,13 +1046,12 @@ def make_iv_tex_report(self):
             TES_index=i+j*nrows
             TES=TES_index+1
             PIX=self.tes2pix(TES)
-
-            if self.filterinfo['turnover'][TES_index]==None:
+            if self.filtersummary[TES_index]['fit']['turnover']==None:
                 turnover='-'
             else:
-                turnover=str('%.2f V' % self.filterinfo['turnover'][TES_index])
+                turnover=str('%.2f V' % self.filtersummary[TES_index]['fit']['turnover'])
 
-            R1=self.filterinfo['fitinfo'][TES_index]['R1']
+            R1=self.filtersummary[TES_index]['fit']['R1']
             if R1==None or R1>10000:
                 R1str='-'
             else:
@@ -1086,7 +1060,7 @@ def make_iv_tex_report(self):
                 else:
                     R1str=str('%.2e $\Omega$' % R1)
 
-            comment=self.filterinfo['comment'][TES_index]
+            comment=self.filtersummary[TES_index]['comment']
             if comment=='no comment': comment='good'
 
             if self.transdic==None:
@@ -1130,14 +1104,14 @@ def make_iv_report(self):
     '''
 
     # run filter
-    if self.filterinfo==None:f=self.filter_iv_all()
+    if self.filtersummary==None:f=self.filter_iv_all()
 
     # plot all the I-V in the focal-plane map
     self.figsize=(14,14)
     self.plot_iv_physical_layout(xwin=False)
 
     # plot all the good I-V curves on a single plot
-    self.plot_iv_all(selection=self.filterinfo['is_good'],xwin=False)
+    self.plot_iv_all(selection=self.is_good_iv(),xwin=False)
 
     # plot each I-V curve
     self.figsize=(16,12)
@@ -1152,5 +1126,64 @@ def make_iv_report(self):
     os.system(cmd)
     os.system(cmd)
     return
+
+###################################################
+### helper functions to return info from the filter
+###################################################
+
+def filterinfo(self,TES=None):
+    # if filter has not been run, run it with defaults
+    if self.filtersummary==None:
+        filtersummary=self.filter_iv_all()
+
+    if self.filtersummary==None:return None
+
+    if TES==None:return self.filtersummary
+
+    return self.filtersummary[self.TES_index(TES)]
+        
+    
+def is_good_iv(self,TES=None):
+    '''
+    return the judgement about a TES
+    if TES==None, return a list of all TES determinations
+    '''
+
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+        
+    if TES==None:
+        filtersummary=filterinfo
+        is_good=[]
+        for finfo in filtersummary:
+            is_good.append(finfo['is_good'])
+        return is_good
+    return filterinfo['is_good']
+
+def good_index(self):
+    '''
+    return a list of indexes corresponding to the good TES
+    '''
+    filtersummary=self.filterinfo()
+    if filtersummary==None:return None
+    
+    good_index=[]
+    for TES_index in range(self.NPIXELS):
+        if filtersummary[TES_index]['is_good']:good_index.append(TES_index)
+    return good_index
+
+
+    
+def ngood(self):
+    '''
+    return the number of good TES
+    '''
+    filtersummary=self.filterinfo()
+    if filtersummary==None:return None
+    
+    ngood=0
+    for TES_index in range(self.NPIXELS):
+        if filtersummary[TES_index]['is_good']:ngood+=1
+    return ngood
 
     

@@ -74,6 +74,10 @@ class qubicpack:
         get_iv_data,\
         filter_iv,\
         filter_iv_all,\
+        filterinfo,\
+        is_good_iv,\
+        good_index,\
+        ngood,\
         read_Vtes_file,\
         make_iv_tex_report,\
         make_iv_report
@@ -86,7 +90,7 @@ class qubicpack:
         return
 
     def verdate(self):
-        print("Mon 31 Jul 2017 15:48:39 CEST")
+        print("Sat 05 Aug 2017 18:43:13 CEST")
         return
 
     def debugmsg(self,msg):
