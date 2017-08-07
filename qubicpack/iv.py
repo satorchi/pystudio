@@ -10,13 +10,11 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
           redistribute it.  There is NO WARRANTY, to the extent
           permitted by law.
 
-get data from QubicStudio and plot hysterisis I-V curves 
-refresh and replot
+methods to plot and analyse I-V curves
 
 """
 from __future__ import division, print_function
 import numpy as np
-import pystudio
 import sys,os,time
 import datetime as dt
 import matplotlib.pyplot as plt
@@ -739,94 +737,6 @@ def make_Vbias(self,cycle=True,ncycles=2,vmin=5.0,vmax=9.0,dv=0.04,lowhigh=True)
     self.max_bias_position=np.argmax(self.vbias)
     return vbias
 
-def get_iv_data(self,replay=False,TES=None,monitor=False):
-    '''
-    get IV data and make a running plot
-    optionally, replay saved data.
-
-    you can monitor the progress of a given TES by the keyword TES=<number>
-
-    setting monitor=True will monitor *all* the TES, but this slows everything down
-    enormously!  Not recommended!!
-
-    '''
-
-    monitor_iv=False
-    if not TES==None:
-        monitor_TES_index=self.TES_index(TES)
-        monitor_iv=True
-
-    if replay:
-        if self.v_tes==None:
-            print('Please read an I-V data file, or run a new measurement!')
-            return None
-        if self.vbias==None:
-            print('There appears to be I-V data, but no Vbias info.')
-            print('Please run make_Vbias() with the correct max and min values')
-            return None
-        vbias=self.vbias
-        v_tes=self.v_tes
-    else:
-        client = self.connect_QubicStudio()
-        if client==None: return None
-        self.obsdate=dt.datetime.utcnow()
-        if self.vbias==None:
-            vbias=make_Vbias()
-        nbias=len(self.vbias)
-        v_tes = np.empty((self.NPIXELS,nbias))
-
-    vbias=self.vbias
-    nbias=len(self.vbias)
-
-    figavg=self.setup_plot_Vavg()
-    if monitor_iv:figiv,axiv=self.setup_plot_iv(TES)
-    if monitor:
-        nrows=16
-        ncols=8
-        figmulti,axmulti=self.setup_plot_iv_multi()
-    
-    for j in range(nbias) :
-        print("measures at Voffset=%gV " % vbias[j])
-        if not replay:
-            self.set_VoffsetTES(vbias[j],0.0)
-            self.wait_a_bit()
-            Vavg= self.get_mean()
-            v_tes[:,j]=Vavg
-        else:
-            Vavg=v_tes[:,j]
-
-        print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
-        plt.figure(figavg.number)
-        self.plot_Vavg(Vavg,vbias[j])
-        if monitor_iv:
-            plt.figure(figiv.number)
-            I_tes=v_tes[monitor_TES_index,0:j+1]
-            Iadjusted=self.ADU2I(I_tes)
-            self.draw_iv(Iadjusted,axis=axiv)
-
-        if monitor:
-            # monitor all the I-V curves:  Warning!  Extremely slow!!!
-            TES_index=0
-            for row in range(nrows):
-                for col in range(ncols):
-                    axmulti[row,col].get_xaxis().set_visible(False)
-                    axmulti[row,col].get_yaxis().set_visible(False)
-
-                    Iadjusted=self.ADU2I(self.v_tes[TES_index,0:j+1])
-                    self.draw_iv(Iadjusted,colour='blue',axis=axmulti[row,col])
-                    text_y=min(Iadjusted)
-                    axmulti[row,col].text(max(self.vbias),text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
-            
-                    TES_index+=1
-        
-
-
-    plt.show()
-    self.assign_Vtes(v_tes)
-    if not replay:
-        self.write_fits()
-    
-    return v_tes
 
 def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=2.0):
     '''

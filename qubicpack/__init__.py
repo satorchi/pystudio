@@ -13,12 +13,17 @@ a class with tools which are generally useful for scripts using pystudio
 """
 from __future__ import division, print_function
 import numpy as np
-import pystudio
-import sys,os,time
 import datetime as dt
+import sys,os,time
 import matplotlib.pyplot as plt
-from glob import glob
 
+try:
+    import pystudio
+    with_pystudio=True
+except:
+    with_pystudio=False
+
+    
 class qubicpack:
 
     from .assign_variables import\
@@ -41,16 +46,9 @@ class qubicpack:
         lookup_TEStable
     
     from .tools import\
-        connect_QubicStudio,\
         read_date_from_filename,\
         write_fits,\
-        read_fits,\
-        get_amplitude,\
-        get_mean,\
-        integrate_scientific_data,\
-        set_VoffsetTES,\
-        set_diffDAC,\
-        set_slowDAC
+        read_fits
 
     from .iv import\
         wait_a_bit,\
@@ -71,7 +69,6 @@ class qubicpack:
         oplot_iv,\
         plot_iv,\
         make_Vbias,\
-        get_iv_data,\
         filter_iv,\
         filter_iv_all,\
         filterinfo,\
@@ -81,16 +78,30 @@ class qubicpack:
         read_Vtes_file,\
         make_iv_tex_report,\
         make_iv_report
-
-    from .ASD import\
-        plot_ASD
     
+    if with_pystudio:
+        '''
+        these methods connect to QubicStudio and require pystudio
+        '''
+        from .acquisition import\
+            connect_QubicStudio,\
+            get_amplitude,\
+            get_mean,\
+            integrate_scientific_data,\
+            set_VoffsetTES,\
+            set_diffDAC,\
+            set_slowDAC,\
+            get_iv_data
+
+        from .ASD import\
+            plot_ASD
+
     def __init__(self):
         self.assign_defaults()
         return
 
     def verdate(self):
-        print("Sat 05 Aug 2017 18:43:13 CEST")
+        print("Mon 07 Aug 2017 07:43:54 CEST")
         return
 
     def debugmsg(self,msg):
