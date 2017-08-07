@@ -16,7 +16,7 @@ integration time for data gathering
 wait time between subsequent commands to QubicStudio
 
 ### assign_observer(observer)
-assign the name of the observer which will appear in the [[make_iv_report|final report]].  The default value is "LaboMM"
+assign the name of the observer which will appear in the [final report](test-report).  The default value is "LaboMM"
  
 ### assign_ip(ip)
 IP address of the QUBIC Local Control Computer (running QubicStudio)
