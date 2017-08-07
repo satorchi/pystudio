@@ -1,8 +1,11 @@
 # Data plotting and analysis methods
 
 ### ADU2I(ADU, offset=None)
- * conversion from the Analogue Digital Units returned by QubicStudio to current in micro Ampere
- * the optional offset will raise/lower the entire curve.  Note that in general, offset is calculated by methods such as plot_iv() (see below).
+conversion from the Analogue Digital Units returned by QubicStudio to current in micro Ampere
+ * the optional offset will raise/lower the entire curve.  Note that in general, offset is calculated by methods such as plot_iv() (see below).  If you want to have the vector of points for an I-V curve, you can use the method *adjusted_iv()* described below.
+
+### adjusted_iv(TES)
+return a vector with the measured current for each bias point.  If you want the corresponding bias voltages, they can be found in the variable *vbias*.  For example, if your QubicPack object is called *go*, then the bias voltages are found in *go.vbias*
 
 ### plot_iv(TES=None,offset=None,multi=False)
  - make a plot of an I-V curve, or multiple curves
