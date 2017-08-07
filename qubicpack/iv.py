@@ -1138,9 +1138,9 @@ def turnover(self,TES=None):
         filtersummary=filterinfo
         turnover=[]
         for finfo in filtersummary:
-            turnover.append(finfo['turnover'])
+            turnover.append(finfo['fit']['turnover'])
         return turnover
-    return filterinfo['turnover']
+    return filterinfo['fit']['turnover']
 
 def offset(self,TES=None):
     '''
@@ -1154,9 +1154,9 @@ def offset(self,TES=None):
         filtersummary=filterinfo
         turnover=[]
         for finfo in filtersummary:
-            turnover.append(finfo['offset'])
+            turnover.append(finfo['fit']['offset'])
         return turnover
-    return filterinfo['offset']
+    return filterinfo['fit']['offset']
 
 def R1(self,TES=None):
     '''
@@ -1170,9 +1170,9 @@ def R1(self,TES=None):
         filtersummary=filterinfo
         turnover=[]
         for finfo in filtersummary:
-            turnover.append(finfo['R1'])
+            turnover.append(finfo['fit']['R1'])
         return turnover
-    return filterinfo['R1']
+    return filterinfo['fit']['R1']
 
 
     
