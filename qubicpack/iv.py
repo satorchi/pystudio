@@ -1126,4 +1126,53 @@ def ngood(self):
         if filtersummary[TES_index]['is_good']:ngood+=1
     return ngood
 
+def turnover(self,TES=None):
+    '''
+    return the turnover (operation) voltage for the TES
+    if TES==None, return a list for all the TES
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+        
+    if TES==None:
+        filtersummary=filterinfo
+        turnover=[]
+        for finfo in filtersummary:
+            turnover.append(finfo['turnover'])
+        return turnover
+    return filterinfo['turnover']
+
+def offset(self,TES=None):
+    '''
+    return the offset current for the TES
+    if TES==None, return a list for all the TES
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+        
+    if TES==None:
+        filtersummary=filterinfo
+        turnover=[]
+        for finfo in filtersummary:
+            turnover.append(finfo['offset'])
+        return turnover
+    return filterinfo['offset']
+
+def R1(self,TES=None):
+    '''
+    return the dynamic normal resistance for the TES
+    if TES==None, return a list for all the TES
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+        
+    if TES==None:
+        filtersummary=filterinfo
+        turnover=[]
+        for finfo in filtersummary:
+            turnover.append(finfo['R1'])
+        return turnover
+    return filterinfo['R1']
+
+
     

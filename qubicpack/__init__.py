@@ -77,6 +77,9 @@ class qubicpack:
         is_good_iv,\
         good_index,\
         ngood,\
+        turnover,\
+        offset,\
+        R1,\
         read_Vtes_file,\
         make_iv_tex_report,\
         make_iv_report
