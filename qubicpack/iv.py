@@ -20,6 +20,7 @@ import datetime as dt
 import matplotlib.pyplot as plt
 from glob import glob
 import math
+import pickle
 
 def wait_a_bit(self,pausetime=None):
     if pausetime==None:
@@ -833,6 +834,35 @@ def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
         
     self.filtersummary=filtersummary
     return filtersummary
+
+def save_filter(self):
+    '''
+    save the filter to a picke file
+    '''
+    datefmt='%Y%m%dT%H%M%SUTC'
+    datestr=self.obsdate.strftime(datefmt)
+    picklename=str('QUBIC_TES_%s.filter.pickle' % datestr)
+    h=open(picklename,'w')
+    pickle.dump(self.filtersummary,h)
+    h.close()
+    return
+
+def read_filter(self):
+    '''
+    read the filter from a pickle file
+    '''
+    datefmt='%Y%m%dT%H%M%SUTC'
+    datestr=self.obsdate.strftime(datefmt)
+    picklename=str('QUBIC_TES_%s.filter.pickle' % datestr)
+    if not os.path.exists(picklename):
+        print('ERROR!  filter file not found: %s' % picklename)
+        return None
+    
+    h=open(picklename,'r')
+    filtersummary=pickle.load(h)
+    h.close()
+    self.filtersummary=filtersummary
+    return
 
 def read_Vtes_file(self,filename):
     if not os.path.exists(filename):

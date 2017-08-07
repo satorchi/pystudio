@@ -71,6 +71,8 @@ class qubicpack:
         make_Vbias,\
         filter_iv,\
         filter_iv_all,\
+        read_filter,\
+        save_filter,\
         filterinfo,\
         is_good_iv,\
         good_index,\
