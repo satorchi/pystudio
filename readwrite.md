@@ -2,7 +2,7 @@
 
 read_fits(filename)
 
-* ''filename'' is a string with the name of the file to be read.  The qubicpack object will then have the data in memory and can be used with the [plotting/analysis routines](plot-analysis).
+* _filename_ is a string with the name of the file to be read.  The qubicpack object will then have the data in memory and can be used with the [plotting/analysis routines](plot-analysis).
 
 write_fits()
 
