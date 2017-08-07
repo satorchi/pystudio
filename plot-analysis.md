@@ -30,4 +30,13 @@ arguments:
 ### filter_iv_all(residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=2.0)
  * run a filter on the I-V data to determine which are good pixels.  The keywords are as described above for filter_iv().  The result is stored in the qubicpack object and is used in subsequent plotting.  The filter results are accessible via a number of helper methods, or directly in the python list called _filtersummary_.
 
+### is_good_iv(TES)
+The return value is the determination of whether or not the TES is considered to be a good pixel.  If no TES is specified, the return value is a list of True/False values corresponding to the evaluation of each TES.
+
+### ngood()
+The return value is the total number of good pixels.
+
+### good_index()
+The return value is a list of indexes corresponding to the TES which are considered to be good.  **WARNING!!!** These indexes are not the same as the TES number!  TES_index=TES-1 (python counts starting from zero).  In general, wherever the word *index* is used, it refers to a count which begins at zero.
+
 
