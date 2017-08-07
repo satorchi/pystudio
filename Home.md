@@ -61,5 +61,5 @@ Example scripts can be found in the [scripts folder](https://github.com/satorchi
 
 ### Here is a list of QubicPack methods:
 * [assignment methods](assignment-methods)
-* [Data gathering and visualization](acquisition-plot-methods)
+* [Data gathering and visualization](acquisition-methods)
 * [Read and write](readwrite)
