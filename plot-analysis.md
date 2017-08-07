@@ -11,3 +11,7 @@ plot_iv(TES=None,offset=None,multi=False)
 plot_iv_physical_layout(xwin=True)
  * plot the I-V curves in thumbnails mapped to the physical location of each detector
  * the optional keyword xwin can be set to False and the plot will not appear on screen but will only be saved to a png file.
+
+filter_iv_all()
+ * run a filter on the I-V data to determine which are good pixels
+
