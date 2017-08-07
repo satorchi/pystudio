@@ -31,13 +31,11 @@ following:
 
     >>> from qubicpack import qubicpack
     >>> go=qubipack()
-    >>> Vtes=go.get_IV_data()
+    >>> Vtes=go.get_iv_data()
 
 The above three lines will run the I-V curve measurements for all TES.
 Afterwards, you have all the data saved in the qubicpack object.  The
-data has also been saved to a file for future analysis offline.  More
-examples are given below, including details on each method available
-in QubicPack.
+data has also been saved to a file for future analysis offline.  
 
 QubicPack is installed on the computer in the Millimetre Lab at APC.
 The machine is called LaboMM.  As of this writing, the machine has IP
@@ -64,3 +62,4 @@ Example scripts can be found in the [scripts folder](https://github.com/satorchi
 ### Here is a list of QubicPack methods:
 * [assignment methods](assignment-methods)
 * [Data gathering and visualization](acquisition-plot-methods)
+* [Read and write](readwrite)
