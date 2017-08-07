@@ -59,7 +59,7 @@ Installation of qubicstudio without pystudio
   simply run the qubicpack setup script as follows:
 
 ```python
-python setup_quibicpack.py install
+python setup_qubicpack.py install
 ```
 
 Qubic Pack
@@ -77,7 +77,7 @@ as ipython or Jupyter.  A simple example of a qubicpack program is the
 following:
 
     >>> from qubicpack import qubicpack
-    >>> go=qubipack()
+    >>> go=qubicpack()
     >>> Vtes=go.get_iv_data()
 
 The above three lines will run the I-V curve measurements for all TES.
