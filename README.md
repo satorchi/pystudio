@@ -43,7 +43,7 @@ https://github.com/satorchi/pystudio
 - Download pystudio and use the build.sh script
 
 ```bash
-     $ git clone git@github.com:satorchi/pystudio.git
+     $ git clone https://github.com/satorchi/pystudio.git
      $ cd pystudio
      $ ./build.sh
      $ sudo python ./setup.py install
