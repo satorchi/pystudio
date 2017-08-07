@@ -21,8 +21,9 @@ package QubicPack (see below) is a collection of tools to run various
 measurements and analyze them in real-time.
 
 
-Installation notes
-------------------
+Installation notes for pystudio
+-------------------------------
+Note: qubicpack can be installed independently of pystudio.  This is useful if you don't need to connect to QubicStudio.
 
 - The files parametersDescription.dispatcher and parametersTF.dispatcher
 must be copied into the directory that contains the python interpreter
@@ -50,6 +51,17 @@ https://github.com/satorchi/pystudio
 
 and run pystudio!  See the description of QubicPack below for more details.
 
+
+Installation of qubicstudio without pystudio
+--------------------------------------------
+
+- Download pystudio as above, but instead of running the build script,
+  simply run the qubicpack setup script as follows:
+
+```python
+python setup_quibicpack.py install
+```
+
 Qubic Pack
 ----------
 
@@ -66,13 +78,22 @@ following:
 
     >>> from qubicpack import qubicpack
     >>> go=qubipack()
-    >>> Vtes=go.get_IV_data()
+    >>> Vtes=go.get_iv_data()
 
 The above three lines will run the I-V curve measurements for all TES.
 Afterwards, you have all the data saved in the qubicpack object.  The
-data has also been saved to a file for future analysis offline.  More
-examples are given below, including details on each method available
-in QubicPack.
+data has also been saved to a file for future analysis offline.
+
+QubicPack can be used to read and plot saved data.  For example, to
+plot the I-V curve of TES#70 from data saved on 4 August 2017, do the
+following:
+
+    >>> from qubicpack import qubicpack
+    >>> go=qubicpack()
+    >>> go.read_fits('QUBIC_TES_20170804T134238UTC.fits')
+    >>> go.plot_iv(70)
+
+More detailed help is available at https://github.com/satorchi/pystudio/wiki
 
 QubicPack is installed on the computer in the Millimetre Lab at APC.
 The machine is called LaboMM.  As of this writing, the machine has IP
