@@ -13,7 +13,6 @@ default values for various parameters in qubicpack
 """
 from __future__ import division, print_function
 import numpy as np
-import pystudio
 import sys,os,time
 import datetime as dt
 import matplotlib.pyplot as plt

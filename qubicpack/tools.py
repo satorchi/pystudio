@@ -1,16 +1,6 @@
 """
 $Id: tools.py
 $auth: Steve Torchinsky <satorchi@apc.in2p3.fr>
-
-     the following methods are originally by Michel Piat:
-      set_VoffsetTES()
-      set_slowDAC()
-      set_diffDAC()
-      get_amplitude()
-      get_mean()
-      integrate_scientific_data()
-
-
 $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 
           This is free software: you are free to change and
@@ -22,7 +12,6 @@ tools which are generally useful for scripts using pystudio
 """
 from __future__ import division, print_function
 import numpy as np
-import pystudio
 import sys,os,time
 import datetime as dt
 import matplotlib.pyplot as plt
