@@ -8,17 +8,16 @@ conversion from the Analogue Digital Units returned by QubicStudio to current in
 return a vector with the measured current for each bias point.  If you want the corresponding bias voltages, they can be found in the variable *vbias*.  For example, if your QubicPack object is called *go*, then the bias voltages are found in *go.vbias*
 
 ### plot_iv(TES=None,offset=None,multi=False)
- - make a plot of an I-V curve, or multiple curves
+make a plot of an I-V curve, or multiple curves
  - if TES=None, all I-V curves are plotted on top of each other
  - if multi=True, a grid of plots is made, one for each TES
  - see also plot_iv_physical_layout() below
 
 ### plot_iv_physical_layout(xwin=True)
- * plot the I-V curves in thumbnails mapped to the physical location of each detector
+plot the I-V curves in thumbnails mapped to the physical location of each detector
  * the optional keyword xwin can be set to False and the plot will not appear on screen but will only be saved to a png file.
 
 ### filter_iv(TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=2.0)
-
 This method will apply a filter to the I-V curve of a given TES, and determine if this is a good pixel.  The I-V curve is fit to a 3rd degree polynomial in order to find the turnover (operation) point of the TES.  The dynamic normal resistance (resistance at high bias voltage) which should be on the order of 1 Ohm, is determined by fitting the final points to a straight line.  
 
 arguments:
