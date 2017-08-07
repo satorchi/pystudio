@@ -39,4 +39,12 @@ The return value is the total number of good pixels.
 ### good_index()
 The return value is a list of indexes corresponding to the TES which are considered to be good.  **WARNING!!!** These indexes are not the same as the TES number!  TES_index=TES-1 (python counts starting from zero).  In general, wherever the word *index* is used, it refers to a count which begins at zero.
 
+### R1(TES)
+The return value is the Dynamic Normal Resistance of the TES.  This should be close to 1 Ohm.  If no TES is specified, the return value is a list corresponding to the calculated R1 value of each TES.
+
+### turnover(TES)
+The return value is the turnover (operating) point of the TES.    If no TES is specified, the return value is a list corresponding to the calculated turnover point of each TES.
+
+### offset(TES)
+The return value is the current offset used to make the I-V curve intersect with the R=1 Ohm line at the highest bias voltage.  If no TES is specified, the return value is a list corresponding to the calculated offset of each TES.
 
