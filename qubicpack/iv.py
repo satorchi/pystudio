@@ -105,13 +105,7 @@ def plot_iv_all(self,selection=None,xwin=True):
         TES=TES_index+1
 
         if (selection==None) or (selection[TES_index]):
-            if self.filtersummary[TES_index]==None:
-                filterinfo=self.filter_iv(TES)
-                offset=filterinfo['fit']['offset']
-            else:
-                offset=self.filtersummary[TES_index]['fit']['offset']
-
-            Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset)
+            Iadjusted=self.adjusted_iv(TES)
 
             if colour_idx >= ncolours:colour_idx=0
             self.draw_iv(Iadjusted,colour=self.colours[colour_idx])
@@ -164,13 +158,7 @@ def plot_iv_multi(self, xwin=True):
             axes[row,col].get_xaxis().set_visible(False)
             axes[row,col].get_yaxis().set_visible(False)
 
-            if self.filtersummary[TES_index]==None:
-                filterinfo=self.filter_iv(TES)
-                offset=filterinfo['fit']['offset']
-            else:
-                offset=self.filtersummary[TES_index]['fit']['offset']
-
-            Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset)            
+            Iadjusted=self.adjusted_iv(TES)
             self.draw_iv(Iadjusted,colour='blue',axis=axes[row,col])
             text_y=min(Iadjusted)
             axes[row,col].text(self.max_bias,text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
@@ -237,13 +225,7 @@ def plot_iv_physical_layout(self,xwin=True):
                 label_colour='black'
                 face_colour='white'
                 TES_index=self.TES_index(TES)
-
-                if self.filtersummary[TES_index]==None:
-                    filterinfo=self.filter_iv(TES)
-                    offset=filterinfo['fit']['offset']
-                else:
-                    offset=self.filtersummary[TES_index]['fit']['offset']
-                Iadjusted=self.ADU2I(self.v_tes[TES_index,:],offset)            
+                Iadjusted=self.adjusted_iv(TES)
                 text_y=min(Iadjusted)
                 self.draw_iv(Iadjusted,colour='blue',axis=ax[row,col])
 
