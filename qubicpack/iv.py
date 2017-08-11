@@ -369,6 +369,9 @@ def fit_iv(self,TES,jumplimit=2.0):
     we work directly with the uncalibrated data.
     The fit will be used to make the final adjustments
     '''
+    if self.v_tes==None:
+        print('ERROR! No data!')
+        return None
     
     TES_index=self.TES_index(TES)
     
@@ -601,12 +604,8 @@ def adjusted_iv(self,TES,fit=None):
     '''
     return the adjusted I-V curve
     '''
-    filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
-    
-    if fit==None:fit=filterinfo['fit']
-
-    offset=fit['offset']
+    offset=self.offset(TES)
+    if offset==None:offset=0.0
     Iadjusted=self.ADU2I(self.v_tes[self.TES_index(TES),:],offset=offset)
     return Iadjusted
 
@@ -1085,6 +1084,9 @@ def filterinfo(self,TES=None):
     '''
     return the filterinfo for a given TES
     '''
+    if self.v_tes==None:
+        print('ERROR! No data!')
+        return None
 
     # if no TES is specified, return the whole list
     if TES==None:
@@ -1113,7 +1115,8 @@ def is_good_iv(self,TES=None):
     '''
 
     filterinfo=self.filterinfo(TES)
-        
+    if filterinfo==None:return False
+
     if TES==None:
         filtersummary=filterinfo
         is_good=[]
@@ -1148,6 +1151,7 @@ def turnover(self,TES=None):
     if TES==None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
         
     if TES==None:
         filtersummary=filterinfo
@@ -1163,6 +1167,7 @@ def offset(self,TES=None):
     if TES==None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
         
     if TES==None:
         filtersummary=filterinfo
@@ -1178,7 +1183,7 @@ def R1(self,TES=None):
     if TES==None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-        
+    if filterinfo==None:return None
     if TES==None:
         filtersummary=filterinfo
         turnover=[]
