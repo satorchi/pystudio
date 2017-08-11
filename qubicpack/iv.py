@@ -894,7 +894,7 @@ def read_Vtes_file(self,filename):
     self.assign_Vtes(v_tes)
     return v_tes
 
-def make_iv_tex_report(self):
+def make_iv_tex_report(self,tableonly=False):
     '''
     make a report in LaTeX.  
     This relies on the data in self.filtersummary.  See self.filter_iv_all() above
@@ -927,8 +927,11 @@ def make_iv_tex_report(self):
     h.write('\\newcommand{\\comment}[1]{\n\\begin{minipage}[t]{20ex}\n\\setstretch{0.5}\\flushleft\\noindent\n#1\n\\vspace*{1ex}\n\\end{minipage}}\n')
     h.write('\\newlength{\\openlooplen}\n')
     h.write('\\settowidth{\\openlooplen}{ooop}\n')
+    h.write('\\newlength{\\cflen}\n')
+    h.write('\\settowidth{\\cflen}{carbon}\n')
     h.write('\\newcommand{\\openloopheading}{\n\\begin{minipage}[t]{\\openlooplen}\nopen\\\\\nloop\n\\end{minipage}\n}\n')
-
+    h.write('\\newcommand{\\cfheading}{\n\\begin{minipage}[t]{\\cflen}\ncarbon\\\\\nfibre\n\\end{minipage}\n}\n')
+    
     h.write('\\begin{document}\n')
     h.write('\\begin{center}\n')
     h.write('QUBIC TES Report\\\\\n')
@@ -953,7 +956,7 @@ def make_iv_tex_report(self):
     
     h.write('\n\\vspace*{3ex}\n\\noindent This document includes the following:\n')
     h.write('\\begin{itemize}\n')
-    h.write('\\item Table of turnover points for each TES\n')
+    h.write('\\item Summary Table including turnover points and other parameters for each TES\n')
     h.write('\\item Plot of all the I-V curves, each in its corresponding location in the focal plane\n')
     h.write('\\item Plot of all the good I-V curves on a single plot\n')
     h.write('\\item Plot of each TES I-V curve (%i plots)\n' % self.NPIXELS)
@@ -961,13 +964,14 @@ def make_iv_tex_report(self):
 
     ncols=1
     nrows=int(self.NPIXELS/ncols)
-    colfmt='|r|r|r|r|r|l|l|'
+    colfmt='|r|r|r|r|r|l|l|l|'
     headline1='\\multicolumn{1}{|c|}{TES} & '\
                '\\multicolumn{1}{|c|}{pix} & '\
                '\\multicolumn{1}{c|}{V$_{\\rm turnover}$} & '\
                '\\multicolumn{1}{c|}{R$_1$} & '\
                '\\multicolumn{1}{c|}{R$_{\\rm 300K}$} & '\
                '\\multicolumn{1}{c|}{\\openloopheading} &'\
+               '\\multicolumn{1}{c|}{\\cfheading} &'\
                '\\multicolumn{1}{c|}{comment}'
     headline=''
     headline+=headline1
@@ -976,7 +980,9 @@ def make_iv_tex_report(self):
             colfmt+='|||r|r|'
             headline+=' & '+headline1 
     h.write('\\noindent\\begin{longtable}{%s}\n' % colfmt)
-    h.write('\\caption{List of turnover (operation) points for each TES}\\\\\n')
+    h.write('\\caption{Summary Table for TES\\\\\n')
+    h.write('The carbon fibre measurements are from Sophie Henrot Versill\\a\'e, see \\url{http://qubic.in2p3.fr/wiki/pmwiki.php/TD/P73TestWithACarbonFiberSource}.\\\\\n')
+    h.write('Results of the open loop test and the room temperature measurements are from Damien Pr\\^ele}\\\\\n')
     h.write('\\hline\n')
     h.write(headline+'\\\\ \n')
     h.write('\\hline\\endhead\n')
@@ -1006,6 +1012,7 @@ def make_iv_tex_report(self):
             if self.transdic==None:
                 R300str='--'
                 openloop='--'
+                cf='--'
             else:
                 self.debugmsg('table lookup for PIX=%i' % PIX)
                 entry=self.lookup_TEStable(key='PIX',value=PIX)
@@ -1018,13 +1025,20 @@ def make_iv_tex_report(self):
                 else:
                     R300str=R300
                 openloop=entry['OpenLoop']
+                cf=entry['CarbonFibre']
 
             comment_entry=str('\\comment{%s}' % comment)
-            h.write('%3i & %3i & %s & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, openloop, comment_entry))
+            h.write('%3i & %3i & %s & %s & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, openloop, cf, comment_entry))
             if j<ncols-1: h.write(' &')
             else: h.write('\\\\\n')
     h.write('\\hline\n')
     h.write('\\end{longtable}\n\\clearpage\n')
+
+    if tableonly:
+        h.write('\n\n\\end{document}\n')
+        h.close()
+        return texfilename
+        
     
     h.write('\n\\noindent\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % thumbnailplot)
     h.write('\n\\includegraphics[width=0.8\\linewidth,clip]{%s}\n\\clearpage\n\\noindent' % allplot)

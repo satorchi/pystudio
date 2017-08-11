@@ -48,8 +48,6 @@ def assign_openloop_results(transdic,asic):
     '''
     add the Open Loop test results for ASICn
     '''
-    go=qp()
-    go.assign_asic(asic)
     asic_transdic=[entry for entry in transdic if entry['ASIC'] == asic]
     filename=str('P73_openlooptest_asic%i.txt' % asic)
     OpenLoopList=read_txtcolumns(filename)
@@ -82,6 +80,48 @@ def assign_openloop_results(transdic,asic):
             transdic.append({})
             entry=transdic[-1]
         entry['OpenLoop']=OL
+    
+    return transdic
+
+def assign_carbon_fibre_results(transdic):
+    '''
+    assign the identification of bad pixels from the carbon fibre tests by Sophie H-V
+    '''
+    filename='carbon-fibre_bad-pixel-list.txt'
+    CarbonFibreList=read_txtcolumns(filename)
+
+    asic_transdic=[]
+    asic_transdic.append([entry for entry in transdic if entry['ASIC'] == 1])
+    asic_transdic.append([entry for entry in transdic if entry['ASIC'] == 2])
+    for val in CarbonFibreList:
+        ASIC=int(eval(val[0]))
+        asic_index=ASIC-1
+        TES=int(eval(val[1]))
+
+        # find the corresponding entry in the list
+        TESlist=[entry['TES'] for entry in asic_transdic[asic_index]]
+        npts=len(TESlist)
+        gotit=False
+        idx=0
+        while (not gotit) and (idx<npts):
+            _TES=TESlist[idx]
+            if _TES==TES:
+                gotit=True
+                entry_idx=idx
+            idx+=1
+            
+        if gotit:
+            entry=asic_transdic[asic_index][entry_idx]
+        else:
+            transdic.append({})
+            entry=transdic[-1]
+        entry['CarbonFibre']='bad'
+
+    # all other pixels were found to be good by the Carbon Fibre test
+    for entry in transdic:
+        keys=entry.keys()
+        if not 'CarbonFibre' in keys:
+            entry['CarbonFibre']='good'
     
     return transdic
 
@@ -122,8 +162,11 @@ def make_translation_table():
     transdic=assign_openloop_results(transdic,1)
     transdic=assign_openloop_results(transdic,2)
 
+    # assign the results of the Carbon Fibre tests
+    transdic=assign_carbon_fibre_results(transdic)
+    
     # make sure all entries have all keys
-    allkeys=['TES','PIX','ASIC','R300','OpenLoop']
+    allkeys=['TES','PIX','ASIC','R300','OpenLoop','CarbonFibre']
     nkeys=len(allkeys)
     for entry in transdic:
         for key in allkeys:
