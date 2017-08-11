@@ -105,7 +105,7 @@ def plot_iv_all(self,selection=None,xwin=True):
         TES=TES_index+1
 
         if (selection==None) or (selection[TES_index]):
-            if self.filtersummary==None:
+            if self.filtersummary[TES_index]==None:
                 filterinfo=self.filter_iv(TES)
                 offset=filterinfo['fit']['offset']
             else:
@@ -131,10 +131,9 @@ def setup_plot_iv_multi(self,nrows=16,ncols=8,xwin=True):
         ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
 
     nbad=0
-    if not self.filtersummary==None:
-        for val in self.is_good_iv():
-            if not val:nbad+=1
-        ttl+=str('\n%i flagged as bad pixels' % nbad)
+    for val in self.is_good_iv():
+        if not val:nbad+=1
+    ttl+=str('\n%i flagged as bad pixels' % nbad)
     
     if xwin: plt.ion()
     else: plt.ioff()
@@ -165,7 +164,7 @@ def plot_iv_multi(self, xwin=True):
             axes[row,col].get_xaxis().set_visible(False)
             axes[row,col].get_yaxis().set_visible(False)
 
-            if self.filtersummary==None:
+            if self.filtersummary[TES_index]==None:
                 filterinfo=self.filter_iv(TES)
                 offset=filterinfo['fit']['offset']
             else:
@@ -176,8 +175,7 @@ def plot_iv_multi(self, xwin=True):
             text_y=min(Iadjusted)
             axes[row,col].text(self.max_bias,text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
 
-            if (not self.filtersummary==None)\
-               and (not self.is_good_iv()==None)\
+            if (not self.is_good_iv()==None)\
                and (not self.is_good_iv()[TES_index]):
                 # axes[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
                 axes[row,col].set_axis_bgcolor('red')
@@ -240,7 +238,7 @@ def plot_iv_physical_layout(self,xwin=True):
                 face_colour='white'
                 TES_index=self.TES_index(TES)
 
-                if self.filtersummary==None:
+                if self.filtersummary[TES_index]==None:
                     filterinfo=self.filter_iv(TES)
                     offset=filterinfo['fit']['offset']
                 else:
@@ -636,7 +634,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
     fig,ax=self.setup_plot_iv(TES,xwin)
 
     # normalize the Current so that R=1 Ohm at the highest Voffset
-    if self.filtersummary==None:
+    if self.filtersummary[TES_index]==None:
         fit=self.fit_iv(TES,jumplimit)
     else:
         fit=self.filtersummary[TES_index]['fit']
@@ -683,7 +681,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
         txt+='\nOpen Loop Test:  %s' % openloop
     
     # use the filter if we've already run it, otherwise do it here
-    if self.filtersummary==None:
+    if self.filtersummary[TES_index]==None:
         filterinfo=self.filter_iv(TES)
         is_good=filterinfo['is_good']
         comment=filterinfo['comment']
@@ -765,7 +763,7 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     if residual>residual_limit:
         ret['is_good']=False
         ret['comment']='bad poly fit'
-        return ret
+        return self.assign_filterinfo(TES,ret)
     
     # second filter: small amplitude is rejected
     # best curve is determined by the fit
@@ -781,7 +779,7 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     if spread<abs_amplitude_limit:
         ret['is_good']=False
         ret['comment']='current too low'
-        return ret
+        return self.assign_filterinfo(TES,ret)
         
     # third filter: peak to peak amplitude
     rel_amplitude=abs(spread/meanval)
@@ -789,31 +787,31 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     if rel_amplitude<rel_amplitude_limit:
         ret['is_good']=False
         ret['comment']='current peak-to-peak too small'
-        return ret
+        return self.assign_filterinfo(TES,ret)
     
     # fourth filter: do we find a valid turnover for the Vbias?
     ret['turnover']=fit['turnover']
     if fit['turning']==None or fit['turnover']==None:
         ret['is_good']=False
         ret['comment']='no turnover'
-        return ret
+        return self.assign_filterinfo(TES,ret)
 
     # fifth filter: is the operational point (the turnover) within the acceptable range?
     if ret['turnover']<self.min_bias+bias_margin or ret['turnover']>self.max_bias-bias_margin:
         ret['is_good']=False
         ret['comment']='operation point outside acceptable range'
-        return ret
+        return self.assign_filterinfo(TES,ret)
 
     # sixth filter:  do we have both turning points within the bias range?
     # maybe I should delete this filter
     #if fit['turnings within range']>1:
     #    ret['is_good']=False
     #    ret['comment']='bad I-V profile'
-    #    return ret
+    #    return self.assign_filterinfo(TES,ret)
     
     
     # we only get this far if it's a good I-V
-    return ret
+    return self.assign_filterinfo(TES,ret)
 
 def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=2.0):
     '''
@@ -828,8 +826,9 @@ def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
 
     # go through each filter.  Jump out and examine the next I-V curve as soon as a bad I-V is found
     for TES_index in range(self.NPIXELS):
-        self.debugmsg('running filter on TES %03i' % (TES_index+1))
-        filterinfo=self.filter_iv(TES_index+1,residual_limit,abs_amplitude_limit,rel_amplitude_limit,bias_margin,jumplimit)
+        TES=TES_index+1
+        self.debugmsg('running filter on TES %03i' % TES)
+        filterinfo=self.filter_iv(TES,residual_limit,abs_amplitude_limit,rel_amplitude_limit,bias_margin,jumplimit)
         filtersummary.append(filterinfo)
         
     self.filtersummary=filtersummary
@@ -899,7 +898,6 @@ def make_iv_tex_report(self,tableonly=False):
     make a report in LaTeX.  
     This relies on the data in self.filtersummary.  See self.filter_iv_all() above
     '''
-    if self.filtersummary==None:f=self.filter_iv_all()
     
     thumbnailplot=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     allplot=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
@@ -992,12 +990,13 @@ def make_iv_tex_report(self,tableonly=False):
             TES_index=i+j*nrows
             TES=TES_index+1
             PIX=self.tes2pix(TES)
-            if self.filtersummary[TES_index]['fit']['turnover']==None:
+            filterinfo=self.filterinfo(TES)
+            if self.turnover(TES)==None:
                 turnover='-'
             else:
-                turnover=str('%.2f V' % self.filtersummary[TES_index]['fit']['turnover'])
+                turnover=str('%.2f V' % self.turnover(TES))
 
-            R1=self.filtersummary[TES_index]['fit']['R1']
+            R1=self.R1(TES)
             if R1==None or R1>10000:
                 R1str='-'
             else:
@@ -1057,9 +1056,6 @@ def make_iv_report(self):
     do all the business to generate the I-V report document
     '''
 
-    # run filter
-    if self.filtersummary==None:f=self.filter_iv_all()
-
     # plot all the I-V in the focal-plane map
     self.figsize=(14,14)
     self.plot_iv_physical_layout(xwin=False)
@@ -1086,16 +1082,29 @@ def make_iv_report(self):
 ###################################################
 
 def filterinfo(self,TES=None):
+    '''
+    return the filterinfo for a given TES
+    '''
+
+    # if no TES is specified, return the whole list
+    if TES==None:
+        # if filter has not been run, run it with defaults
+        for TES_index in range(self.NPIXELS):
+            f=self.filtersummary[TES_index]
+            if f==None: f=self.filter_iv(TES_index+1)
+            return self.filtersummary
+
     # if filter has not been run, run it with defaults
-    if self.filtersummary==None:
-        filtersummary=self.filter_iv_all()
-
-    if self.filtersummary==None:return None
-
-    if TES==None:return self.filtersummary
-
+    f=self.filtersummary[self.TES_index(TES)]
+    if f==None: f=self.filter_iv(TES)
     return self.filtersummary[self.TES_index(TES)]
-        
+
+def assign_filterinfo(self,TES,filterinfo):
+    '''
+    assign the dictionary of filter info to the filtersummary list
+    '''
+    self.filtersummary[self.TES_index(TES)]=filterinfo
+    return filterinfo
     
 def is_good_iv(self,TES=None):
     '''
@@ -1104,7 +1113,6 @@ def is_good_iv(self,TES=None):
     '''
 
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
         
     if TES==None:
         filtersummary=filterinfo
@@ -1118,26 +1126,20 @@ def good_index(self):
     '''
     return a list of indexes corresponding to the good TES
     '''
-    filtersummary=self.filterinfo()
-    if filtersummary==None:return None
-    
     good_index=[]
     for TES_index in range(self.NPIXELS):
-        if filtersummary[TES_index]['is_good']:good_index.append(TES_index)
+        TES=TES_index+1
+        if self.is_good_iv(TES):good_index.append(TES_index)
     return good_index
-
-
     
 def ngood(self):
     '''
     return the number of good TES
-    '''
-    filtersummary=self.filterinfo()
-    if filtersummary==None:return None
-    
+    '''    
     ngood=0
     for TES_index in range(self.NPIXELS):
-        if filtersummary[TES_index]['is_good']:ngood+=1
+        TES=TES_index+1
+        if self.is_good_iv(TES):ngood+=1
     return ngood
 
 def turnover(self,TES=None):
@@ -1146,7 +1148,6 @@ def turnover(self,TES=None):
     if TES==None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
         
     if TES==None:
         filtersummary=filterinfo
@@ -1162,7 +1163,6 @@ def offset(self,TES=None):
     if TES==None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
         
     if TES==None:
         filtersummary=filterinfo
@@ -1178,7 +1178,6 @@ def R1(self,TES=None):
     if TES==None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
         
     if TES==None:
         filtersummary=filterinfo

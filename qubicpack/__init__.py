@@ -74,6 +74,7 @@ class qubicpack:
         read_filter,\
         save_filter,\
         filterinfo,\
+        assign_filterinfo,\
         is_good_iv,\
         good_index,\
         ngood,\
