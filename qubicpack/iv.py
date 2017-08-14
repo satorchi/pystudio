@@ -874,6 +874,49 @@ def read_Vtes_file(self,filename):
     self.assign_Vtes(v_tes)
     return v_tes
 
+def iv_tex_table_entry(self,TES):
+    TES_index=self.TES_index(TES)
+    PIX=self.tes2pix(TES)
+    if self.turnover(TES)==None:
+        turnover='-'
+    else:
+        turnover=str('%.2f V' % self.turnover(TES))
+
+    R1=self.R1(TES)
+    if R1==None or R1>10000:
+        R1str='-'
+    else:
+        if abs(R1)<100:
+            R1str=str('%.2f $\Omega$' % R1)
+        else:
+            R1str=str('%.2e $\Omega$' % R1)
+
+    comment=self.filtersummary[TES_index]['comment']
+    if comment=='no comment': comment='good'
+
+    if self.transdic==None:
+        R300str='--'
+        openloop='--'
+        cf='--'
+    else:
+        self.debugmsg('table lookup for PIX=%i' % PIX)
+        entry=self.lookup_TEStable(key='PIX',value=PIX)
+        R300=entry['R300']
+        if isinstance(R300,float):
+            if abs(R300)<10000:
+                R300str='%.1f $\Omega$' % R300
+            else:
+                R300str='%.2e $\Omega$' % R300
+        else:
+            R300str=R300
+
+        openloop=entry['OpenLoop']
+        cf=entry['CarbonFibre']
+
+    comment_entry=str('\\comment{%s}' % comment)
+    rowstr='%3i & %3i & %s & %s & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, openloop, cf, comment_entry)
+    return rowstr
+
 def make_iv_tex_report(self,tableonly=False):
     '''
     make a report in LaTeX.  
@@ -970,49 +1013,62 @@ def make_iv_tex_report(self,tableonly=False):
         for j in range(ncols):
             TES_index=i+j*nrows
             TES=TES_index+1
-            PIX=self.tes2pix(TES)
-            filterinfo=self.filterinfo(TES)
-            if self.turnover(TES)==None:
-                turnover='-'
-            else:
-                turnover=str('%.2f V' % self.turnover(TES))
-
-            R1=self.R1(TES)
-            if R1==None or R1>10000:
-                R1str='-'
-            else:
-                if abs(R1)<100:
-                    R1str=str('%.2f $\Omega$' % R1)
-                else:
-                    R1str=str('%.2e $\Omega$' % R1)
-
-            comment=self.filtersummary[TES_index]['comment']
-            if comment=='no comment': comment='good'
-
-            if self.transdic==None:
-                R300str='--'
-                openloop='--'
-                cf='--'
-            else:
-                self.debugmsg('table lookup for PIX=%i' % PIX)
-                entry=self.lookup_TEStable(key='PIX',value=PIX)
-                R300=entry['R300']
-                if isinstance(R300,float):
-                    if abs(R300)<10000:
-                        R300str='%.1f $\Omega$' % R300
-                    else:
-                        R300str='%.2e $\Omega$' % R300
-                else:
-                    R300str=R300
-                openloop=entry['OpenLoop']
-                cf=entry['CarbonFibre']
-
-            comment_entry=str('\\comment{%s}' % comment)
-            h.write('%3i & %3i & %s & %s & %s & %s & %s & %s' % (TES, PIX, turnover, R1str, R300str, openloop, cf, comment_entry))
+            rowstr=self.iv_tex_table_entry(TES)
+            h.write(rowstr)
             if j<ncols-1: h.write(' &')
             else: h.write('\\\\\n')
     h.write('\\hline\n')
     h.write('\\end{longtable}\n\\clearpage\n')
+
+
+    # make a table of disagreement
+    if not self.transdic==None:
+        h.write('\\noindent\\begin{longtable}{%s}\n' % colfmt)
+        h.write('\\caption{Table of Disagreement\\\\\n')
+        h.write('The carbon fibre measurements are from Sophie Henrot Versill\\a\'e, see \\url{http://qubic.in2p3.fr/wiki/pmwiki.php/TD/P73TestWithACarbonFiberSource}.\\\\\n')
+        h.write('Results of the open loop test and the room temperature measurements are from Damien Pr\\^ele}\\\\\n')
+        h.write('\\hline\n')
+        h.write(headline+'\\\\ \n')
+        h.write('\\hline\\endhead\n')
+        h.write('\\hline\\endfoot\n')
+        for TES_index in range(self.NPIXELS):
+            TES=TES_index+1
+            PIX=self.tes2pix(TES)
+            entry=self.lookup_TEStable(key='PIX',value=PIX)
+
+            if entry['CarbonFibre']=='good':
+                is_good_CF=True
+            else:
+                is_good_CF=False
+
+            if entry['OpenLoop']=='good':
+                is_good_OL=True
+            else:
+                is_good_OL=False
+
+            R300=entry['R300']
+            is_good_R300=False
+            if isinstance(entry['R300'],float):
+                if abs(R300)<10000: is_good_R300=True
+                
+            '''
+            if ((self.is_good_iv(TES) and (not is_good_CF
+                                           or not is_good_OL
+                                           or not is_good_R300))
+                or (not self.is_good_iv(TES) and (is_good_CF
+                                                  or is_good_OL
+                                                  or is_good_R300))):
+            '''
+            if ((self.is_good_iv(TES) and not is_good_CF)\
+                or (not self.is_good_iv(TES) and is_good_CF)):
+                
+                rowstr=self.iv_tex_table_entry(TES)
+                h.write(rowstr)
+                h.write('\\\\\n')
+                
+        h.write('\\hline\n')
+        h.write('\\end{longtable}\n\\clearpage\n')
+    
 
     if tableonly:
         h.write('\n\n\\end{document}\n')
