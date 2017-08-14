@@ -48,7 +48,8 @@ class qubicpack:
     from .tools import\
         read_date_from_filename,\
         write_fits,\
-        read_fits
+        read_fits,\
+        read_bins
 
     from .iv import\
         wait_a_bit,\

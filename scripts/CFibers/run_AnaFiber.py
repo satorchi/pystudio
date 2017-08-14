@@ -1,3 +1,12 @@
+"""
+$Id: run_AnaFiber.py
+$auth: Sophie Henrot-Versille <versille@lal.in2p3.fr>
+$created: Mon 14 Aug 2017 1
+make use of the AnaFiber set of classes to sum-up the
+signal measured for the Carbon fiber pulses and store
+them to binary files
+"""
+
 import numpy as numpy
 import pandas as pandas
 from qubicpack import qubicpack as qp

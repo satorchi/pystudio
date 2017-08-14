@@ -1,3 +1,10 @@
+"""                                                                                                                                                                                                                                        $Id: AnaFiber.py                                                                                                                                                                                                                           $auth: Sophie Henrot-Versille <versille@lal.in2p3.fr>                                                                                                                                                                                      $created: Mon 14 Aug 2017 1                                                                                                                                                                                                                
+dictionnary with data (Carbon fibers-like) binary files to be processed
+with run_AnaFiber.py and with the corresponding setup of the data taking
+period (fll, Voffset for the detectors and AmpFibre for the amplitude
+of the signal of the Fiber)
+"""
+
 dataFibre=[
     
 #    {"file":"/sps/hep/qubic/Users/Calib/Data_13_07_2017/Pulses 13072017 3/Sums/2017-07-13 143053/sum-asic1-2017.07.13.143053.bin",

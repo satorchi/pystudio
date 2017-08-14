@@ -1,3 +1,12 @@
+"""
+$Id: plot_Fibers_FP.py
+$auth: Sophie Henrot-Versille <versille@lal.in2p3.fr>
+$created: Mon 14 Aug 2017 1
+will search for bad pixels according to the data of the TES
+recorded with the Carbon fibers and show them on the focal
+plane (adapted from Steve Torchinsky's example in scripts/)
+"""
+
 import numpy as numpy
 import matplotlib.pyplot as plt
 import dataFiles_Fibres as dataFiles
