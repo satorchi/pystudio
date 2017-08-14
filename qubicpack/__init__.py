@@ -82,6 +82,7 @@ class qubicpack:
         offset,\
         R1,\
         read_Vtes_file,\
+        iv_tex_table_entry,\
         make_iv_tex_report,\
         make_iv_report
     

@@ -223,8 +223,8 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
             Vavg=v_tes[:,j]
 
         print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
-        plt.figure(figavg.number)
-        self.plot_Vavg(Vavg,vbias[j])
+        # plt.figure(figavg.number)
+        # self.plot_Vavg(Vavg,vbias[j])
         if monitor_iv:
             plt.figure(figiv.number)
             I_tes=v_tes[monitor_TES_index,0:j+1]
@@ -248,7 +248,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         
 
 
-    plt.show()
+    # plt.show()
     self.assign_Vtes(v_tes)
     if not replay:
         self.write_fits()
