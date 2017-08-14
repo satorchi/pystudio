@@ -194,3 +194,38 @@ def read_fits(self,filename):
     h.close()
     return
 
+
+def read_bins(self,filename):
+    import struct
+            
+    if not isinstance(filename,str):
+        print('ERROR! please enter a valid filename.')
+        return None
+            
+    if not os.path.exists(filename):
+        print('ERROR! file not found: %s' % filename)
+        return None
+            
+    print('reading binary file: %s, I suppose this is a timeline' % filename)
+        
+    data=[]
+    timelines=[]
+    with open(filename, "rb") as f:
+        b = f.read(14)
+        data.append(struct.unpack('128i', f.read(4*128)))
+        while f.read(14) != "": data.append(struct.unpack('128i', f.read(4*128)))
+        
+    data=np.asarray(zip(*data))
+    self.NPIXELS=128
+    npts=data.size/128.
+            
+    timeline=np.empty((npts))
+    for n in range(self.NPIXELS):
+        timeline=data[n]
+        timelines.append(timeline)
+        
+    self.timelines=np.array(timelines)
+    f.close()
+    return
+        
+         
