@@ -1,3 +1,11 @@
+"""
+$Id: AnaFiber.py
+$auth: Sophie Henrot-Versille <versille@lal.in2p3.fr>
+$created: Mon 14 Aug 2017 1
+set of class to Analyse timeline measurements when Carbon fibers are
+pulsed in fron of the TES arrays of QUBIC
+"""
+
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 import pandas as pandas

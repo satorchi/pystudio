@@ -1,3 +1,15 @@
+"""
+$Id: ana_Fiber_TimeConstant.py
+$auth: Sophie Henrot-Versille <versille@lal.in2p3.fr>
+$created: Mon 14 Aug 2017 1
+re-reading of binary files produced by run_AnaFibre.py which
+stores for each file of dataFiles_Fibres and for each TES
+the mean template of the signal measured on a pulse of the
+Carbon fibers
+Will then, for the chosen TES, extract the time constant
+(TES+Fibers)
+"""
+
 import numpy as numpy
 import matplotlib.pyplot as plt
 import dataFiles_Fibres as dataFiles
