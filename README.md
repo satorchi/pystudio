@@ -52,7 +52,7 @@ https://github.com/satorchi/pystudio
 and run pystudio!  See the description of QubicPack below for more details.
 
 
-Installation of qubicstudio without pystudio
+Installation of qubicpack without pystudio
 --------------------------------------------
 
 - Download pystudio as above, but instead of running the build script,
