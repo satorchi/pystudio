@@ -217,7 +217,7 @@ def plot_iv_physical_layout(self,xwin=True):
             text_y=0.0
             if physpix==0:
                 pix_label='EMPTY'
-                label_colour='white'
+                label_colour='black'
                 face_colour='black'
             elif physpix in TES_translation_table:
                 TES=self.pix2tes(physpix)
