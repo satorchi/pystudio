@@ -68,6 +68,7 @@ Qubic Pack
 authors:
 - Steve Torchinsky <satorchi@apc.in2p3.fr>
 - Michel Piat
+- Sophie Henrot-Versillé
 - and other members of the QUBIC team
 
 
