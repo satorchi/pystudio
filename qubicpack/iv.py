@@ -645,6 +645,8 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
             ypts=[min(Iadjusted),max(Iadjusted)]
             plt.plot(xpts,ypts,linestyle='dashed',color='green')
             txt+=str('\nturnover Vbias=%.2fV' % v0)
+            I0=min(Iadjusted)
+            txt+=str('\nI$_0$=%.2f $\mu$A' % I0)
         
 
     # add room temp results, if loaded
