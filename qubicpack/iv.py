@@ -341,7 +341,7 @@ def filter_jumps(self,I,jumplimit=2.0):
     self.debugmsg('best span of points in the curve is %i:%i' % (maxspan_idx1,maxspan_idx2))
     return maxspan_idx1,maxspan_idx2
 
-def fit_iv(self,TES,jumplimit=2.0):
+def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
     '''
     fit the I-V curve to a polynomial
 
@@ -350,6 +350,10 @@ def fit_iv(self,TES,jumplimit=2.0):
 
     we work directly with the uncalibrated data.
     The fit will be used to make the final adjustments
+
+    optional arguments: 
+       jumplimit:    this is the smallest step considered to be a jump in the data
+       curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
     '''
     if self.v_tes==None:
         print('ERROR! No data!')
@@ -410,8 +414,17 @@ def fit_iv(self,TES,jumplimit=2.0):
         istart+=npts_curve
 
     # from now on we use the best curve fit
+    # unless there is request to override with the curve_index option
     fit['best curve index']=best_curve_index
-    fitinfo=allfits[best_curve_index]
+    if not curve_index==None:
+        if not isinstance(curve_index,int) or curve_index>=ncurves or curve_index<0:
+            print('Invalid option for curve index:  Please give an integer between 0 and %i' % (ncurves-1))
+            print('Using default:  best curve index=%i' % best_curve_index)
+            curve_index=best_curve_index
+    else:
+        curve_index=best_curve_index
+    fit['curve index']=curve_index
+    fitinfo=allfits[curve_index]
     fit['fitinfo']=fitinfo
     
     # the coefficients of the polynomial fit
@@ -468,7 +481,7 @@ def fit_iv(self,TES,jumplimit=2.0):
        and (inflection_V>fit['turnover']) \
        and (inflection_V<self.max_bias):
         # find the corresponding points to fit
-        istart=fit['best curve index']*fit['npts_curve']
+        istart=fit['curve index']*fit['npts_curve']
         iend=istart+fit['npts_curve']
         xpts=self.vbias[istart:iend]
         gotit=False
@@ -711,7 +724,13 @@ def make_Vbias(self,cycle=True,ncycles=2,vmin=5.0,vmax=9.0,dv=0.04,lowhigh=True)
     return vbias
 
 
-def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=2.0):
+def filter_iv(self,TES,
+              residual_limit=3.0,
+              abs_amplitude_limit=0.01,
+              rel_amplitude_limit=0.1,
+              bias_margin=0.2,
+              jumplimit=2.0,
+              curve_index=None):
     '''
     determine if this is a good TES from the I-V curve
     '''
@@ -723,7 +742,7 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     ret['comment']='no comment'
 
     # fit to a polynomial. The fit will be for the best measured curve if it's cycled bias
-    fit=self.fit_iv(TES,jumplimit)
+    fit=self.fit_iv(TES,jumplimit,curve_index)
     ret['fit']=fit
     residual=fit['fitinfo'][1][0]
     ret['residual']=residual
@@ -740,10 +759,11 @@ def filter_iv(self,TES,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
         return self.assign_filterinfo(TES,ret)
     
     # second filter: small amplitude is rejected
-    # best curve is determined by the fit
+    # we use the best curve as determined by the fit unless curve_index was specified
+    curve_index=fit['curve index']
     npts=fit['npts_curve']
-    istart=npts*fit['best curve index']
-    iend=npts*(fit['best curve index']+1)
+    istart=npts*curve_index
+    iend=npts*(curve_index+1)
     meanval=Iadjusted[istart:iend].mean()
     maxval=max(Iadjusted[istart:iend])
     minval=min(Iadjusted[istart:iend])

@@ -107,9 +107,12 @@ def plot_TES_temperature_curves(qplist,TES,plot='I',xwin=True):
         filterinfo=go.filterinfo(TES)
         npts_curve=filterinfo['fit']['npts_curve']
         ncurves=filterinfo['fit']['ncurves']
-        best_curve_index=filterinfo['fit']['best curve index']
+        if 'curve index' in filterinfo['fit'].keys():
+            curve_index=filterinfo['fit']['curve index']
+        else:
+            curve_index=filterinfo['fit']['best curve index']
         Iadjusted=go.adjusted_iv(TES)
-        istart=best_curve_index*npts_curve
+        istart=curve_index*npts_curve
         iend=istart+npts_curve
         I=Iadjusted[istart:iend]
         bias=go.vbias[istart:iend]
@@ -172,9 +175,12 @@ def plot_TES_NEP(qplist,TES,xwin=True):
         filterinfo=go.filterinfo(TES)
         npts_curve=filterinfo['fit']['npts_curve']
         ncurves=filterinfo['fit']['ncurves']
-        best_curve_index=filterinfo['fit']['best curve index']
+        if 'curve index' in filterinfo['fit'].keys():
+            curve_index=filterinfo['fit']['curve index']
+        else:
+            curve_index=filterinfo['fit']['best curve index']
         Iadjusted=go.adjusted_iv(TES)
-        istart=best_curve_index*npts_curve
+        istart=curve_index*npts_curve
         iend=istart+npts_curve
         I=Iadjusted[istart:iend]
         I0=I.min()
