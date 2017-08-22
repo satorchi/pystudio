@@ -207,11 +207,13 @@ def plot_TES_NEP(qplist,TES,xwin=True):
         ret['n']=n
 
         G=n*K*(T0**(n-1))
+        ret['G']=G
         Tratio=0.3/T0
         gamma=(n/(2*n+1)) * (1-Tratio**(2*n+1))/(1-Tratio**n)
+        ret['gamma']=gamma
         discr=gamma*kBoltzmann*G
         if discr<0.0:
-            print('ERROR! Imaginary NEP!')
+            print('ERROR! Imaginary NEP!  TES=%i' % TES)
             NEP=-2*T0*sqrt(-discr)
         else:
             NEP=2*T0*sqrt(discr)
@@ -238,6 +240,8 @@ def plot_TES_NEP(qplist,TES,xwin=True):
         ret['T0']=None
         ret['n']=None
         ret['NEP']=None
+        ret['G']=None
+        ret['gamma']=None
         if len(P)==1:
             plot_P_min=P[0]-0.2*P[0]
             plot_P_max=P[0]+0.2*P[0]
