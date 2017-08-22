@@ -837,9 +837,10 @@ def read_filter(self):
     datestr=self.obsdate.strftime(datefmt)
     picklename=str('QUBIC_TES_%s.filter.pickle' % datestr)
     if not os.path.exists(picklename):
-        print('ERROR!  filter file not found: %s' % picklename)
+        print('No previously saved filter information: %s' % picklename)
         return None
-    
+
+    print('Reading previously saved filter information: %s' % picklename)
     h=open(picklename,'r')
     filtersummary=pickle.load(h)
     h.close()
