@@ -76,7 +76,7 @@ def plot_TES_temperature_curves(qplist,TES,plot='I',xwin=True):
     if not verify_temperature_arguments(qplist,TES):return None
     asic=qplist[0].asic
 
-    if plot=='P':
+    if plot.upper()[0]=='P':
         powerplot=True
         pngname='QUBIC_TES%03i_ASIC%i_P-V_Temperatures.png' % (TES,asic)
     else:
@@ -212,7 +212,7 @@ def plot_TES_NEP(qplist,TES,xwin=True):
         discr=gamma*kBoltzmann*G
         if discr<0.0:
             print('ERROR! Imaginary NEP!')
-            NEP=2*T0*sqrt(-discr)
+            NEP=-2*T0*sqrt(-discr)
         else:
             NEP=2*T0*sqrt(discr)
         ret['NEP']=NEP
