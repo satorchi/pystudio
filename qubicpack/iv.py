@@ -598,7 +598,7 @@ def oplot_iv(self,TES,fit=None,label=None):
     
     return
 
-def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
+def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     filterinfo=self.filterinfo(TES)
     if filterinfo==None:return None
     
@@ -607,6 +607,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
     if not isinstance(TES,int): return self.plot_iv_physical_layout()
 
     TES_index=self.TES_index(TES)
+    fit=filterinfo['fit']
     
     if self.vbias==None:
         print('ERROR: No Vbias.')
@@ -615,11 +616,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
     fig,ax=self.setup_plot_iv(TES,xwin)
 
     # normalize the Current so that R=1 Ohm at the highest Voffset
-    if self.filtersummary[TES_index]==None:
-        fit=self.fit_iv(TES,jumplimit)
-    else:
-        fit=self.filtersummary[TES_index]['fit']
-    offset=fit['offset']
+    offset=self.offset(TES)
     txt=str('offset=%.4e' % offset)
     Iadjusted=self.adjusted_iv(TES,fit)
     self.oplot_iv(TES,fit)
@@ -627,7 +624,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
     # draw a line tangent to the fit at the highest Vbias
     R1,I0=self.draw_tangent(fit)
 
-    R1=fit['R1']
+    R1=self.R1(TES)
     if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
 
     # draw a polynomial fit to the I-V curve
@@ -663,16 +660,10 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,jumplimit=2.0,xwin=True):
         openloop=entry['OpenLoop']
         txt+='\nOpen Loop Test:  %s' % openloop
     
-    # use the filter if we've already run it, otherwise do it here
-    if self.filtersummary[TES_index]==None:
-        filterinfo=self.filter_iv(TES)
-        is_good=filterinfo['is_good']
-        comment=filterinfo['comment']
-    else:
-        is_good=self.is_good_iv(TES)
-        comment=self.filtersummary[TES_index]['comment']
-    if not is_good:
-        txt+=str('\nFlagged as BAD:  %s' % comment)
+    is_good=self.is_good_iv(TES)
+    comment=filterinfo['comment']
+    if not is_good:txt+=str('\nFlagged as BAD:  %s' % comment)
+
     # write out the comments
     text_x=self.min_bias + 0.95*(self.max_bias-self.min_bias)
     text_y=min(Iadjusted) + 0.98*(max(Iadjusted)-min(Iadjusted))
