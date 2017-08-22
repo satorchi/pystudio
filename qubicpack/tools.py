@@ -192,6 +192,8 @@ def read_fits(self,filename):
         print('assigning timeline data')
         self.timelines=np.array(timelines)
     h.close()
+
+    self.read_filter()
     return
 
 
