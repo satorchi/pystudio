@@ -153,7 +153,7 @@ def fit_Pbath(T_pts, P_pts):
     ret=curve_fit(P_bath_function,T_pts,P_pts)
     return ret
 
-def plot_TES_NEP(qplist,TES,xwin=True):
+def calculate_TES_NEP(qplist,TES,quiet=False):
     '''
     make the list of temperatures and associated P0
     and calculate the NEP
@@ -191,17 +191,12 @@ def plot_TES_NEP(qplist,TES,xwin=True):
     try:
         temperature_fit=curve_fit(P_bath_function,T,P)
     except:
-        if xwin:print('insufficient data')
+        if not quiet:print('insufficient data for TES %i' % TES)
         temperature_fit=None
         
-
-    Tmin=min(all_T)
-    Tmax=max(all_T)
-    T_span=Tmax-Tmin
-    # add 10% to the plot edges
-    plot_T_min=Tmin - 0.1*T_span
-    plot_T_max=Tmax + 0.1*T_span
-    T_stepsize=1.1*T_span/100
+    ret['P']=P
+    ret['T']=T
+    ret['all temperatures']=all_T
 
     if not temperature_fit==None:
         
@@ -223,8 +218,73 @@ def plot_TES_NEP(qplist,TES,xwin=True):
             NEP=-2*T0*sqrt(-discr)
         else:
             NEP=2*T0*sqrt(discr)
-        ret['NEP']=NEP
+        ret['NEP']=NEP    
+
+    else:
+        ret['K']=None
+        ret['T0']=None
+        ret['n']=None
+        ret['NEP']=None
+        ret['G']=None
+        ret['gamma']=None
+
+    return ret
+
+def make_TES_NEP_resultslist(qplist):
+    '''
+    make a list of NEP calculation results, one for each TES
+    '''
+    if not verify_temperature_arguments(qplist,1):return None
+    NPIXELS=qplist[0].NPIXELS
+    results=[]
+    for TES in 1+np.arange(128):
+        res=calculate_TES_NEP(qplist,TES,quiet=True)
+        results.append(res)
+            
+    return results
+
+def plot_TES_NEP(qplist,TES,xwin=True):
+    '''
+    plot the P vs. Temperature for a TES
+    '''
+
+    result=calculate_TES_NEP(qplist,TES)
+    if result==None:return None
+
+    TES=result['TES']
+    asic=result['ASIC']
+
+    all_T=result['all temperatures']
+    P=result['P']
+    T=result['T']
+
+    NEP=result['NEP']
+    K=result['K']
+    T0=result['T0']
+    n=result['n']
+    G=result['G']
     
+    Tmin=min(all_T)
+    Tmax=max(all_T)
+    T_span=Tmax-Tmin
+    # add 10% to the plot edges
+    plot_T_min=Tmin - 0.1*T_span
+    plot_T_max=Tmax + 0.1*T_span
+    T_stepsize=1.1*T_span/100
+
+    if NEP==None:
+        txt='NEP estimate is not possible'
+        if len(P)==1:
+            plot_P_min=P[0]-0.2*P[0]
+            plot_P_max=P[0]+0.2*P[0]
+        elif len(P)==0:
+            plot_P_min=0.0
+            plot_P_max=5e-11
+        else:
+            P_span=max(P)-min(P)
+            plot_P_min=min(P)-0.1*P_span
+            plot_P_max=max(P)+0.1*P_span
+    else:
         fit_T=np.arange(plot_T_min,plot_T_max,T_stepsize)
         fit_P=P_bath_function(fit_T,K,T0,n)
 
@@ -239,26 +299,9 @@ def plot_TES_NEP(qplist,TES,xwin=True):
         txt+='\nn=%.3f' % n
         txt+='\nG=%.4e' % G
         txt+='\nNEP=%.4e at T$_{bath}$=300mK' % NEP
+            
+    
 
-    else:
-        txt='NEP estimate is not possible'
-        ret['K']=None
-        ret['T0']=None
-        ret['n']=None
-        ret['NEP']=None
-        ret['G']=None
-        ret['gamma']=None
-        if len(P)==1:
-            plot_P_min=P[0]-0.2*P[0]
-            plot_P_max=P[0]+0.2*P[0]
-        elif len(P)==0:
-            plot_P_min=0.0
-            plot_P_max=5e-11
-        else:
-            P_span=max(P)-min(P)
-            plot_P_min=min(P)-0.1*P_span
-            plot_P_max=max(P)+0.1*P_span
-        
     pngname='QUBIC_TES%03i_ASIC%i_NEP.png' % (TES,asic)
     figsize=qplist[0].figsize
     ttl='QUBIC ASIC %i, TES #%i NEP' % (asic,TES)
@@ -278,12 +321,12 @@ def plot_TES_NEP(qplist,TES,xwin=True):
     P_span=plot_P_max-plot_P_min
     text_y=plot_P_min+0.5*P_span
     plt.plot(T,P,linestyle='none',marker='D')
-    if not temperature_fit==None: plt.plot(fit_T,fit_P,color='red')
+    if not NEP==None: plt.plot(fit_T,fit_P,color='red')
     plt.text(Tmin,text_y,txt,fontsize=14)
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin:plt.show()
     else:plt.close('all')
-    return ret
+    return result
 
 def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     '''
@@ -303,11 +346,7 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     datadate=go.obsdate
 
     # generate the results if not already done
-    if NEPresults==None:
-        NEPresults=[]
-        for TES in np.arange(1,129):
-            res=plot_TES_NEP(qplist,TES,xwin=False)
-            NEPresults.append(res)
+    if NEPresults==None:NEPresults=make_TES_NEP_resultslist(qplist)
 
     NEP_estimate=[]
     TESlist=[]
@@ -319,7 +358,7 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     nNEP=len(NEP_estimate)
     NEP_estimate=np.array(NEP_estimate)
     NEPmean=NEP_estimate.mean()
-    txt='NEP$_{mean}$=%.4f$10^{-17}W/\sqrt{Hz}$' % (1e17*NEPmean)
+    txt='NEP$_\mathrm{mean}=%.4f \\times 10^{-17}W/\sqrt{\mathrm{Hz}}$' % (1e17*NEPmean)
     
     pngname='QUBIC_TES_ASIC%i_NEP_histogram.png' % asic
     figsize=qplist[0].figsize
@@ -351,9 +390,9 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     n_max=max(hist)
     ax.set_ylim(0,n_max+1)
 
-    text_x=binedge[6]
-    text_y=n_max-0.5
-    plt.text(text_x,text_y,txt)
+    text_x=binedge[0]
+    text_y=n_max-1.5
+    plt.text(text_x,text_y,txt,fontsize=16)
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin:plt.show()
     else:plt.close('all')
