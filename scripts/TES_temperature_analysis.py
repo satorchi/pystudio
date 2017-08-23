@@ -417,13 +417,8 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     asic=go300.asic
     observer=go300.observer.replace('<','$<$').replace('>','$>$')
 
-    # generate the results if not already done
-    if NEPresults==None:
-        NEPresults=[]
-        for TES in np.arange(1,129):
-            res=plot_TES_NEP(qplist,TES,xwin=False)
-            NEPresults.append(res)
-        plot_NEP_histogram(qplist,NEPresults,xwin=False)                           
+    # generate the plots if not already done
+    if NEPresults==None:NEPresults=make_TES_NEP_resultslist(qplist)
 
     NEP_estimate=[]
     TESlist=[]
@@ -486,6 +481,9 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     h.write('\\end{itemize}\n\\clearpage\n')
 
     png='QUBIC_TES_ASIC%i_NEP_histogram.png' % asic
+    if not os.path.exists(png):
+        plot_NEP_histogram(qplist,NEPresults,xwin=False)                           
+
     if os.path.exists(png):
        h.write('\n\\noindent\\includegraphics[width=0.9\\linewidth,clip]{%s}' % png)
        h.write('\n\\clearpage\n')
@@ -524,8 +522,18 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     for TES in np.arange(1,129):
         h.write('\n\\clearpage')
         pngIV ='QUBIC_TES%03i_ASIC%i_I-V_Temperatures.png' % (TES,asic)
+        if not os.path.exists(pngIV):
+            res=plot_TES_temperature_curves(qplist,TES,plot='I',xwin=False)
+
         pngPV ='QUBIC_TES%03i_ASIC%i_P-V_Temperatures.png' % (TES,asic)
+        if not os.path.exists(pngPV):
+            res=plot_TES_temperature_curves(qplist,TES,plot='P',xwin=False)
+
         pngNEP='QUBIC_TES%03i_ASIC%i_NEP.png' % (TES,asic)
+        if not os.path.exists(pngNEP):
+            res=plot_TES_NEP(qplist,TES,xwin=False)
+
+        
         pngFiles=[pngIV,pngPV,pngNEP]
         for png in pngFiles:
             if os.path.exists(png):
