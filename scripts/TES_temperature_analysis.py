@@ -210,6 +210,7 @@ def calculate_TES_NEP(qplist,TES,quiet=False):
         G=n*K*(T0**(n-1))
         ret['G']=G
         Tratio=0.3/T0
+        # gamma is defined in Perbost PhD eq. 2.72 (page 82)
         gamma=(n/(2*n+1)) * (1-Tratio**(2*n+1))/(1-Tratio**n)
         ret['gamma']=gamma
         discr=gamma*kBoltzmann*G
