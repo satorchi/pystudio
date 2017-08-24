@@ -440,7 +440,9 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
         fit['turning']=[None,None]
         fit['concavity']=[None,None]
         fit['turnover']=None
+        fit['Iturnover']=None
         fit['inflection']=None
+        # the following two can be set to something more appropriate
         fit['offset']=0.0
         fit['R1']=None
         return fit
@@ -455,19 +457,23 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
 
     # check if we have a valid turnover point within the range
     found_turnover=False
-    n_turnings_within_range=0
     idx=0
     for V0 in fit['turning']:
         concavity=fit['concavity'][idx]
-        if (not V0==None) and V0>self.min_bias and V0<self.max_bias:
-            n_turnings_within_range+=1
+        if (not V0==None):
             if concavity>0:
                 found_turnover=True
                 fit['turnover']=V0
         idx+=1
+        
     if not found_turnover:
         fit['turnover']=None
+        fit['Iturnover']=None
 
+    n_turnings_within_range=0
+    for V0 in fit['turning']:
+        if (not V0==None) and V0>self.min_bias and V0<self.max_bias:
+            n_turnings_within_range+=1     
     fit['turnings within range']=n_turnings_within_range
 
     # find the inflection point between the turning points
@@ -486,12 +492,14 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
         xpts=self.vbias[istart:iend]
         gotit=False
         dv=xpts[1]-xpts[0]
-        idx=-1
+        idx=0
         while not gotit and idx<fit['npts_curve']:
-            idx+=1
             if (dv>0.0 and xpts[idx]>=inflection_V)\
                or (dv<0.0 and xpts[idx]<=inflection_V): 
                 gotit=True
+            idx+=1
+
+        idx-=1
         if (dv>0.0):
             ibeg=istart+idx
             istop=iend
@@ -516,6 +524,10 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
         offset=self.max_bias-Imax
         fit['R1']=R1
         fit['offset']=offset
+        if found_turnover:
+            V0=fit['turnover']
+            fit['Iturnover']=a0 + a1*V0 + a2*V0**2 + a3*V0**3 + offset
+
         return fit
         
 
@@ -527,6 +539,7 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
     Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
     offset=V-Imax
     fit['offset']=offset
+    fit['Iturnover']=a0 + a1*V0 + a2*V0**2 + a3*V0**3 + offset
     
     # find the tangent line of the fit to the I-V curve at the maximum bias
     # this should be equivalent to a circuit with resistance 1 Ohm
@@ -635,6 +648,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     self.oplot_iv(TES,fit)
         
     # draw a line tangent to the fit at the highest Vbias
+    # I0 here is the current extrapolated to Vbias=0
     R1,I0=self.draw_tangent(fit)
 
     R1=self.R1(TES)
@@ -650,13 +664,16 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
         txt+='\nNo turnover!'
     else:
         v0=fit['turnover']
-        if v0>self.min_bias and v0<self.max_bias:
-            xpts=[v0,v0]
-            ypts=[min(Iadjusted),max(Iadjusted)]
-            plt.plot(xpts,ypts,linestyle='dashed',color='green')
-            txt+=str('\nturnover Vbias=%.2fV' % v0)
-            I0=min(Iadjusted)
-            txt+=str('\nI$_0$=%.2f $\mu$A' % I0)
+        xpts=[v0,v0]
+        ypts=[min(Iadjusted),max(Iadjusted)]
+        plt.plot(xpts,ypts,linestyle='dashed',color='green')
+        txt+=str('\nturnover Vbias=%.2fV' % v0)
+        # Iturnover is the current at Vturnover
+        if 'Iturnover' in fit.keys():
+            Iturnover=fit['Iturnover']
+        else:
+            Iturnover=min(Iadjusted)
+        txt+=str('\nI$_\mathrm{turnover}$=%.2f $\mu$A' % Iturnover)
         
 
     # add room temp results, if loaded
