@@ -539,7 +539,9 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
     Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
     offset=V-Imax
     fit['offset']=offset
-    fit['Iturnover']=a0 + a1*V0 + a2*V0**2 + a3*V0**3 + offset
+    if found_turnover:
+        V0=fit['turnover']
+        fit['Iturnover']=a0 + a1*V0 + a2*V0**2 + a3*V0**3 + offset
     
     # find the tangent line of the fit to the I-V curve at the maximum bias
     # this should be equivalent to a circuit with resistance 1 Ohm
