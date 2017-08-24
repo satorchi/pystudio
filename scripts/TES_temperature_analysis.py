@@ -183,9 +183,12 @@ def calculate_TES_NEP(qplist,TES,quiet=False):
         istart=curve_index*npts_curve
         iend=istart+npts_curve
         I=Iadjusted[istart:iend]
-        I0=I.min()
+        if 'Iturnover' in filterinfo['fit'].keys():
+            Iturnover=filterinfo['fit']['Iturnover']
+        else:
+            Iturnover=I.min()
         Tbath=go.temperature
-        P.append(I0*go.turnover(TES)*1e-12)
+        P.append(Iturnover*go.turnover(TES)*1e-12)
         T.append(Tbath)
 
     try:
