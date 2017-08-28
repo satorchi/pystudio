@@ -875,7 +875,7 @@ def read_filter(self):
     filtersummary=pickle.load(h)
     h.close()
     self.filtersummary=filtersummary
-    return
+    return True
 
 def read_Vtes_file(self,filename):
     if not os.path.exists(filename):
