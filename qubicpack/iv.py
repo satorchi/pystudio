@@ -877,7 +877,10 @@ def read_filter(self):
     self.filtersummary=filtersummary
     return True
 
-def read_Vtes_file(self,filename):
+def read_ADU_file(self,filename):
+    '''
+    legacy:  a few files were produced in this format before the FITS file was defined
+    '''
     if not os.path.exists(filename):
         print("file not found: ",filename)
         return None
@@ -904,7 +907,7 @@ def read_Vtes_file(self,filename):
             i+=1
         X.append(row)
         adu=np.array(X)
-    self.assign_Vtes(adu)
+    self.assign_ADU(adu)
     return adu
 
 def iv_tex_table_entry(self,TES):

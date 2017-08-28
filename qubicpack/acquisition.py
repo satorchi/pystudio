@@ -249,7 +249,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
 
 
     # plt.show()
-    self.assign_Vtes(adu)
+    self.assign_ADU(adu)
     if not replay:
         self.write_fits()
     

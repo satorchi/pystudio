@@ -107,7 +107,7 @@ def assign_integration_time(self,tinteg=0.1):
         self.tinteg=tinteg
     return
 
-def assign_Vtes(self,adu):
+def assign_ADU(self,adu):
     if (not isinstance(adu,np.ndarray)):
         print('Please enter a 2 dimensional numpy array with the first dimension=%i' % self.NPIXELS)
         return None
