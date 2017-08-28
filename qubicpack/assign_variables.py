@@ -23,6 +23,9 @@ def assign_defaults(self):
     self.zero=1e-9
     self.QubicStudio_ip='134.158.186.233'
     self.NPIXELS=128
+    self.kBoltzmann=1.3806485279e-23
+    self.Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
+    self.Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
     self.figsize=(12.80,7.68)
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
     self.assign_asic(1)
