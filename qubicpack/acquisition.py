@@ -184,7 +184,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         monitor_iv=True
 
     if replay:
-        if self.v_tes==None:
+        if self.adu==None:
             print('Please read an I-V data file, or run a new measurement!')
             return None
         if self.vbias==None:
@@ -192,7 +192,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
             print('Please run make_Vbias() with the correct max and min values')
             return None
         vbias=self.vbias
-        v_tes=self.v_tes
+        adu=self.adu
     else:
         client = self.connect_QubicStudio()
         if client==None: return None
@@ -200,7 +200,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         if self.vbias==None:
             vbias=make_Vbias()
         nbias=len(self.vbias)
-        v_tes = np.empty((self.NPIXELS,nbias))
+        adu = np.empty((self.NPIXELS,nbias))
 
     vbias=self.vbias
     nbias=len(self.vbias)
@@ -218,16 +218,16 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
             self.set_VoffsetTES(vbias[j],0.0)
             self.wait_a_bit()
             Vavg= self.get_mean()
-            v_tes[:,j]=Vavg
+            adu[:,j]=Vavg
         else:
-            Vavg=v_tes[:,j]
+            Vavg=adu[:,j]
 
         print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
         # plt.figure(figavg.number)
         # self.plot_Vavg(Vavg,vbias[j])
         if monitor_iv:
             plt.figure(figiv.number)
-            I_tes=v_tes[monitor_TES_index,0:j+1]
+            I_tes=adu[monitor_TES_index,0:j+1]
             Iadjusted=self.ADU2I(I_tes)
             self.draw_iv(Iadjusted,axis=axiv)
 
@@ -239,7 +239,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
                     axmulti[row,col].get_xaxis().set_visible(False)
                     axmulti[row,col].get_yaxis().set_visible(False)
 
-                    Iadjusted=self.ADU2I(self.v_tes[TES_index,0:j+1])
+                    Iadjusted=self.ADU2I(self.adu[TES_index,0:j+1])
                     self.draw_iv(Iadjusted,colour='blue',axis=axmulti[row,col])
                     text_y=min(Iadjusted)
                     axmulti[row,col].text(max(self.vbias),text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
@@ -249,8 +249,8 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
 
 
     # plt.show()
-    self.assign_Vtes(v_tes)
+    self.assign_Vtes(adu)
     if not replay:
         self.write_fits()
     
-    return v_tes
+    return adu

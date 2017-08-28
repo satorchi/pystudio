@@ -27,7 +27,7 @@ def assign_defaults(self):
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
     self.assign_asic(1)
     self.tinteg=0.1
-    self.v_tes=None
+    self.adu=None
     self.vbias=None
     self.cycle_vbias=True
     self.nbiascycles=None
@@ -107,11 +107,11 @@ def assign_integration_time(self,tinteg=0.1):
         self.tinteg=tinteg
     return
 
-def assign_Vtes(self,v_tes):
-    if (not isinstance(v_tes,np.ndarray)):
+def assign_Vtes(self,adu):
+    if (not isinstance(adu,np.ndarray)):
         print('Please enter a 2 dimensional numpy array with the first dimension=%i' % self.NPIXELS)
         return None
-    self.v_tes=v_tes
+    self.adu=adu
     return
 
 def assign_pausetime(self,pausetime):

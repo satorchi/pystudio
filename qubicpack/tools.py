@@ -52,7 +52,7 @@ def write_fits(self):
     prihdr['TES_TEMP']=(self.temperature,'TES physical temperature in K')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
-    if self.v_tes != None:
+    if self.adu != None:
         fitsfile=str('QUBIC_TES_%s.fits' % datestr)
         if os.path.exists(fitsfile):
             print('file already exists! %s' % fitsfile)
@@ -60,11 +60,11 @@ def write_fits(self):
             print('instead, saving to file: %s' % fitsfile)
 
         nbias=len(self.vbias)
-        fmtstr=str('%iD' % self.v_tes.shape[1])
-        dimstr=str('%i' % self.v_tes.shape[0])
+        fmtstr=str('%iD' % self.adu.shape[1])
+        dimstr=str('%i' % self.adu.shape[0])
         #print('format=',fmtstr)
         #print('dim=',dimstr)
-        col1  = pyfits.Column(name='V_tes', format=fmtstr, dim=dimstr, unit='ADU', array=self.v_tes)
+        col1  = pyfits.Column(name='V_tes', format=fmtstr, dim=dimstr, unit='ADU', array=self.adu)
         cols  = pyfits.ColDefs([col1])
         tbhdu1 = pyfits.BinTableHDU.from_columns(cols)
 
@@ -154,11 +154,11 @@ def read_fits(self,filename):
             # number of bias points
             nbias=eval(hdu.header['TFORM1'].strip()[:-1])
 
-            # read the v_tes matrix
+            # read the adu matrix
             data=hdu.data
-            self.v_tes=np.empty((self.NPIXELS,nbias))
+            self.adu=np.empty((self.NPIXELS,nbias))
             for n in range(self.NPIXELS):
-                self.v_tes[n,:]=data[n][0]
+                self.adu[n,:]=data[n][0]
 
         if hdrtype=='V_bias':
             '''
@@ -193,7 +193,7 @@ def read_fits(self,filename):
         self.timelines=np.array(timelines)
     h.close()
 
-    self.read_filter()
+    f=self.read_filter()
     return
 
 

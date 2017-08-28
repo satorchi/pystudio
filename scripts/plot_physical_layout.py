@@ -45,10 +45,10 @@ def plot_physical_layout(xwin=True,figsize=(16,16),a1=None,a2=None):
     asic1_fontsize=8
     asic2_data=True
     asic2_fontsize=8
-    if asic1_obj.v_tes==None:
+    if asic1_obj.adu==None:
         asic1_data=False
         asic1_fontsize=figsize[0]
-    if asic2_obj.v_tes==None:
+    if asic2_obj.adu==None:
         asic2_data=False
         asic2_fontsize=figsize[0]
             

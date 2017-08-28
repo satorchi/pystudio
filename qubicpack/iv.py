@@ -96,7 +96,7 @@ def plot_iv_all(self,selection=None,xwin=True):
     plt.xlabel('Bias Voltage  /  V')
     plt.ylabel('Current  /  $\mu$A')
 
-    nbias=self.v_tes.shape[1]
+    nbias=self.adu.shape[1]
     
     offset=[]
     colour_idx=0
@@ -355,7 +355,7 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
        jumplimit:    this is the smallest step considered to be a jump in the data
        curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
     '''
-    if self.v_tes==None:
+    if self.adu==None:
         print('ERROR! No data!')
         return None
     
@@ -367,7 +367,7 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
     # return is a dictionary with various info
     fit={}
 
-    I=self.ADU2I(self.v_tes[TES_index,:])
+    I=self.ADU2I(self.adu[TES_index,:])
     npts=len(I)
 
     if self.cycle_vbias:
@@ -616,7 +616,7 @@ def adjusted_iv(self,TES,fit=None):
     '''
     offset=self.offset(TES)
     if offset==None:offset=0.0
-    Iadjusted=self.ADU2I(self.v_tes[self.TES_index(TES),:],offset=offset)
+    Iadjusted=self.ADU2I(self.adu[self.TES_index(TES),:],offset=offset)
     return Iadjusted
 
 def oplot_iv(self,TES,fit=None,label=None):
@@ -767,7 +767,7 @@ def filter_iv(self,TES,
     ret['residual']=residual
     offset=fit['offset']
     ret['offset']=offset
-    ADU=self.v_tes[TES_index,:]
+    ADU=self.adu[TES_index,:]
     Iadjusted=self.ADU2I(ADU,offset=offset,fudge=1.0)
     ret['turnover']=fit['turnover']
 
@@ -830,7 +830,7 @@ def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     '''
     find which TES are good
     '''
-    if self.v_tes==None:
+    if self.adu==None:
         print('No data!  Please read a file, or run a measurement.')
         return None
 
@@ -903,9 +903,9 @@ def read_Vtes_file(self,filename):
             row[i]=val
             i+=1
         X.append(row)
-        v_tes=np.array(X)
-    self.assign_Vtes(v_tes)
-    return v_tes
+        adu=np.array(X)
+    self.assign_Vtes(adu)
+    return adu
 
 def iv_tex_table_entry(self,TES):
     TES_index=self.TES_index(TES)
@@ -1155,7 +1155,7 @@ def filterinfo(self,TES=None):
     '''
     return the filterinfo for a given TES
     '''
-    if self.v_tes==None:
+    if self.adu==None:
         print('ERROR! No data!')
         return None
 
