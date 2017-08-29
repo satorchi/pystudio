@@ -706,6 +706,72 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     else: plt.close('all')
     return fig
 
+def plot_pv(self,TES,xwin=True):
+    ttl=str('QUBIC P-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+    if self.temperature==None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.0f mK' % (1000*self.temperature))
+    subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
+    if xwin: plt.ion()
+    else: plt.ioff()
+    fig,ax=plt.subplots(1,1,figsize=self.figsize)
+    fig.canvas.set_window_title('plt: '+ttl) 
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    ax.set_xlabel('Bias Voltage  /  V')
+    ax.set_ylabel('P$_\mathrm{TES}$  /  $p$A')
+    ax.set_xlim([self.min_bias,self.max_bias])
+
+    istart,iend=self.selected_iv_curve(TES)
+    Ptes=self.Ptes(TES)[istart:iend]
+    bias=self.vbias[istart:iend]
+    plt.plot(bias,Ptes)
+    
+    pngname=str('TES%03i_PV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
+    return fig,ax
+    
+def plot_rp(self,TES,xwin=True):
+    if self.R1(TES)==None:
+        print('No normal resistance estimate.')
+        return None
+
+    
+    Rn_ratio=self.Rn_ratio(TES)[istart:iend]
+    Pbias=self.Pbias(TES)
+    lbl+=', P$_\mathrm{bias}=$%.2f pW' % Pbias
+    plt.plot(Ptes,Rn_ratio,label=lbl)
+
+    ttl=str('QUBIC P-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+    if self.temperature==None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.0f mK' % (1000*self.temperature))
+    subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
+    if xwin: plt.ion()
+    else: plt.ioff()
+    fig,ax=plt.subplots(1,1,figsize=self.figsize)
+    fig.canvas.set_window_title('plt: '+ttl) 
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    ax.set_xlabel('Bias Voltage  /  V')
+    ax.set_ylabel('P$_\mathrm{TES}$  /  $p$A')
+    ax.set_xlim([self.min_bias,self.max_bias])
+
+    istart,iend=self.selected_iv_curve(TES)
+    Ptes=self.Ptes(TES)[istart:iend]
+    bias=self.vbias[istart:iend]
+    plt.plot(bias,Ptes)
+    
+    pngname=str('TES%03i_PV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
+    return fig,ax
+
+
+                
 def make_Vbias(self,cycle=True,ncycles=2,vmin=5.0,vmax=9.0,dv=0.04,lowhigh=True):
     '''
     the bias voltage values used during the I-V curve measurement
@@ -1170,6 +1236,11 @@ def filterinfo(self,TES=None):
             if f==None: f=self.filter_iv(TES_index+1)
             return self.filtersummary
 
+    # if not a valid TES, return None
+    if not isinstance(TES,int) or TES<1 or TES>self.NPIXELS:
+        print('please enter a valid TES number between 1 and %i.' % self.NPIXELS)
+        return None
+
     # if filter has not been run, run it with defaults
     f=self.filtersummary[self.TES_index(TES)]
     if f==None: f=self.filter_iv(TES)
@@ -1266,5 +1337,94 @@ def R1(self,TES=None):
         return turnover
     return filterinfo['fit']['R1']
 
+def Rn(self,TES=None):
+    '''
+    this is an alias for R1
+    '''
+    return self.R1(TES)
 
+def selected_iv_curve(self,TES):
+    '''
+    return the index end points which selects the I-V cycle of the measurement used in the fit
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
     
+    if 'curve index' in filterinfo['fit'].keys():
+        curve_index=filterinfo['fit']['curve index']
+    else:
+        curve_index=filterinfo['fit']['best curve index']
+
+    npts_curve=filterinfo['fit']['npts_curve']
+    istart=curve_index*npts_curve
+    iend=istart+npts_curve
+    return (istart,iend)
+
+
+def Ites(self,TES):
+    '''
+    return the TES current in Amps (not in microAmps)
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+    
+    Ites=self.adjusted_iv(TES)*1e-6 # Amps
+    return Ites
+
+def Vtes(self,TES):
+    '''
+    return the Vtes
+    '''
+    Ites=self.Ites(TES)
+    if Ites==None:return None
+    
+    Vtes=self.Rshunt*(self.vbias/self.Rbias-Ites)
+    return Vtes
+
+def Ptes(self,TES):
+    '''
+    return the power on the TES as a function of bias
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+    
+    Ptes=self.Ites(TES)*self.Vtes(TES)*1e12 # pW
+    return Ptes
+
+
+def Rn_ratio(self,TES):
+    '''
+    return the ratio of TES resistance to Normal resistance
+    '''
+    if self.R1(TES)==None:return None
+
+    Rn=self.Vtes(TES)/self.Ites(TES)
+    Rn_ratio=100*Rn/self.R1(TES) # percent
+
+    return Rn_ratio
+
+def Pbias(self,TES):
+    '''
+    find the Pbias at 90% Rn
+    '''    
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+
+    Rn_ratio=self.Rn_ratio(TES)
+    if Rn_ratio==None:return None
+
+    istart,iend=self.selected_iv_curve(TES)
+
+    Rn_ratio=Rn_ratio[istart:iend]
+    Ptes=self.Ptes(TES)
+    Ptes=Ptes[istart:iend]
+    
+    # check that Rn_ratio is increasing
+    increasing=np.diff(Rn_ratio).mean()
+    if increasing<0:
+        Pbias=np.interp(90., np.flip(Rn_ratio,0), np.flip(Ptes,0))
+    else:
+        Pbias=np.interp(90., Rn_ratio, Ptes)
+
+    return Pbias
+

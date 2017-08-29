@@ -69,6 +69,8 @@ class qubicpack:
         adjusted_iv,\
         oplot_iv,\
         plot_iv,\
+        plot_pv,\
+        plot_rp,\
         make_Vbias,\
         filter_iv,\
         filter_iv_all,\
@@ -82,6 +84,13 @@ class qubicpack:
         turnover,\
         offset,\
         R1,\
+        Rn,\
+        selected_iv_curve,\
+        Vtes,\
+        Ites,\
+        Ptes,\
+        Rn_ratio,\
+        Pbias,\
         read_ADU_file,\
         iv_tex_table_entry,\
         make_iv_tex_report,\
