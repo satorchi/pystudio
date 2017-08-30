@@ -28,3 +28,9 @@ arguments:
    * plot='P' : P-V curves
    * plot='R' : R-P curves
 * xwin : plot to screen, True or False.  If False, the plot will be saved to a png file, but not displayed on the screen
+
+### plot_TES_NEP(data_list,TES,xwin=True)
+plot the P vs. Temperature for a TES
+ 
+### plot_NEP_histogram(qplist,NEPresults=None,xwin=True)
+plot the histogram of the NEP calculations
