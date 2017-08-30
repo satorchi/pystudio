@@ -738,13 +738,26 @@ def plot_rp(self,TES,xwin=True):
         print('No normal resistance estimate.')
         return None
 
+    istart,iend=self.selected_iv_curve(TES)
     
     Rn_ratio=self.Rn_ratio(TES)[istart:iend]
+    Ptes=self.Ptes(TES)[istart:iend]
     Pbias=self.Pbias(TES)
-    lbl+=', P$_\mathrm{bias}=$%.2f pW' % Pbias
-    plt.plot(Ptes,Rn_ratio,label=lbl)
+    lbl='P$_\mathrm{bias}=$%.2f pW' % Pbias
 
-    ttl=str('QUBIC P-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+    Rmin=min(Rn_ratio)
+    Rmax=max(Rn_ratio)
+    Rspan=Rmax-Rmin
+    plot_Rmin=Rmin-0.2*Rspan
+    plot_Rmax=100.
+    
+    Pmin=min(Ptes)
+    Pmax=max(Ptes)
+    Pspan=Pmax-Pmin
+    plot_Pmin=Pmin-0.05*Pspan
+    plot_Pmax=Pmax+0.2*Pspan
+    
+    ttl=str('QUBIC R-P curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     if self.temperature==None:
         tempstr='unknown'
     else:
@@ -755,16 +768,20 @@ def plot_rp(self,TES,xwin=True):
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
-    ax.set_xlabel('Bias Voltage  /  V')
-    ax.set_ylabel('P$_\mathrm{TES}$  /  $p$A')
-    ax.set_xlim([self.min_bias,self.max_bias])
+    ax.set_xlabel('P$_\mathrm{TES}$  /  pW')
+    ax.set_ylabel('$\\frac{R_\mathrm{TES}}{R_\mathrm{normal}}$ / %')
 
-    istart,iend=self.selected_iv_curve(TES)
-    Ptes=self.Ptes(TES)[istart:iend]
-    bias=self.vbias[istart:iend]
-    plt.plot(bias,Ptes)
+    plt.plot(Ptes,Rn_ratio)
+    plt.plot([Pbias,Pbias],[0,90],linestyle='dashed',color='green')
+    plt.plot([plot_Pmin,Pbias],[90,90],linestyle='dashed',color='green')
+    ax.set_xlim([plot_Pmin,plot_Pmax])
+    ax.set_ylim([plot_Rmin,plot_Rmax])
+
+    text_x=plot_Pmax-0.3*Pspan
+    text_y=plot_Rmin+0.5*Rspan
+    plt.text(text_x,text_y,lbl)
     
-    pngname=str('TES%03i_PV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES%03i_RP_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
     else: plt.close('all')
