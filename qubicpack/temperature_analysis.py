@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-$Id: TES_temperature_analysis.py
+$Id: temperature_analysis.py
 $auth: Steve Torchinsky <satorchi@apc.in2p3.fr>
 $created: Fri 18 Aug 2017 18:57:44 CEST
 $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
