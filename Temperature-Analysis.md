@@ -32,5 +32,8 @@ arguments:
 ### plot_TES_NEP(data_list,TES,xwin=True)
 plot the P vs. Temperature for a TES
  
-### plot_NEP_histogram(qplist,NEPresults=None,xwin=True)
+### plot_NEP_histogram(qplist,xwin=True)
 plot the histogram of the NEP calculations
+
+### make_TES_NEP_tex_report(data_list)
+generate a LaTeX source file which is a test report compiling all the results
