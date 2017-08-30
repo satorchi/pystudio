@@ -64,4 +64,5 @@ Example scripts can be found in the [scripts folder](https://github.com/satorchi
 * [assignment methods](assignment-methods)
 * [Data gathering](acquisition-methods)
 * [Read and write](readwrite)
-* [Data plotting and analysis](plot-analysis)
+* [Data analysis](plot-analysis)
+* [Data plotting](plotting)
