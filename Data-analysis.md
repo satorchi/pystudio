@@ -34,13 +34,13 @@ the ratio of TES resistance to Normal Resistance (see __R1__ below).
 This method will apply a filter to the I-V curve of a given TES, and determine if this is a good pixel.  The I-V curve is fit to a 3rd degree polynomial in order to find the turnover (operation) point of the TES.  The dynamic normal resistance (resistance at high bias voltage) which should be on the order of 1 Ohm, is determined by fitting the final points to a straight line.  
 
 arguments:
- * TES is the TES number (required)
+ * **TES** is the TES number (required)
  * the remaining keywords are all optional:
-   * residual_limit: this is an indication of the acceptable quality of the polynomial fit
-   * abs_amplitude_limit: this is the lower limit for acceptable current measured
-   * real_amplitude_limite: this is the lower limit for the peak-to-peak variation in the measured current across the bias voltage range applied.
-   * bias_margin: this is the proximity to the edge of the bias range which is considered to be acceptable
-   * jump_limit: this is the current step size between bias points which is considered to be a jump.  The polynomial fit takes this into account when it determines which points to fit.
+   * **residual_limit**: this is an indication of the acceptable quality of the polynomial fit
+   * **abs_amplitude_limit**: this is the lower limit for acceptable current measured
+   * **real_amplitude_limit**: this is the lower limit for the peak-to-peak variation in the measured current across the bias voltage range applied.
+   * **bias_margin**: this is the proximity to the edge of the bias range which is considered to be acceptable
+   * **jump_limit**: this is the current step size between bias points which is considered to be a jump.  The polynomial fit takes this into account when it determines which points to fit.
 
 ### filter_iv_all(residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=2.0)
  * run a filter on the I-V data to determine which are good pixels.  The keywords are as described above for filter_iv().  The result is stored in the qubicpack object and is used in subsequent plotting.  The filter results are accessible via a number of helper methods, or directly in the python list called _filtersummary_.
