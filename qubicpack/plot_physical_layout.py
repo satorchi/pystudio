@@ -10,7 +10,8 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 
 plot a poster of the layout of the QUBIC TES array
 '''
-
+from qubicpack import qubicpack as qp
+import matplotlib.pyplot as plt
 
 def plot_physical_layout(xwin=True,figsize=(16,16),a1=None,a2=None):
     '''
