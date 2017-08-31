@@ -6,9 +6,9 @@ Options:
 * xwin : *True* plot on the screen.
 * figsize : a tuple with the size of the final output
 * a1 : a qubicpack object containing the data from ASIC1
-  * the default is to plot only the Pixel ID and no data
+  * the default is to print only the Pixel ID and no data
 * a2 : a qubicpack object containing the data from ASIC2
-  * the default is to plot on the Pixel ID and no data
+  * the default is to print only the Pixel ID and no data
 
 Here is an example python script to make the plot:
 
