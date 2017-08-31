@@ -105,10 +105,11 @@ def plot_iv_all(self,selection=None,xwin=True):
         TES=TES_index+1
 
         if (selection==None) or (selection[TES_index]):
-            Iadjusted=self.adjusted_iv(TES)
-
+            istart,iend=self.selected_iv_curve(TES)
+            Iadjusted=self.adjusted_iv(TES)[istart:iend]
+            bias=self.vbias[istart:iend]
             if colour_idx >= ncolours:colour_idx=0
-            self.draw_iv(Iadjusted,colour=self.colours[colour_idx])
+            plt.plot(bias,Iadjusted,color=self.colours[colour_idx])
             colour_idx+=1
 
     pngname=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
