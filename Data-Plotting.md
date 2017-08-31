@@ -11,9 +11,9 @@ make a plot of an I-V curve, or multiple curves
 plot the I-V curves in thumbnails mapped to the physical location of each detector
  * the optional keyword xwin can be set to False and the plot will not appear on screen but will only be saved to a png file.
 
-If you would like to plot the I-V curves from both ASICs on a single plot, you should use the [standalone version](plot_physical_layout.md).
+If you would like to plot the I-V curves from both ASICs on a single plot, you should use the [standalone version](/satorchi/pystudio/wiki/plot_physical_layout)
 
 ### plot_iv_all(selection=None)
-plot all the I-V curves on top of each other.  The optional parameter *selection* is used to make a selection of curves to plot. Enter a list of True/False for each TES.  You can get such a list using the method *is_good_iv()* (see [analysis routines](Data-analysis)).
+plot all the I-V curves on top of each other.  The optional parameter *selection* is used to make a selection of curves to plot. Enter a list of True/False for each TES.  You can get such a list using the method *is_good_iv()* (see [analysis routines](/satorchi/pystudio/wiki/Data-analysis)).
 
 
