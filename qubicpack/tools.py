@@ -169,9 +169,6 @@ def read_fits(self,filename):
             for n in range(self.NPIXELS):
                 self.adu[n,:]=data[n][0]
 
-            f=self.read_filter()
-            if f==None:f=self.filter_iv_all()
-
         if hdrtype=='V_bias':
             '''
             this is the bias points
@@ -204,6 +201,11 @@ def read_fits(self,filename):
         print('assigning timeline data')
         self.timelines=np.array(timelines)
     h.close()
+
+
+    if not self.adu==None:
+        f=self.read_filter()
+        if f==None:f=self.filter_iv_all()
 
     return
 
