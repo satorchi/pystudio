@@ -74,7 +74,7 @@ def plot_Vavg(self,Vavg,Vbias,offset=None,axes=None):
     return
 
 def plot_iv_all(self,selection=None,xwin=True):
-    if self.vbias==None:
+    if not isinstance(self.vbias,np.ndarray):
         self.vbias=make_Vbias()
     if isinstance(self.obsdate,dt.datetime):
         ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
@@ -119,7 +119,7 @@ def plot_iv_all(self,selection=None,xwin=True):
     return fig
 
 def setup_plot_iv_multi(self,nrows=16,ncols=8,xwin=True):
-    if self.vbias==None: self.vbias=make_Vbias()
+    if not isinstance(self.vbias,np.ndarray): self.vbias=make_Vbias()
     if isinstance(self.obsdate,dt.datetime):
         ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
@@ -638,7 +638,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     TES_index=self.TES_index(TES)
     fit=filterinfo['fit']
     
-    if self.vbias==None:
+    if not isinstance(self.vbias,np.ndarray):
         print('ERROR: No Vbias.')
         return None
     

@@ -187,7 +187,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         if not isinstance(self.adu,np.ndarray):
             print('Please read an I-V data file, or run a new measurement!')
             return None
-        if self.vbias==None:
+        if not isinstance(self.vbias,np.ndarray):
             print('There appears to be I-V data, but no Vbias info.')
             print('Please run make_Vbias() with the correct max and min values')
             return None
@@ -197,7 +197,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         client = self.connect_QubicStudio()
         if client==None: return None
         self.obsdate=dt.datetime.utcnow()
-        if self.vbias==None:
+        if not isinstance(self.vbias,np.ndarray):
             vbias=make_Vbias()
         nbias=len(self.vbias)
         adu = np.empty((self.NPIXELS,nbias))
