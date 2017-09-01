@@ -356,7 +356,7 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
        jumplimit:    this is the smallest step considered to be a jump in the data
        curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
     '''
-    if self.adu==None:
+    if not isinstance(self.adu,np.ndarray):
         print('ERROR! No data!')
         return None
     
