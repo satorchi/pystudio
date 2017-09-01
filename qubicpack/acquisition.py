@@ -249,6 +249,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
 
 
     # plt.show()
+    self.endobs=dt.datetime.utcnow()
     self.assign_ADU(adu)
     if not replay:
         self.write_fits()

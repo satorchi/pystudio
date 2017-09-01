@@ -39,6 +39,7 @@ def assign_defaults(self):
     self.max_bias_position=None
     self.pausetime=0.3
     self.obsdate=None
+    self.endobs=None
     self.observer='APC LaboMM'
     self.nsamples=None
     self.timelines=None

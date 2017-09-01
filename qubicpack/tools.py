@@ -38,10 +38,14 @@ def write_fits(self):
         self.obsdate=dt.datetime.utcnow()
     datestr=self.obsdate.strftime(datefmt)
 
+    if self.endobs==None:
+        self.endobs=self.obsdate
+    
     prihdr = pyfits.Header()
     prihdr['TELESCOP']=('QUBIC','Telescope used for the observation')
     prihdr['OBSERVER']=(self.observer,'name of the observer')
     prihdr['DATE-OBS']=(self.obsdate.strftime('%Y-%m-%d %H:%M:%S UTC'),'date of the observation in UTC')
+    prihdr['END-OBS']=(self.endobs.strftime('%Y-%m-%d %H:%M:%S UTC'),'end time of the observation in UTC')
     prihdr['NSAMPLES']=(self.nsamples,'number of samples per integration time')
     prihdr['INT-TIME']=(self.tinteg,'integration time in seconds')
     prihdr['NPIXELS']=(self.NPIXELS,'number of TES detectors in the array')
@@ -142,6 +146,11 @@ def read_fits(self,filename):
     else:
         self.temperature=None
 
+    if 'END-OBS' in h[0].header.keys():
+        self.endobs=dt.datetime.strptime(h[0].header['END-OBS'],'%Y-%m-%d %H:%M:%S UTC')
+    else:
+        self.endobs=None
+
     timelines=[]
     for hdu in h[1:]:
         hdrtype=hdu.header['TTYPE1']
@@ -159,6 +168,9 @@ def read_fits(self,filename):
             self.adu=np.empty((self.NPIXELS,nbias))
             for n in range(self.NPIXELS):
                 self.adu[n,:]=data[n][0]
+
+            f=self.read_filter()
+            if f==None:f=self.filter_iv_all()
 
         if hdrtype=='V_bias':
             '''
@@ -193,7 +205,6 @@ def read_fits(self,filename):
         self.timelines=np.array(timelines)
     h.close()
 
-    f=self.read_filter()
     return
 
 
