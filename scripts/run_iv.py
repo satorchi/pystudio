@@ -60,5 +60,5 @@ if ncycles==None:quit()
 
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
-#go.get_iv_data(TES=70)
-#raw_input('Hit return to exit. ')
+go.get_iv_data(TES=70)
+raw_input('Hit return to exit. ')
