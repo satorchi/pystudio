@@ -203,7 +203,7 @@ def read_fits(self,filename):
     h.close()
 
 
-    if not self.adu==None:
+    if isinstance(self.adu,np.ndarray):
         f=self.read_filter()
         if f==None:f=self.filter_iv_all()
 

@@ -914,7 +914,7 @@ def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     '''
     find which TES are good
     '''
-    if self.adu==None:
+    if not isinstance(self.adu,np.ndarray):
         print('No data!  Please read a file, or run a measurement.')
         return None
 
@@ -1242,7 +1242,7 @@ def filterinfo(self,TES=None):
     '''
     return the filterinfo for a given TES
     '''
-    if self.adu==None:
+    if not isinstance(self.adu,np.ndarray):
         print('ERROR! No data!')
         return None
 

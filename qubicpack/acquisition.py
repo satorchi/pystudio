@@ -184,7 +184,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         monitor_iv=True
 
     if replay:
-        if self.adu==None:
+        if not isinstance(self.adu,np.ndarray):
             print('Please read an I-V data file, or run a new measurement!')
             return None
         if self.vbias==None:

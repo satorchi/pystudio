@@ -46,10 +46,10 @@ def plot_physical_layout(xwin=True,figsize=(16,16),a1=None,a2=None):
     asic1_fontsize=8
     asic2_data=True
     asic2_fontsize=8
-    if asic1_obj.adu==None:
+    if not isinstance(asic1_obj.adu,np.ndarray):
         asic1_data=False
         asic1_fontsize=figsize[0]
-    if asic2_obj.adu==None:
+    if not isinstance(asic2_obj.adu,np.ndarray):
         asic2_data=False
         asic2_fontsize=figsize[0]
             
