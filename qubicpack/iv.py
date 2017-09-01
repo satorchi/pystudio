@@ -51,7 +51,7 @@ def setup_plot_Vavg(self,axes=None):
     fig=plt.figure(figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
     fig.suptitle(ttl,fontsize=16)
-    if axes != None: plt.axis(axes)
+    if isinstance(axes,list) or isinstance(axes,np.ndarray): plt.axis(axes)
     plt.xlabel('TES number')
     plt.ylabel('I  /  $\mu$A')
     return fig
@@ -61,7 +61,7 @@ def plot_Vavg(self,Vavg,Vbias,offset=None,axes=None):
     
     lbl=str('V$_{bias}$ = %.2fV' % Vbias)
     plt.cla()
-    if axes != None: plt.axis(axes)
+    if isinstance(axes,list) or isinstance(axes,np.ndarray): plt.axis(axes)
     plt.xlabel('TES number')
     plt.ylabel('I  /  $\mu$A')
     # plot markers with no lines
@@ -80,7 +80,7 @@ def plot_iv_all(self,selection=None,xwin=True):
         ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     else:
         ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
-    if selection != None:
+    if isinstance(selection,list):
         nselection=0
         for val in selection:
             if val: nselection+=1

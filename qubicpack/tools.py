@@ -56,7 +56,7 @@ def write_fits(self):
     prihdr['TES_TEMP']=(self.temperature,'TES physical temperature in K')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
-    if self.adu != None:
+    if isinstance(self.adu,np.ndarray):
         fitsfile=str('QUBIC_TES_%s.fits' % datestr)
         if os.path.exists(fitsfile):
             print('file already exists! %s' % fitsfile)
@@ -79,7 +79,7 @@ def write_fits(self):
         thdulist = pyfits.HDUList([prihdu, tbhdu1, tbhdu2])
         thdulist.writeto(fitsfile)
 
-    if self.timelines != None:
+    if isinstance(self.timelines,np.ndarray):
         fitsfile=str('QUBIC_timeline_%s.fits' % datestr)
         if os.path.exists(fitsfile):
             print('file already exists! %s' % fitsfile)
