@@ -11,12 +11,54 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 
 wrapper script to run the I-V curve data gathering
 """
+from __future__ import division, print_function
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
+
+def get_from_keyboard(msg,default=None):
+    prompt='%s (default: %s) ' % (msg,str(default))
+    ans=raw_input(prompt)
+    if ans=='':return default
+    try:
+        x=eval(ans)
+    except:
+        print('invalid response.')
+        return None
+    return x
+    
+
+
 go=qp()
-go.debuglevel=1
-go.assign_asic(2)
-if go.vbias==None:
-    go.make_Vbias(vmin=5,vmax=9,cycle=True,ncycles=1,dv=0.01)
-go.get_iv_data(TES=70)
-raw_input('Hit return to exit. ')
+
+# set debuglevel to 1 if you want lots of messages on the screen
+# go.debuglevel=1
+
+asic=get_from_keyboard('Which ASIC?  ',2)
+if asic==None:quit()
+ret=go.assign_asic(asic)
+
+temp=get_from_keyboard('TES bath temperature in K ',0.3)
+if temp==None:quit()
+ret=go.assign_temperature(temp)
+if ret==None:quit()
+
+min_bias=get_from_keyboard('minimum bias voltage ',4.5)
+if min_bias==None:quit()
+max_bias=get_from_keyboard('maximum bias voltage ',9.0)
+if max_bias==None:quit()
+dv=get_from_keyboard('bias step size ',0.02)
+cycle=get_from_keyboard('cycle bias up/down? ','y')
+if cycle==None:quit()
+if cycle.upper()=='N':
+    cyclebias=False
+else:
+    cyclebias=True
+    
+ncycles=get_from_keyboard('number of bias cycles ',3)
+if ncycles==None:quit()
+
+
+
+go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
+#go.get_iv_data(TES=70)
+#raw_input('Hit return to exit. ')

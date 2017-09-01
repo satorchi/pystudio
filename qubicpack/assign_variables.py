@@ -138,8 +138,8 @@ def assign_ip(self,ip):
 def assign_temperature(self,temp):
     if (not isinstance(temp,int)) and (not isinstance(temp,float)):
         print('ERROR! Temperature should be a number in Kelvin (not milliKelvin)')
-        self.temperature
+        self.temperature=None
         return None
     else:
         self.temperature=temp
-    return
+    return self.temperature
