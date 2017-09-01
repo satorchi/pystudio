@@ -37,7 +37,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         self.nsamples=100 # this should be read from file!
 
     if replay:
-        if self.timelines==None:
+        if not isinstance(self.timelines,np.ndarray):
             print('Please read a timeline file, or run a new measurement!')
             return None
         ntimelines=self.timelines.shape[0]
@@ -79,7 +79,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         else:
             timeline = self.timelines[i,:,:]
             
-        if timeline==None:
+        if not isinstance(timeline,np.ndarray):
             plt.close(fig)
             return None
 

@@ -104,7 +104,7 @@ def plot_iv_all(self,selection=None,xwin=True):
     for TES_index in range(self.NPIXELS):
         TES=TES_index+1
 
-        if (selection==None) or (selection[TES_index]):
+        if (not isinstance(selection,list)) or (selection[TES_index]):
             istart,iend=self.selected_iv_curve(TES)
             Iadjusted=self.adjusted_iv(TES)[istart:iend]
             bias=self.vbias[istart:iend]
@@ -1394,7 +1394,7 @@ def Vtes(self,TES):
     return the Vtes
     '''
     Ites=self.Ites(TES)
-    if Ites==None:return None
+    if not isinstance(Ites,np.ndarray):return None
     
     Vtes=self.Rshunt*(self.vbias/self.Rbias-Ites)
     return Vtes
@@ -1429,7 +1429,7 @@ def Pbias(self,TES):
     if filterinfo==None:return None
 
     Rn_ratio=self.Rn_ratio(TES)
-    if Rn_ratio==None:return None
+    if not isinstance(Rn_ratio,np.ndarray):return None
 
     istart,iend=self.selected_iv_curve(TES)
 
