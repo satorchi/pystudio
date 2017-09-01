@@ -205,7 +205,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
     vbias=self.vbias
     nbias=len(self.vbias)
 
-    figavg=self.setup_plot_Vavg()
+    # figavg=self.setup_plot_Vavg()
     if monitor_iv:figiv,axiv=self.setup_plot_iv(TES)
     if monitor:
         nrows=16
