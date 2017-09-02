@@ -1232,6 +1232,7 @@ def make_iv_report(self):
     cmd='pdflatex %s' % texname
     os.system(cmd)
     os.system(cmd)
+    pdfname=texname.replace('.tex','.pdf')
     return
 
 ###################################################

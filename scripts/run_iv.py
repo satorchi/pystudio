@@ -14,6 +14,9 @@ wrapper script to run the I-V curve data gathering
 from __future__ import division, print_function
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 def get_from_keyboard(msg,default=None):
     prompt='%s (default: %s) ' % (msg,str(default))
@@ -60,5 +63,14 @@ if ncycles==None:quit()
 
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
+
+# run the measurement
 go.get_iv_data(TES=70)
-raw_input('Hit return to exit. ')
+
+# generate the test document
+pdfname=go.make_iv_report()
+if os.path.exists(pdfname):
+    os.system('xpdf %s' % pdfname)
+
+    
+
