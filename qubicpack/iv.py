@@ -1219,6 +1219,9 @@ def make_iv_report(self):
     '''
     do all the business to generate the I-V report document
     '''
+    if not isinstance(self.adu,np.ndarray):
+        print('ERROR! No data!')
+        return None
 
     # plot all the I-V in the focal-plane map
     self.figsize=(14,14)
