@@ -182,6 +182,10 @@ def plot_iv_physical_layout(self,xwin=True):
     '''
     plot the I-V curves in thumbnails mapped to the physical location of each detector
     '''
+    if not isinstance(self.adu,np.ndarray):
+        print('ERROR! No data!')
+        return None
+    
     ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
 
     ngood=self.ngood()
@@ -1042,6 +1046,9 @@ def make_iv_tex_report(self,tableonly=False):
     make a report in LaTeX.  
     This relies on the data in self.filtersummary.  See self.filter_iv_all() above
     '''
+    if not isinstance(self.adu,np.ndarray):
+        print('ERROR! No data!')
+        return None
     
     thumbnailplot=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     allplot=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
