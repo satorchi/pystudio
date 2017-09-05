@@ -14,8 +14,7 @@ wrapper script to run the I-V curve data gathering
 from __future__ import division, print_function
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
-import subprocess
-import sys
+import subprocess,os,sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -60,16 +59,15 @@ if cycle.upper()=='N':
     cyclebias=False
 else:
     cyclebias=True
-    
 ncycles=get_from_keyboard('number of bias cycles ',3)
 if ncycles==None:quit()
-
-
+monitor_TES=get_from_keyboard('which TES would you like to monitor during the measurement? ',70)
+if monitor_TES==None:quit()
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
 
 # run the measurement
-go.get_iv_data(TES=70)
+#go.get_iv_data(TES=monitor_TES)
 
 # generate the test document
 pdfname=go.make_iv_report()
@@ -86,7 +84,7 @@ for viewer in viewers:
         break
         
 cmd='%s %s' % (use_viewer,pdfname)
-if os.path.exists(pdfname) and not use_viewer==None:
+if not pdfname==None and os.path.exists(pdfname) and not use_viewer==None:
     os.system(cmd)
 
     
