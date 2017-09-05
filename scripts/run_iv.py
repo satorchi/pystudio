@@ -14,6 +14,7 @@ wrapper script to run the I-V curve data gathering
 from __future__ import division, print_function
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
+import subprocess
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -22,6 +23,9 @@ def get_from_keyboard(msg,default=None):
     prompt='%s (default: %s) ' % (msg,str(default))
     ans=raw_input(prompt)
     if ans=='':return default
+    if type(default)==str:
+        return ans
+    
     try:
         x=eval(ans)
     except:
@@ -69,8 +73,21 @@ go.get_iv_data(TES=70)
 
 # generate the test document
 pdfname=go.make_iv_report()
-if os.path.exists(pdfname):
-    os.system('xpdf %s' % pdfname)
+
+# find pdf viewer
+viewers=['xpdf','evince','okular','acroread']
+use_viewer=None
+for viewer in viewers:
+    cmd='which %s' % viewer
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    (out, err) = proc.communicate()
+    if not out=='':
+        use_viewer==out
+        break
+        
+cmd='%s %s' % (use_viewer,pdfname)
+if os.path.exists(pdfname) and not use_viewer==None:
+    os.system(cmd)
 
     
 
