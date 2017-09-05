@@ -67,7 +67,7 @@ if monitor_TES==None:quit()
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
 
 # run the measurement
-#go.get_iv_data(TES=monitor_TES)
+go.get_iv_data(TES=monitor_TES)
 
 # generate the test document
 pdfname=go.make_iv_report()
