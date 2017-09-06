@@ -34,7 +34,7 @@ def read_data_from_20170804():
     I-V curves of P73 at different bath temperatures
     '''
     files=[]
-    a2_tests=[]
+    datlist=[]
 
     files.append('QUBIC_TES_20170804T134238UTC.fits')
     files.append('QUBIC_TES_20170804T144916UTC.fits')
@@ -47,10 +47,36 @@ def read_data_from_20170804():
 
     idx=0
     for F in files:
-        a2_tests.append(qp())
-        a2_tests[idx].read_fits(F)
+        datlist.append(qp())
+        datlist[idx].read_fits(F)
         idx+=1
-    return a2_tests
+    return datlist
+
+def read_data_from_20170905():
+    '''
+    read the data from the measurement campaign of 5/6 Sept 2017
+    '''
+    fitslist=['QUBIC_TES_20170905T082847UTC.fits',
+              'QUBIC_TES_20170905T091628UTC.fits',
+              'QUBIC_TES_20170905T095550UTC.fits',
+              'QUBIC_TES_20170905T145150UTC.fits',
+              'QUBIC_TES_20170905T154040UTC.fits',
+              'QUBIC_TES_20170905T165531UTC.fits',
+              'QUBIC_TES_20170905T172101UTC.fits',
+              'QUBIC_TES_20170906T075624UTC.fits',
+              'QUBIC_TES_20170906T085757UTC.fits',
+              'QUBIC_TES_20170906T091909UTC.fits',
+              'QUBIC_TES_20170906T094433UTC.fits',
+              'QUBIC_TES_20170906T101411UTC.fits',
+              'QUBIC_TES_20170906T113411UTC.fits',
+              'QUBIC_TES_20170906T121954UTC.fits',
+              'QUBIC_TES_20170906T123554UTC.fits']
+    datlist=[]
+    for F in fitslist:
+        datlist.append(qp())
+        datlist[-1].read_fits(F)
+    
+    return datlist
 
 def verify_temperature_arguments(qplist,TES):
     # make sure TES is a valid selection
@@ -76,6 +102,71 @@ def verify_temperature_arguments(qplist,TES):
             return False
 
     return True
+
+def plot_TES_turnover_temperature(qplist,TES,xwin=True):
+    '''
+    plot the turnover point as a function of temperature for a given TES
+    '''
+    if not verify_temperature_arguments(qplist,TES):return None
+    asic=qplist[0].asic
+
+    temps_list=[]
+    turnover_list=[]
+    for go in qplist:
+        if not go.turnover(TES)==None:
+            temps_list.append(go.temperature)
+            turnover_list.append(go.turnover(TES))
+
+
+    if len(turnover_list)==0:
+        print('no turnover for TES %i' % TES)
+        return None
+    
+    temps_list=np.array(temps_list)
+    turnover_list=np.array(turnover_list)
+
+    sorted_index=sorted(range(len(temps_list)), key=lambda i: temps_list[i])
+    sorted_temps=temps_list[sorted_index]
+    sorted_turnover=turnover_list[sorted_index]
+    
+    pngname='QUBIC_TES%03i_ASIC%i_Turnover_Temperature.png' % (TES,asic)
+    xlabel='T$_{bath}$ / mK'
+    ylabel='V$_{turnover}$ / V'
+
+    figsize=qplist[0].figsize
+    ttl='QUBIC ASIC %i TES #%i Turnover at Different Temperatures' % (asic,TES)
+    subttl=qplist[0].obsdate.strftime('Measurements of %Y-%m-%d')
+    
+    if xwin:plt.ion()
+    else:
+        plt.close('all')
+        plt.ioff()
+        
+    fig=plt.figure(figsize=figsize)
+    fig.canvas.set_window_title('plt: '+ttl)
+
+    plt.suptitle(ttl+'\n'+subttl)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    plt.plot(temps_list,turnover_list,linestyle='none',marker='D')
+    plt.plot(sorted_temps,sorted_turnover,color='green')
+
+    xmax=temps_list.max()
+    xmin=temps_list.min()
+    
+    span=xmax-xmin
+    plot_xlim=(xmin-0.05*span,xmax+0.1*span)
+    
+    ax=plt.gca()
+    ax.set_xlim(plot_xlim)
+    
+    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
+    
+    return
+
 
 def plot_TES_temperature_curves(qplist,TES,plot='I',xwin=True):
     '''
