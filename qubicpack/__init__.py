@@ -94,7 +94,8 @@ class qubicpack:
         read_ADU_file,\
         iv_tex_table_entry,\
         make_iv_tex_report,\
-        make_iv_report
+        make_iv_report,\
+        iv2txt
     
     if with_pystudio:
         '''

@@ -1245,6 +1245,26 @@ def make_iv_report(self):
     pdfname=texname.replace('.tex','.pdf')
     return
 
+def iv2txt(self,TES):
+    '''
+    extract the I-V data from a given TES to a text file with two columns
+    '''
+    if not isinstance(self.adu,np.ndarray):
+        print('ERROR! No Data.')
+        return None
+    
+    fname='QUBIC_TES%03i_ASIC%i_IV_%s.txt' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%S'))
+    h=open(fname,'w')
+    Ites=self.Ites(TES)
+    if not isinstance(Ites,np.ndarray):return None
+    
+    Vtes=self.Vtes(TES)
+    for idx in range(len(Ites)):
+        h.write('%.6e %.6e\n' % (Vtes[idx],Ites[idx]))
+    h.close()
+    return fname
+
+
 ###################################################
 ### helper functions to return info from the filter
 ###################################################
