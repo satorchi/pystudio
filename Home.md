@@ -22,6 +22,8 @@ authors:
 * Steve Torchinsky <satorchi@apc.in2p3.fr>
 * Michel Piat
 * Sophie Henrot-Versillé
+* Manuel Gonzalez
+* Maria Salatino
 * and other members of the QUBIC team
 
 
