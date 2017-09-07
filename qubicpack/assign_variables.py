@@ -29,7 +29,7 @@ def assign_defaults(self):
     self.figsize=(12.80,7.68)
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
     self.assign_asic(1)
-    self.tinteg=0.1
+    self.assign_integration_time()
     self.adu=None
     self.vbias=None
     self.cycle_vbias=True
