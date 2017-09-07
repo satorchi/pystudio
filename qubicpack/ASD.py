@@ -23,9 +23,22 @@ import matplotlib.mlab as mlab
 import pickle
 
 def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
+    '''
+    get timeline data and plot the Amplitude Spectral Density
+    timeline data is saved in FITS file, unless in monitor mode.
+    in monitor mode, the plots will refresh indefinitely.  exit with Ctrl-C
+    '''
     TES_index=self.TES_index(TES)
-    # legacy: pickle file was only used once.  Use FITS from now on.
+    monitor_mode=False
+    if not isinstance(ntimelines,int) or ntimelines<=0:
+        monitor_mode=True
+
+        
+
     if isinstance(picklename,str) and os.path.exists(picklename):
+        ''' 
+        legacy: pickle file was only used once.  Use FITS from now on.        
+        '''
         h=open(picklename,'r')
         timelines=pickle.load(h)
         self.timelines=timelines
@@ -37,24 +50,28 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         self.nsamples=100 # this should be read from file!
 
     if replay:
+        '''
+        replay data that is imported from file.  This is for testing.
+        '''
         if not isinstance(self.timelines,np.ndarray):
             print('Please read a timeline file, or run a new measurement!')
             return None
         ntimelines=self.timelines.shape[0]
         
     else:
+        '''
+        acquire new timeline data
+        '''
         self.assign_integration_time(tinteg)  # s
         client=self.connect_QubicStudio()
         self.nsamples = client.fetch('QUBIC_Nsample')
         self.obsdate=dt.datetime.utcnow()
 
-    Ndet = self.NPIXELS
-    fs = 20000/Ndet*(100/self.nsamples)
+    fs = 20000/self.NPIXELS*(100/self.nsamples)
     
-    saved_timelines=[]
+    if not monitor_mode: saved_timelines=[]
     ttl=str('Timeline and Amplitude Spectral Density')
     subttl=str('TES #%i' % TES)
-    plt.ion()
 
     nrows=1
     ncols=2
@@ -75,7 +92,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     for i in range(ntimelines):
 	if not replay:
             timeline = self.integrate_scientific_data()
-            saved_timelines.append(timeline)
+            if not monitor_mode: saved_timelines.append(timeline)
         else:
             timeline = self.timelines[i,:,:]
             
@@ -112,7 +129,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         pickle.dump(timelines,h)
         h.close()
     '''
-    if not replay:
+    if not replay and not monitor_mode:
         self.timelines=np.array(saved_timelines)
         self.write_fits()
 
