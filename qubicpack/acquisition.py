@@ -82,6 +82,8 @@ def integrate_scientific_data(self):
     client = self.connect_QubicStudio()
     if client==None:return None
 
+    self.debugmsg('calling integrate_scientific_data for ASIC %i' % self.asic)
+    
     integration_time=self.tinteg
     asic=self.asic
     
