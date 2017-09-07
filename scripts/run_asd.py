@@ -15,5 +15,9 @@ from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 go=qp()
 
-go.plot_ASD(tinteg=10.,chan=70)
-raw_input('Hit return to exit. ')
+'''
+if ntimelines is a positive integer, the timeline data will be saved
+otherwise, the plots are run in an infinite loop in "monitor mode" and no data is saved
+to exit from monitor mode, press Ctrl-C at the command line where the script was run (not on the plot)
+'''
+go.plot_ASD(tinteg=1.,TES=70,ntimelines=-1)
