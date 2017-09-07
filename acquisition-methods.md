@@ -18,5 +18,14 @@ make the list of bias voltages used during the I-V curve measurement.  Optional 
 
  
 ### get_iv_data()
- * run an I-V measurement
- * see also the wrapper script run_iv.py in the [example scripts](https://github.com/satorchi/pystudio/tree/master/scripts)
+run an I-V measurement
+
+see also the wrapper script run_iv.py in the [example scripts](https://github.com/satorchi/pystudio/tree/master/scripts)
+
+### plot_asd(TES=1,tinteg=None,ntimelines=10)
+take timeline data continuously and calculate the Amplitude Spectral Density.
+
+options
+* TES: this is the TES to monitor (default TES=1)
+* tinteg: the integration time.  If not specified, the integration time is taken from whatever was set earlier using **assign_integration_time()** (see [assignmement-methods](assignment methods)).  The default is 0.1 seconds.
+* ntimelines: the number of loops to make for taking timeline data.  If set to anything which is not a positive non-zero integer, the loop will run indefinitely.  Use **Ctrl-C** to break out of the loop.
