@@ -70,9 +70,9 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     fs = 20000/self.NPIXELS*(100/self.nsamples)
     
     if not monitor_mode: saved_timelines=[]
-    ttl=str('Timeline and Amplitude Spectral Density')
-    subttl=str('TES #%i' % TES)
-
+    ttl='Timeline and Amplitude Spectral Density'
+    subttl='\nASIC %i, TES #%i' % (self.asic,TES)
+    
     nrows=1
     ncols=2
     plt.ion()
@@ -80,7 +80,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     ax_timeline=axes[0]
     ax_asd=axes[1]
     fig.canvas.set_window_title('plt: '+ttl)
-    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    fig.suptitle(ttl+subttl,fontsize=16)
 
     ax_asd.set_xlabel('freq')
     ax_asd.set_ylabel('P')
@@ -89,6 +89,8 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     ax_timeline.set_ylabel('A')
     
     filerootname=self.obsdate.strftime('AmplitudeSpectralDensity_%Y%m%dT%H%M%SUTC')
+    txt_x=0.05
+    txt_y=0.02
     idx=0
     while idx<ntimelines or monitor_mode:
         
@@ -102,6 +104,9 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
             plt.close(fig)
             return None
 
+
+        data_time=dt.datetime.utcnow()
+        time_txt=data_time.strftime('%Y-%m-%m %H:%M:%S UTC')
         
 	PSD, freqs = mlab.psd(timeline[TES_index],
                               Fs = fs,
@@ -112,29 +117,23 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         
         ax_timeline.cla()
 	ax_timeline.plot(timeline[TES_index])
+        ax_timeline.text(txt_x,txt_y,time_txt,transform=ax_timeline.transAxes)
         plt.pause(0.01)
 
+        ASD=np.sqrt(PSD)
         ax_asd.cla()
-	ax_asd.loglog(freqs,np.sqrt(PSD))
+	ax_asd.loglog(freqs,ASD)
+        ax_asd.text(txt_x,txt_y,time_txt,transform=ax_asd.transAxes)
         plt.pause(0.01)
         
         if not monitor_mode:
-            pngname=str('%s_TES%03i_timeline%03i.png' % (filerootname,TES,i))
+            pngname=str('%s_TES%03i_timeline%03i.png' % (filerootname,TES,idx))
             plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
 
         idx+=1
 
     plt.show()
 
-    # legacy:  Pickle file was used only once.  Now use FITS
-    '''
-    if not replay:
-        opicklename=filerootname+'.pickle'
-        timelines=np.array(saved_timelines)
-        h=open(opicklename,'w')
-        pickle.dump(timelines,h)
-        h.close()
-    '''
     if not replay and not monitor_mode:
         self.timelines=np.array(saved_timelines)
         self.write_fits()
