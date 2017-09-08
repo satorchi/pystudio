@@ -89,20 +89,19 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     ax_timeline.set_ylabel('A')
     
     filerootname=self.obsdate.strftime('AmplitudeSpectralDensity_%Y%m%dT%H%M%SUTC')
-    for i in range(ntimelines):
+    idx=0
+    while idx<ntimelines or monitor_mode:
+        
 	if not replay:
             timeline = self.integrate_scientific_data()
             if not monitor_mode: saved_timelines.append(timeline)
         else:
-            timeline = self.timelines[i,:,:]
+            timeline = self.timelines[idx,:,:]
             
         if not isinstance(timeline,np.ndarray):
             plt.close(fig)
             return None
 
-        ax_timeline.cla()
-	ax_timeline.plot(timeline[TES_index])
-        plt.pause(0.01)
         
 	PSD, freqs = mlab.psd(timeline[TES_index],
                               Fs = fs,
@@ -111,12 +110,19 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
                               detrend='mean')
 
         
+        ax_timeline.cla()
+	ax_timeline.plot(timeline[TES_index])
+        plt.pause(0.01)
+
         ax_asd.cla()
 	ax_asd.loglog(freqs,np.sqrt(PSD))
         plt.pause(0.01)
-        pngname=str('%s_TES%03i_timeline%03i.png' % (filerootname,TES,i))
-        plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
-            
+        
+        if not monitor_mode:
+            pngname=str('%s_TES%03i_timeline%03i.png' % (filerootname,TES,i))
+            plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+
+        idx+=1
 
     plt.show()
 
