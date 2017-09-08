@@ -96,7 +96,7 @@ def integrate_scientific_data(self):
     self.nsamples=nsample
     
     period = 1 / (2e6 / self.NPIXELS / nsample)
-    self.debugmsg('period=%.2f' % period)
+    self.debugmsg('period=%.3f msec' % (1000*period))
     self.debugmsg ('integration_time=%.2f' % self.tinteg)
     timeline_size = int(np.ceil(self.tinteg / period))
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
