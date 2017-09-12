@@ -114,6 +114,9 @@ class qubicpack:
         from .ASD import\
             plot_ASD
 
+        from .squids import\
+            squid_test
+
     def __init__(self):
         self.assign_defaults()
         return
