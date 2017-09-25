@@ -68,7 +68,7 @@ def oxford_set_point(self, T=None):
 
 def oxford_read_bath_temperature(self):
     '''
-    read the current bath temperature of the dilution fridge
+    read the bath temperature of the dilution fridge
     '''
     cmd='READ:DEV:T5:TEMP:SIG:TEMP\n'
         
@@ -76,6 +76,8 @@ def oxford_read_bath_temperature(self):
     try:
         T=eval(d[-1].replace('K',''))
     except:
-        T=d[-1]
-    return T
+        print('ERROR! could not read bath temperature: %s' % d[-1])
+        return None
+
+    return self.assign_temperature(T)
 
