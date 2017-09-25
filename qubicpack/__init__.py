@@ -96,6 +96,12 @@ class qubicpack:
         make_iv_tex_report,\
         make_iv_report,\
         iv2txt
+
+    from .oxford import\
+        oxford_send_cmd,\
+        oxford_init,\
+        oxford_set_point,\
+        oxford_read_bath_temperature
     
     if with_pystudio:
         '''
