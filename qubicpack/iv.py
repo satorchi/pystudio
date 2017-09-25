@@ -581,6 +581,10 @@ def draw_iv(self,I,colour='blue',axis=plt,label=None):
         # we mark the last point
         axis.plot(self.vbias[0:npts],I,color=colour)
         axis.plot(self.vbias[npts-1],I[npts-1],color='red',marker='D',linestyle='none')
+
+        tempstr='T$_{bath}$=%0.2f mK' % (1000*self.temperature)
+        axis.text(0.05,0.95,tempstr,va='top',ha='left',fontsize=14,transform=axis.transAxes)
+        
         plt.pause(0.01)
         return
     
