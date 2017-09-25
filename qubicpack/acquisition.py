@@ -215,16 +215,17 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         figmulti,axmulti=self.setup_plot_iv_multi()
     
     for j in range(nbias) :
-        print("measures at Voffset=%gV " % vbias[j])
+        print("Vbias=%gV " % vbias[j])
         if not replay:
             self.set_VoffsetTES(vbias[j],0.0)
             self.wait_a_bit()
             Vavg= self.get_mean()
             adu[:,j]=Vavg
+            self.oxford_read_bath_temperature()
         else:
             Vavg=adu[:,j]
 
-        print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
+        # print ("a sample of V averages :  %g %g %g " %(Vavg[0], Vavg[43], Vavg[73]) )
         # plt.figure(figavg.number)
         # self.plot_Vavg(Vavg,vbias[j])
         if monitor_iv:
