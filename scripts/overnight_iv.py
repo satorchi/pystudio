@@ -18,14 +18,30 @@ import datetime as dt
 import subprocess,os,sys,time
 reload(sys)
 sys.setdefaultencoding('utf8')
+from datefunctions import *
+
+# set this to False for a real measurement
+TESTMODE=True
 
 # precision required for bath temperature
 temp_precision=0.005 # in Kelvin
 
 # timeout for waiting for temperature to settle
-temp_timeout=dt.timedelta(minutes=30)
+if TESTMODE:
+    temp_timeout=dt.timedelta(seconds=30)
+    temp_wait=dt.timedelta(seconds=5)
+    wait_msg='waiting %.0f seconds for temperature to settle' % tot_seconds(temp_wait)
+else:
+    temp_timeout=dt.timedelta(minutes=30)
+    temp_wait=dt.timedelta(minutes=5)
+    wait_msg='waiting %.1f minutes for temperature to settle' % tot_seconds(temp_wait)/60.
 
+
+    
 def get_from_keyboard(msg,default=None):
+    ''''
+    get interactive input from the keyboard
+    '''
     prompt='%s (default: %s) ' % (msg,str(default))
     ans=raw_input(prompt)
     if ans=='':return default
@@ -40,6 +56,15 @@ def get_from_keyboard(msg,default=None):
     return x
     
 
+def writelog(filename,msg):
+    '''
+    write some output with a timestamp to a log file
+    '''
+    handle=open(filename,'a')
+    timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S -- ')
+    handle.write(timestamp+msg+'\n')
+    handle.close()
+    return
 
 go=qp()
 
@@ -85,41 +110,61 @@ if step_temp==None:quit()
 
 Tbath_target=np.arange(min_temp,max_temp,step_temp)
 
+# if running in test mode, use a random generated result
+if TESTMODE:
+    go.adu=np.random.rand(go.NPIXELS,len(go.vbias))
+    go.temperature=0.3
+    go.nsamples=100
+
+# make a log file
+logfile=dt.datetime.utcnow().strftime('temperature_IV_logfile_%Y%m%dT%H%M%SUTC.txt')
+
 # run the measurement
 for T in Tbath_target:
+    # set the desired bath temperature
+    cmdret=go.oxford_set_point(T)
+    # make sure the set point was accepted
+    Tsetpt=go.oxford_read_set_point()
+    if Tsetpt==None:
+        writelog(logfile,'ERROR! Could not read set point temperature.')
+        Tsetpt=go.temperature        
+    writelog(logfile,'Temperature set point = %.2f mK' % (1000*Tsetpt))
     Tbath=go.oxford_read_bath_temperature()
+    if Tbath==None:
+        writelog(logfile,'ERROR! Could not read bath temperature.')
+        Tbath=go.temperature
     delta=np.abs(Tbath - T)
     start_waiting=dt.datetime.utcnow()
     end_waiting=start_waiting+temp_timeout
     while (delta>temp_precision) and (dt.datetime.utcnow()<end_waiting):
-        print('waiting 5 minutes for temperature to settle...')
-        time.sleep(300)
-        print(' reading temperature: ')
+        writelog(logfile,wait_msg)
+        time.sleep(tot_seconds(temp_wait))
+        writelog(logfile,'reading temperature')
         Tbath=go.oxford_read_bath_temperature()
+        if Tbath==None:
+            writelog(logfile,'ERROR! Could not read bath temperature.')
+            Tbath=go.temperature
         delta=np.abs(Tbath - T)
-        print('Tbath=%0.2f mK\n' % (1000*go.temperature))
+        
+        writelog(logfile,'Tbath=%0.2f mK' %  (1000*go.temperature))
         
         
-    
-go.get_iv_data(TES=monitor_TES)
+    writelog(logfile,'starting I-V measurement')
+    if delta>temp_precision:
+        writelog(logfile,'WARNING! Did not reach target temperature!')
+        writelog(logfile,'Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
+    go.get_iv_data(TES=monitor_TES,replay=TESTMODE)
+    writelog(logfile,'end I-V measurement')
+    plt.close('all')
 
-# generate the test document
-pdfname=go.make_iv_report()
+    # generate the test document
+    writelog(logfile,'generating test document')
+    if not TESTMODE: pdfname=go.make_iv_report()
+    writelog(logfile,'test document generated')
 
-# find pdf viewer
-viewers=['xpdf','evince','okular','acroread']
-use_viewer=None
-for viewer in viewers:
-    cmd='which %s' % viewer
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    (out, err) = proc.communicate()
-    if not out=='':
-        use_viewer=out.strip()
-        break
-        
-cmd='%s %s' % (use_viewer,pdfname)
-if not pdfname==None and os.path.exists(pdfname) and not use_viewer==None:
-    os.system(cmd)
+    # reset data
+    if not TESTMODE:go.adu=None
+
+
 
     
-
