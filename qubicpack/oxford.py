@@ -28,7 +28,11 @@ def oxford_send_cmd(self, cmd=None):
         return None
 
     s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("134.158.186.162", 33576))
+    try:
+        s.connect(("134.158.186.162", 33576))
+    except:
+        print('ERROR! network not available.')
+        return None
     s.send(cmd)
 
     d=''
@@ -48,7 +52,7 @@ def oxford_init(self):
     '''
     initialize the Oxford Instruments computer so it accepts commands
     '''
-    return oxford_send_cmd('SET:SYS:USER:NORM\n')
+    return self.oxford_send_cmd('SET:SYS:USER:NORM\n')
 
 def oxford_set_point(self, T=None):
     '''
@@ -59,12 +63,24 @@ def oxford_set_point(self, T=None):
         return None
 
     # first initialize Oxford Inst.
-    d=oxford_init()
+    d=self.oxford_init()
 
     # now send the loop set command
     cmd='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\n' % T
-    return send_oxford_cmd(cmd)
+    return self.oxford_send_cmd(cmd)
 
+def oxford_read_set_point(self):
+    '''
+    read the loop set point for bath temperature
+    '''
+    cmd='READ:DEV:T5:TEMP:LOOP:TSET\n'
+    d=self.oxford_send_cmd(cmd)
+    try:
+        T=eval(d[-1].replace('K',''))
+    except:
+        print('ERROR! could not read set point temperature: %s' % d)
+        return None
+    return T
 
 def oxford_read_bath_temperature(self):
     '''
@@ -72,11 +88,11 @@ def oxford_read_bath_temperature(self):
     '''
     cmd='READ:DEV:T5:TEMP:SIG:TEMP\n'
         
-    d=send_oxford_cmd(cmd)
+    d=self.oxford_send_cmd(cmd)
     try:
         T=eval(d[-1].replace('K',''))
     except:
-        print('ERROR! could not read bath temperature: %s' % d[-1])
+        print('ERROR! could not read bath temperature: %s' % d)
         return None
 
     return self.assign_temperature(T)
