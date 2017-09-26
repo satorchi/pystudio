@@ -215,7 +215,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         figmulti,axmulti=self.setup_plot_iv_multi()
     
     for j in range(nbias) :
-        print("Vbias=%gV " % vbias[j])
+        self.debugmsg("Vbias=%gV " % vbias[j])
         if not replay:
             self.set_VoffsetTES(vbias[j],0.0)
             self.wait_a_bit()
