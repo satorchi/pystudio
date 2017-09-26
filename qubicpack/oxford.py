@@ -56,7 +56,7 @@ def oxford_init(self):
 
 def oxford_set_point(self, T=None):
     '''
-    set the loop set point for bath temperature
+    set the loop set point for bath temperature, and activate the loop
     '''
     if (not isinstance(T,float)) and (not isinstance(T,int)):
         print('ERROR! invalid temperature')
@@ -65,8 +65,8 @@ def oxford_set_point(self, T=None):
     # first initialize Oxford Inst.
     d=self.oxford_init()
 
-    # now send the loop set command
-    cmd='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\n' % T
+    # now send the loop set and activate command
+    cmd='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\nSET:DEV:T5:TEMP:LOOP:MODE:ON\n' % T
     return self.oxford_send_cmd(cmd)
 
 def oxford_read_set_point(self):
@@ -81,6 +81,24 @@ def oxford_read_set_point(self):
         print('ERROR! could not read set point temperature: %s' % d)
         return None
     return T
+
+def oxford_read_temperature(self,chan=5):
+    '''
+    read the temperature from one of the thermometers
+    '''
+    if not isinstance(chan,int):
+        print('ERROR! invalid thermometer channel.  Enter a number from 1 to 10.')
+        return None
+    
+    cmd='READ:DEV:T%i:TEMP:SIG:TEMP\n' % chan
+    d=self.oxford_send_cmd(cmd)
+    try:
+        T=eval(d[-1].replace('K',''))
+    except:
+        print('ERROR! could not read temperature: %s' % d)
+        return None
+    return T
+    
 
 def oxford_read_bath_temperature(self):
     '''
