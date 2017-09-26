@@ -61,7 +61,7 @@ def writelog(filename,msg):
     write some output with a timestamp to a log file
     '''
     handle=open(filename,'a')
-    timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S -- ')
+    timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC -- ')
     handle.write(timestamp+msg+'\n')
     handle.close()
     return
