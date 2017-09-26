@@ -18,7 +18,7 @@ import datetime as dt
 import subprocess,os,sys,time
 reload(sys)
 sys.setdefaultencoding('utf8')
-from datefunctions import *
+from satorchipy.datefunctions import *
 
 # set this to False for a real measurement
 TESTMODE=True
