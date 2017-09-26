@@ -65,8 +65,10 @@ def oxford_set_point(self, T=None):
     # first initialize Oxford Inst.
     d=self.oxford_init()
 
-    # now send the loop set and activate command
-    cmd='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\nSET:DEV:T5:TEMP:LOOP:MODE:ON\n' % T
+    # we switch off the loop, reset the set-point, and re-activate the loop
+    cmd ='SET:DEV:T5:TEMP:LOOP:MODE:OFF\n'
+    cmd+='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\n' % T
+    cmd+='SET:DEV:T5:TEMP:LOOP:MODE:ON\n'
     return self.oxford_send_cmd(cmd)
 
 def oxford_read_set_point(self):
