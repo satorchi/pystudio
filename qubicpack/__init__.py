@@ -102,6 +102,7 @@ class qubicpack:
         oxford_init,\
         oxford_set_point,\
         oxford_read_set_point,\
+        oxford_read_temperature,\
         oxford_read_bath_temperature
     
     if with_pystudio:
