@@ -142,6 +142,21 @@ def oxford_read_temperature(self,chan=5):
         print('ERROR! could not read temperature: %s' % d)
         return None
     return T
+
+def oxford_check_calibration(self,chan=5):
+    '''
+    check if a temperature sensor is calibrated
+    '''
+    if not isinstance(chan,int):
+        print('ERROR! invalid thermometer channel.  Enter a number from 1 to 10.')
+        return None
+
+    cmd='READ:DEV:T%i:TEMP:CAL:CHK\n' % chan
+    d=self.oxford_send_cmd(cmd)
+    if d==None:return False
+    ok=d[-1]
+    if ok=='OK':return True
+    return FALSE
     
 
 def oxford_read_bath_temperature(self):
@@ -168,6 +183,15 @@ def oxford_read_all_temperatures(self):
         if not label=='NOT USED':
             chan=idx+1
             val=self.oxford_read_temperature(chan)
-            temperature_table+='T%02i) %8.3f K -- %s\n' % (chan,val,label)
+            if val==None:
+                tempstr='INACCESSIBLE'
+            else:
+                tempstr='%8.3f K' % val
+            calok=self.oxford_check_calibration(chan)
+            if calok:
+                calmsg=''
+            else:
+                calmsg=' == UNCALIBRATED =='
+            temperature_table+='T%02i) %s -- %s%s\n' % (chan,tempstr,label,calmsg)
 
     return temperature_table
