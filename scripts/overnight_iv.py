@@ -127,7 +127,7 @@ for T in Tbath_target:
     Tsetpt=go.oxford_read_set_point()
     if Tsetpt==None:
         writelog(logfile,'ERROR! Could not read set point temperature.')
-        Tsetpt=go.temperature        
+        Tsetpt=T
     writelog(logfile,'Temperature set point = %.2f mK' % (1000*Tsetpt))
     Tbath=go.oxford_read_bath_temperature()
     if Tbath==None:
