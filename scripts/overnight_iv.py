@@ -167,4 +167,6 @@ for T in Tbath_target:
 
 
 
-    
+# finally, switch off the temperature control loop
+go.oxford_pidoff()
+
