@@ -43,11 +43,6 @@ asic=get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
 
-temp=get_from_keyboard('TES bath temperature in K ',0.3)
-if temp==None:quit()
-ret=go.assign_temperature(temp)
-if ret==None:quit()
-
 min_bias=get_from_keyboard('minimum bias voltage ',4.5)
 if min_bias==None:quit()
 max_bias=get_from_keyboard('maximum bias voltage ',9.0)
