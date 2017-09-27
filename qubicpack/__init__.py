@@ -100,6 +100,7 @@ class qubicpack:
     from .oxford import\
         oxford_send_cmd,\
         oxford_init,\
+        oxford_pidoff,\
         oxford_set_point,\
         oxford_read_set_point,\
         oxford_read_temperature,\

@@ -10,12 +10,15 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
           permitted by law.
 
 control and read output from the Oxford Instruments Triton dilution fridge
+
+see document: "Triton manual issue 3.7.pdf" (page 100)
+I put it on the QUBIC wiki.  Here's the link:
+http://qubic.in2p3.fr/wiki/uploads/DetectorWorkingGroup/MeasurementsDetectors/Triton%20manual%20issue%203.7.pdf
 '''
 from __future__ import division, print_function
 import numpy as np
-import pickle
-import socket
-    
+import socket,time
+
 def oxford_send_cmd(self, cmd=None):
     '''
     send a command to the Oxford Instruments control computer for the dilution fridge
@@ -54,9 +57,17 @@ def oxford_init(self):
     '''
     return self.oxford_send_cmd('SET:SYS:USER:NORM\n')
 
-def oxford_set_point(self, T=None):
+def oxford_pidoff(self):
     '''
-    set the loop set point for bath temperature, and activate the loop
+    switch off the temperature control loop
+    '''
+    pidoff='SET:DEV:T5:TEMP:LOOP:MODE:OFF\n'
+    d=self.oxford_init()
+    return self.oxford_send_cmd(pidoff)
+
+def oxford_set_point(self, T=None, heater=0.1, ramp=0.1):
+    '''
+    configure the loop set point for bath temperature, and activate the loop
     '''
     if (not isinstance(T,float)) and (not isinstance(T,int)):
         print('ERROR! invalid temperature')
@@ -65,11 +76,27 @@ def oxford_set_point(self, T=None):
     # first initialize Oxford Inst.
     d=self.oxford_init()
 
-    # we switch off the loop, reset the set-point, and re-activate the loop
-    cmd ='SET:DEV:T5:TEMP:LOOP:MODE:OFF\n'
-    cmd+='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\n' % T
-    cmd+='SET:DEV:T5:TEMP:LOOP:MODE:ON\n'
-    return self.oxford_send_cmd(cmd)
+    # activate the loop:  This must be done first!
+    # and then configure the temperature set-point
+    cmd ='SET:DEV:T5:TEMP:LOOP:MODE:ON\n'        # ON/OFF
+    cmd+='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\n' % T # K
+    d=self.oxford_send_cmd(cmd)
+
+    # wait a second and then activate the heater
+    time.sleep(1)
+    cmdheat='SET:DEV:T5:TEMP:LOOP:RANGE:%f\n' % heater # mA
+    d=self.oxford_send_cmd(cmdheat)
+
+    # set the ramp rate for temperature control
+    cmdramp='SET:DEV:T5:TEMP:LOOP:RAMP:RATE:%f\n' % ramp # K/min
+    d=self.oxford_send_cmd(cmdramp)
+
+    # enable the ramp
+    time.sleep(1)
+    rampenable='SET:DEV:T5:TEMP:LOOP:RAMP:ENAB:ON\n'
+    d=self.oxford_send_cmd(cmdramp)
+    
+    return d
 
 def oxford_read_set_point(self):
     '''
