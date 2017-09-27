@@ -22,6 +22,7 @@ def assign_defaults(self):
     self.debuglevel=0
     self.zero=1e-9
     self.QubicStudio_ip='134.158.186.233'
+    self.OxfordInstruments_ip='134.158.186.162'
     self.NPIXELS=128
     self.kBoltzmann=1.3806485279e-23
     self.Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
@@ -49,6 +50,7 @@ def assign_defaults(self):
     for idx in range(self.NPIXELS): self.filtersummary.append(None)
     self.assign_lookup_table()
     self.temperature=None
+    self.oxford_assign_temperature_labels()
     return
 
 def assign_observer(self,observer='APC LaboMM'):

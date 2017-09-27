@@ -98,13 +98,15 @@ class qubicpack:
         iv2txt
 
     from .oxford import\
+        oxford_assign_temperature_labels,\
         oxford_send_cmd,\
         oxford_init,\
         oxford_pidoff,\
         oxford_set_point,\
         oxford_read_set_point,\
         oxford_read_temperature,\
-        oxford_read_bath_temperature
+        oxford_read_bath_temperature,\
+        oxford_read_all_temperatures
     
     if with_pystudio:
         '''
@@ -128,10 +130,6 @@ class qubicpack:
 
     def __init__(self):
         self.assign_defaults()
-        return
-
-    def verdate(self):
-        print("Mon 07 Aug 2017 07:43:54 CEST")
         return
 
     def debugmsg(self,msg):

@@ -19,6 +19,21 @@ from __future__ import division, print_function
 import numpy as np
 import socket,time
 
+def oxford_assign_temperature_labels(self):
+    labels=[]
+    labels.append('4K Head')
+    labels.append('4K Plate')
+    labels.append('Still RuO2')
+    labels.append('MC Plate cernox')
+    labels.append('MC Plate RuO2')
+    labels.append('100mK Plate RuO2')
+    labels.append('NOT USED')
+    labels.append('NOT USED')
+    labels.append('70K Head')
+    labels.append('70K Plate')
+    self.oxford_temperature_labels=labels
+    return
+
 def oxford_send_cmd(self, cmd=None):
     '''
     send a command to the Oxford Instruments control computer for the dilution fridge
@@ -32,7 +47,7 @@ def oxford_send_cmd(self, cmd=None):
 
     s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.connect(("134.158.186.162", 33576))
+        s.connect((self.OxfordInstruments_ip, 33576))
     except:
         print('ERROR! network not available.')
         return None
@@ -144,3 +159,15 @@ def oxford_read_bath_temperature(self):
 
     return self.assign_temperature(T)
 
+def oxford_read_all_temperatures(self):
+    '''
+    read all the temperatures from the dilution fridge
+    '''
+    temperature_table=''
+    for idx,label in enumerate(self.oxford_temperature_labels):
+        if not label=='NOT USED':
+            chan=idx+1
+            val=self.oxford_read_temperature(chan)
+            temperature_table+='T%02i) %8.3f K -- %s\n' % (chan,val,label)
+
+    return temperature_table
