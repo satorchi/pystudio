@@ -228,6 +228,8 @@ def oxford_read_heater_level(self):
     # and we read the maximum range that we provided in the set_point command
     Imax=self.oxford_read_heater_range()
     if Imax==None:return None
+    # convert Imax to Amps
+    Imax=0.001*Imax
     
     htrpercent=100.0*I/Imax
     return htrpercent
@@ -248,7 +250,7 @@ def oxford_set_heater_level(self,heater=None):
 def oxford_read_heater_range(self):
     '''
     read the maximum current range for the heater
-    NOTE: the return is in Amps (not mA).
+    NOTE: the return is in mA.
     '''
     cmd='READ:DEV:T5:TEMP:LOOP:RANGE\n'
     d=self.oxford_send_cmd(cmd)
@@ -264,11 +266,14 @@ def oxford_read_heater_range(self):
     except:
         print('ERROR! could not read the heater power range maximum')
         return None
-    return Imax
+
+    # return value in mA rather than Amps
+    return Imax*1000
     
 def oxford_determine_best_heater_level(self):
     '''
     determine the correct heater maximum level based on the set point
+    NOTE: this is returned in mA
     '''
     Tsetpt=self.oxford_read_set_point()
     if Tsetpt==None:return None
