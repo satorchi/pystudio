@@ -34,7 +34,7 @@ if TESTMODE:
 else:
     temp_timeout=dt.timedelta(minutes=30)
     temp_wait=dt.timedelta(minutes=5)
-    wait_msg='waiting %.1f minutes for temperature to settle' % tot_seconds(temp_wait)/60.
+    wait_msg='waiting %.1f minutes for temperature to settle' % (tot_seconds(temp_wait)/60.)
 
 
     
@@ -67,6 +67,7 @@ def writelog(filename,msg):
     return
 
 go=qp()
+figsize=go.figsize
 
 # set debuglevel to 1 if you want lots of messages on the screen
 # go.debuglevel=1
@@ -101,14 +102,20 @@ if monitor_TES==None:quit()
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
 
 # setup temperature range
-min_temp=get_from_keyboard('minimum bath temperature ',0.2)
-if min_temp==None:quit()
-max_temp=get_from_keyboard('maximum bath temperature ',0.8)
-if max_temp==None:quit()
+start_temp=get_from_keyboard('start bath temperature ',0.2)
+if start_temp==None:quit()
+end_temp=get_from_keyboard('end bath temperature ',0.8)
+if end_temp==None:quit()
 step_temp=get_from_keyboard('temperature steps',0.025)
 if step_temp==None:quit()
 
-Tbath_target=np.arange(min_temp,max_temp,step_temp)
+# make sure steps are negative if we're going down in temperature
+if start_temp>end_temp:
+    if step_temp>0:step_temp=-step_temp
+else:
+    if step_temp<0:step_temp=-step_temp
+
+Tbath_target=np.arange(start_temp,end_temp,step_temp)
 
 # if running in test mode, use a random generated result
 if TESTMODE:
@@ -145,9 +152,14 @@ for T in Tbath_target:
             writelog(logfile,'ERROR! Could not read bath temperature.')
             Tbath=go.temperature
         delta=np.abs(Tbath - T)
-        
         writelog(logfile,'Tbath=%0.2f mK' %  (1000*go.temperature))
-        
+
+        # check heater percentage
+        heatpercent=go.oxford_read_heater_level()
+        if heatpercent>99:
+            writelog(logfile,'We need to increase the maximum current to the heater')
+            heatmax=oxford_read_heater_range()
+            writelog(logfile,'THIS IS STILL TO BE IMPLEMENTED!!!')        
         
     writelog(logfile,'starting I-V measurement')
     if delta>temp_precision:
@@ -161,6 +173,9 @@ for T in Tbath_target:
     writelog(logfile,'generating test document')
     if not TESTMODE: pdfname=go.make_iv_report()
     writelog(logfile,'test document generated')
+
+    # reset the plotting figure size
+    go.figsize=figsize
 
     # reset data
     if not TESTMODE:go.adu=None

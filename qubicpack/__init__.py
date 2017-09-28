@@ -107,7 +107,10 @@ class qubicpack:
         oxford_read_temperature,\
         oxford_read_bath_temperature,\
         oxford_read_all_temperatures,\
-        oxford_check_calibration
+        oxford_check_calibration,\
+        oxford_read_heater_level,\
+        oxford_read_heater_range,\
+        oxford_determine_best_heater_level
     
     if with_pystudio:
         '''

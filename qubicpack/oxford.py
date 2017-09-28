@@ -80,7 +80,7 @@ def oxford_pidoff(self):
     d=self.oxford_init()
     return self.oxford_send_cmd(pidoff)
 
-def oxford_set_point(self, T=None, heater=0.1, ramp=0.1):
+def oxford_set_point(self, T=None, heater=None, ramp=0.1):
     '''
     configure the loop set point for bath temperature, and activate the loop
     '''
@@ -90,7 +90,7 @@ def oxford_set_point(self, T=None, heater=0.1, ramp=0.1):
 
     # first initialize Oxford Inst.
     d=self.oxford_init()
-
+        
     # activate the loop:  This must be done first!
     # and then configure the temperature set-point
     cmd ='SET:DEV:T5:TEMP:LOOP:MODE:ON\n'        # ON/OFF
@@ -99,8 +99,7 @@ def oxford_set_point(self, T=None, heater=0.1, ramp=0.1):
 
     # wait a second and then activate the heater
     time.sleep(1)
-    cmdheat='SET:DEV:T5:TEMP:LOOP:RANGE:%f\n' % heater # mA
-    d=self.oxford_send_cmd(cmdheat)
+    d=oxford_set_heater_level(heater)
 
     # set the ramp rate for temperature control
     cmdramp='SET:DEV:T5:TEMP:LOOP:RAMP:RATE:%f\n' % ramp # K/min
@@ -195,3 +194,91 @@ def oxford_read_all_temperatures(self):
             temperature_table+='T%02i) %s -- %s%s\n' % (chan,tempstr,label,calmsg)
 
     return temperature_table
+
+def oxford_read_heater_level(self):
+    '''
+    read the percent level of the heater.  
+    This is a percentage of the max current specified in the set heater command
+    '''
+
+    # first we read the heater output power in microWatts
+    cmd='READ:DEV:H1:HTR:SIG:POWR\n'
+    d=self.oxford_send_cmd(cmd)    
+    try:
+        P=1e-6*eval(d[-1].replace('uW',''))
+    except:
+        print('ERROR! could not read heater power: %s' % d)
+        return None
+    self.debugmsg('heater power: %f W' % P)
+    
+    # next we read the heater resistance in Ohms    
+    cmd='READ:DEV:H1:HTR:RES\n'
+    d=self.oxford_send_cmd(cmd)
+    try:
+        R=eval(d[-1])
+    except:
+        print('ERROR! could not read heater resistance: %s' % d)
+        return None
+    self.debugmsg('heater resistance: %f Ohm' % R)
+
+    # and we calculate the current with Ohm's law: P=I^2 R
+    I=np.sqrt(P/R)
+    self.debugmsg('heater current: %f A' % I)
+
+    # and we read the maximum range that we provided in the set_point command
+    Imax=self.oxford_read_heater_range()
+    if Imax==None:return None
+    
+    htrpercent=100.0*I/Imax
+    return htrpercent
+
+def oxford_set_heater_level(self,heater=None):
+    '''
+    set the heater maximum current level
+    '''    
+    # determine heater level to apply
+    if (not isinstance(heater,float)) and (not isinstance(heater,int)):
+        heater=self.oxford_determine_best_heater_level()
+        if heater==None:return None
+
+    cmdheat='SET:DEV:T5:TEMP:LOOP:RANGE:%f\n' % heater # mA
+    d=self.oxford_send_cmd(cmdheat)
+    return d
+
+def oxford_read_heater_range(self):
+    '''
+    read the maximum current range for the heater
+    NOTE: the return is in Amps (not mA).
+    '''
+    cmd='READ:DEV:T5:TEMP:LOOP:RANGE\n'
+    d=self.oxford_send_cmd(cmd)
+    try:
+        val=eval(d[-1].replace('mA','').replace('uA',''))
+        if d[-1].find('mA')>0:
+            f=1e-3
+        elif d[-1].find('uA')>0:
+            f=1e-6
+        else:
+            f=1
+        Imax=val*f
+    except:
+        print('ERROR! could not read the heater power range maximum')
+        return None
+    return Imax
+    
+def oxford_determine_best_heater_level(self):
+    '''
+    determine the correct heater maximum level based on the set point
+    '''
+    Tsetpt=self.oxford_read_set_point()
+    if Tsetpt==None:return None
+
+    if Tsetpt>=0.5:
+        heater=1.0
+    elif Tsetpt>=0.3:
+        heater=0.316
+    else:
+        heater=0.1
+
+    return heater
+
