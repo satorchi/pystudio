@@ -156,7 +156,7 @@ def oxford_check_calibration(self,chan=5):
     if d==None:return False
     ok=d[-1]
     if ok=='OK':return True
-    return FALSE
+    return False
     
 
 def oxford_read_bath_temperature(self):
