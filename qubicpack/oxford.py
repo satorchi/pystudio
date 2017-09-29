@@ -108,7 +108,7 @@ def oxford_set_point(self, T=None, heater=None, ramp=0.1):
 
     # wait a second and then activate the heater
     time.sleep(1)
-    d=oxford_set_heater_range(heater)
+    d=self.oxford_set_heater_range(heater)
 
     # set the ramp rate for temperature control
     cmdramp='SET:DEV:T5:TEMP:LOOP:RAMP:RATE:%f\n' % ramp # K/min
