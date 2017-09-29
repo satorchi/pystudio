@@ -252,6 +252,7 @@ def oxford_set_heater_range(self,heater=None):
         heater=self.oxford_determine_best_heater_level()
         if heater==None:return None
 
+    self.debugmsg('setting heater range: %f mA' % heater)
     cmdheat='SET:DEV:T5:TEMP:LOOP:RANGE:%f\n' % heater # mA
     d=self.oxford_send_cmd(cmdheat)
     return d
@@ -300,27 +301,21 @@ def oxford_increase_heater_range(self,testidx=-1):
     '''
     increase by one level the maximum heater range
     '''
-
     # first read the current setting
     heater=self.oxford_read_heater_range()
     if heater==None:
         if testidx<0:return None
         heater=self.oxford_heater_ranges[testidx]
 
+    if heater>=self.oxford_heater_ranges[-1]:
+        print('WARNING! Already at maximum heater range!')
+        return heater
+    
     self.debugmsg('current heater range: %f mA' % heater)
     # check which level number
-    idx=0
-    std_level=self.oxford_heater_ranges[idx]
-    while heater>=std_level:
-        self.debugmsg('next heater level: %f' % std_level)
-        idx+=1
-        std_level=self.oxford_heater_ranges[idx]
+    for heater_range in self.oxford_heater_ranges:
+        self.debugmsg('next heater range: %f mA' % heater_range)
+        if heater_range>heater:break
 
-    if idx<0:idx=0
-    if idx>=len(self.oxford_heater_ranges):
-        print('WARNING! Already at maximum heater range!')
-        idx=len(self.oxford_heater_ranges)-1
-        return heater
-    next_heater_range=self.oxford_heater_ranges[idx]
-    d=self.oxford_set_heater_range(next_heater_range)
+    d=self.oxford_set_heater_range(heater_range)
     return d
