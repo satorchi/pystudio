@@ -195,11 +195,14 @@ def oxford_read_all_temperatures(self):
                 tempstr='INACCESSIBLE'
             else:
                 tempstr='%8.3f K' % val
+            calmsg=''
+            '''
             calok=self.oxford_check_calibration(chan)
             if calok:
                 calmsg=''
             else:
                 calmsg=' == UNCALIBRATED =='
+            '''
             temperature_table+='T%02i) %s -- %s%s\n' % (chan,tempstr,label,calmsg)
 
     return temperature_table
