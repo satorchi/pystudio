@@ -99,6 +99,7 @@ class qubicpack:
 
     from .oxford import\
         oxford_assign_temperature_labels,\
+        oxford_assign_heater_ranges,\
         oxford_send_cmd,\
         oxford_init,\
         oxford_pidoff,\
@@ -110,7 +111,8 @@ class qubicpack:
         oxford_check_calibration,\
         oxford_read_heater_level,\
         oxford_read_heater_range,\
-        oxford_determine_best_heater_level
+        oxford_determine_best_heater_level,\
+        oxford_increase_heater_range
     
     if with_pystudio:
         '''

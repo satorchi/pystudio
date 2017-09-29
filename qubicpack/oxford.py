@@ -34,6 +34,15 @@ def oxford_assign_temperature_labels(self):
     self.oxford_temperature_labels=labels
     return
 
+def oxford_assign_heater_ranges(self):
+    ranges=[]
+    ranges.append(0.1)
+    ranges.append(0.316)
+    ranges.append(1.0)
+    ranges.append(3.16)
+    self.oxford_heater_ranges=ranges
+    return
+
 def oxford_send_cmd(self, cmd=None):
     '''
     send a command to the Oxford Instruments control computer for the dilution fridge
@@ -99,7 +108,7 @@ def oxford_set_point(self, T=None, heater=None, ramp=0.1):
 
     # wait a second and then activate the heater
     time.sleep(1)
-    d=oxford_set_heater_level(heater)
+    d=oxford_set_heater_range(heater)
 
     # set the ramp rate for temperature control
     cmdramp='SET:DEV:T5:TEMP:LOOP:RAMP:RATE:%f\n' % ramp # K/min
@@ -234,7 +243,7 @@ def oxford_read_heater_level(self):
     htrpercent=100.0*I/Imax
     return htrpercent
 
-def oxford_set_heater_level(self,heater=None):
+def oxford_set_heater_range(self,heater=None):
     '''
     set the heater maximum current level
     '''    
@@ -287,3 +296,31 @@ def oxford_determine_best_heater_level(self):
 
     return heater
 
+def oxford_increase_heater_range(self,testidx=-1):
+    '''
+    increase by one level the maximum heater range
+    '''
+
+    # first read the current setting
+    heater=self.oxford_read_heater_range()
+    if heater==None:
+        if testidx<0:return None
+        heater=self.oxford_heater_ranges[testidx]
+
+    self.debugmsg('current heater range: %f mA' % heater)
+    # check which level number
+    idx=0
+    std_level=self.oxford_heater_ranges[idx]
+    while heater>=std_level:
+        self.debugmsg('next heater level: %f' % std_level)
+        idx+=1
+        std_level=self.oxford_heater_ranges[idx]
+
+    if idx<0:idx=0
+    if idx>=len(self.oxford_heater_ranges):
+        print('WARNING! Already at maximum heater range!')
+        idx=len(self.oxford_heater_ranges)-1
+        return heater
+    next_heater_range=self.oxford_heater_ranges[idx]
+    d=self.oxford_set_heater_range(next_heater_range)
+    return d

@@ -158,8 +158,9 @@ for T in Tbath_target:
         heatpercent=go.oxford_read_heater_level()
         if heatpercent>99:
             writelog(logfile,'We need to increase the maximum current to the heater')
-            heatmax=oxford_read_heater_range()
-            writelog(logfile,'THIS IS STILL TO BE IMPLEMENTED!!!')        
+            cmdret=go.oxford_increase_heater_range()
+            heater=go.oxford_read_heater_range()
+            writelog(logfile,'heater range: %f mA' % heater)
         
     writelog(logfile,'starting I-V measurement')
     if delta>temp_precision:

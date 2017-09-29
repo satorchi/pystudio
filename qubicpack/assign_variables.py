@@ -51,6 +51,7 @@ def assign_defaults(self):
     self.assign_lookup_table()
     self.temperature=None
     self.oxford_assign_temperature_labels()
+    self.oxford_assign_heater_ranges()
     return
 
 def assign_observer(self,observer='APC LaboMM'):
