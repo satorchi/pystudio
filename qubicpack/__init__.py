@@ -111,6 +111,7 @@ class qubicpack:
         oxford_check_calibration,\
         oxford_read_heater_level,\
         oxford_read_heater_range,\
+        oxford_set_heater_range,\
         oxford_determine_best_heater_level,\
         oxford_increase_heater_range
     
