@@ -16,6 +16,7 @@ from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 import datetime as dt
 import subprocess,os,sys,time
+import numpy as np
 reload(sys)
 sys.setdefaultencoding('utf8')
 from satorchipy.datefunctions import *
