@@ -14,7 +14,7 @@ else:
     print("Setting Frequency:", f, "GHz...")
 
 import serial
-source = serial.Serial('/dev/ttyUSB0') 
+source = serial.Serial('/dev/ttyUSB1') 
 
 # TODO If this is going to be implemented in a Raspberry pi that controls both sources udev rules should be defined in order to be able to identify them
 
@@ -45,7 +45,7 @@ def outputFrequency(response):
 
 command=setFreqCommand(f/24.)
 source.write(command)
-response=source.read(6)
+response=bytearray(source.read(6))
 if(response[0]==85):
     print("OK")
     of=outputFrequency(response[1:])
