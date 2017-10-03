@@ -114,6 +114,13 @@ class qubicpack:
         oxford_set_heater_range,\
         oxford_determine_best_heater_level,\
         oxford_increase_heater_range
+
+    from .calibration_source import\
+        calsource_init,\
+        calsource_setFreqCommand,\
+        calsource_outputFrequency,\
+        calsource_setFrequency
+
     
     if with_pystudio:
         '''

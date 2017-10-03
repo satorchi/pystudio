@@ -1,0 +1,11 @@
+# udev rules for the QUBIC calibration sources
+
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="VDIE0032", ACTION=="add", OWNER="qubic", GROUP="users", MODE="0644", SYMLINK+="calsource-HF"
+
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="VDIE0031", ACTION=="add", OWNER="qubic", GROUP="users", MODE="0644", SYMLINK+="calsource-LF"
+
+
+
+
+
+
