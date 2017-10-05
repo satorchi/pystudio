@@ -103,7 +103,7 @@ def oxford_set_point(self, T=None, heater=None, ramp=0.1):
     # activate the loop:  This must be done first!
     # and then configure the temperature set-point
     cmd ='SET:DEV:T5:TEMP:LOOP:MODE:ON\n'        # ON/OFF
-    cmd+='SET:DEV:T5:TEMP:LOOP:TSET:%0.2f\n' % T # K
+    cmd+='SET:DEV:T5:TEMP:LOOP:TSET:%0.3f\n' % T # K
     d=self.oxford_send_cmd(cmd)
 
     # wait a second and then activate the heater
