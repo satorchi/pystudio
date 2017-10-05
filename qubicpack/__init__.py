@@ -35,7 +35,8 @@ class qubicpack:
         assign_integration_time,\
         assign_ADU,\
         assign_pausetime,\
-        assign_temperature
+        assign_temperature,\
+        assign_datadir
 
     from .pix2tes import\
         assign_pix_grid,\
