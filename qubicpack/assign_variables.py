@@ -48,13 +48,13 @@ def assign_defaults(self):
     self.assign_pix2tes()
     self.filtersummary=[]
     for idx in range(self.NPIXELS): self.filtersummary.append(None)
+    self.assign_datadir()
     self.assign_lookup_table()
     self.temperature=None
     self.oxford_assign_temperature_labels()
     self.oxford_assign_heater_ranges()
     self.calsource_LF=None
     self.calsource_HF=None
-    self.assign_datadir()
     return
 
 def assign_observer(self,observer='APC LaboMM'):
@@ -149,6 +149,19 @@ def assign_temperature(self,temp):
     else:
         self.temperature=temp
     return self.temperature
+
+def assign_obsdate(self,d=None):
+    '''
+    assign the observation date
+    '''
+    if not isinstance(d,dt.datetime):
+        self.obsdate=dt.datetime.utcnow()
+    else:
+        self.obsdate=d
+
+    self.assign_datadir()
+    return self.obsdate
+    
 
 def assign_datadir(self,d=None):
     '''
