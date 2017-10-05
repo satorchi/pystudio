@@ -29,12 +29,14 @@ temp_precision=0.005 # in Kelvin
 
 # timeout for waiting for temperature to settle
 if TESTMODE:
-    temp_timeout=dt.timedelta(seconds=30)
-    temp_wait=dt.timedelta(seconds=5)
+    temp_minwait=dt.timedelta(seconds=30)
+    temp_timeout=dt.timedelta(seconds=60)
+    temp_wait=dt.timedelta(seconds=1)
     wait_msg='waiting %.0f seconds for temperature to settle' % tot_seconds(temp_wait)
 else:
-    temp_timeout=dt.timedelta(minutes=30)
-    temp_wait=dt.timedelta(minutes=5)
+    temp_minwait=dt.timedelta(minutes=30)
+    temp_timeout=dt.timedelta(minutes=60)
+    temp_wait=dt.timedelta(minutes=1)
     wait_msg='waiting %.1f minutes for temperature to settle' % (tot_seconds(temp_wait)/60.)
 
 
@@ -67,6 +69,13 @@ def writelog(filename,msg):
     handle.close()
     return
 
+def read_bath_temperature(qpobject,logfile):
+    Tbath=qpobject.oxford_read_bath_temperature()
+    if Tbath==None:
+        writelog(logfile,'ERROR! Could not read bath temperature.')
+        Tbath=qpobject.temperature
+    return Tbath
+
 go=qp()
 figsize=go.figsize
 
@@ -84,28 +93,28 @@ if asic==None:quit()
 ret=go.assign_asic(asic)
 
 # setup bias voltage range
-min_bias=get_from_keyboard('minimum bias voltage ',1.0)
+min_bias=get_from_keyboard('minimum bias voltage ',0.5)
 if min_bias==None:quit()
 max_bias=get_from_keyboard('maximum bias voltage ',3.0)
 if max_bias==None:quit()
-dv=get_from_keyboard('bias step size ',0.02)
+dv=get_from_keyboard('bias step size ',0.004)
 cycle=get_from_keyboard('cycle bias up/down? ','y')
 if cycle==None:quit()
 if cycle.upper()=='N':
     cyclebias=False
 else:
     cyclebias=True
-ncycles=get_from_keyboard('number of bias cycles ',3)
+ncycles=get_from_keyboard('number of bias cycles ',1)
 if ncycles==None:quit()
-monitor_TES=get_from_keyboard('which TES would you like to monitor during the measurement? ',70)
+monitor_TES=get_from_keyboard('which TES would you like to monitor during the measurement? ',82)
 if monitor_TES==None:quit()
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
 
 # setup temperature range
-start_temp=get_from_keyboard('start bath temperature ',0.2)
+start_temp=get_from_keyboard('start bath temperature ',0.6)
 if start_temp==None:quit()
-end_temp=get_from_keyboard('end bath temperature ',0.8)
+end_temp=get_from_keyboard('end bath temperature ',0.3)
 if end_temp==None:quit()
 step_temp=get_from_keyboard('temperature steps',0.025)
 if step_temp==None:quit()
@@ -123,6 +132,7 @@ if TESTMODE:
     go.adu=np.random.rand(go.NPIXELS,len(go.vbias))
     go.temperature=0.3
     go.nsamples=100
+    go.OxfordInstruments_ip='127.0.0.1'
 
 # make a log file
 logfile=dt.datetime.utcnow().strftime('temperature_IV_logfile_%Y%m%dT%H%M%SUTC.txt')
@@ -137,21 +147,25 @@ for T in Tbath_target:
         writelog(logfile,'ERROR! Could not read set point temperature.')
         Tsetpt=T
     writelog(logfile,'Temperature set point = %.2f mK' % (1000*Tsetpt))
-    Tbath=go.oxford_read_bath_temperature()
-    if Tbath==None:
-        writelog(logfile,'ERROR! Could not read bath temperature.')
-        Tbath=go.temperature
+    Tbath=read_bath_temperature(go,logfile)
+    Tbath_previous=Tbath
     delta=np.abs(Tbath - T)
+    delta_step=np.abs(Tbath - Tbath_previous)
     start_waiting=dt.datetime.utcnow()
     end_waiting=start_waiting+temp_timeout
-    while (delta>temp_precision) and (dt.datetime.utcnow()<end_waiting):
+    min_endtime=start_waiting+temp_minwait
+    
+    while (delta>temp_precision
+          or delta_step>temp_precision\
+          or dt.datetime.utcnow()<min_endtime)\
+          and dt.datetime.utcnow()<end_waiting:
+
         writelog(logfile,wait_msg)
         time.sleep(tot_seconds(temp_wait))
         writelog(logfile,'reading temperature')
-        Tbath=go.oxford_read_bath_temperature()
-        if Tbath==None:
-            writelog(logfile,'ERROR! Could not read bath temperature.')
-            Tbath=go.temperature
+        Tbath=read_bath_temperature(go,logfile)
+        delta_step=np.abs(Tbath - Tbath_previous)
+        Tbath_previous=Tbath
         delta=np.abs(Tbath - T)
         writelog(logfile,'Tbath=%0.2f mK' %  (1000*go.temperature))
 
