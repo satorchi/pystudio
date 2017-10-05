@@ -51,7 +51,9 @@ class qubicpack:
         read_date_from_filename,\
         write_fits,\
         read_fits,\
-        read_bins
+        read_bins,\
+        output_filename,\
+        data_subdir
 
     from .iv import\
         wait_a_bit,\
