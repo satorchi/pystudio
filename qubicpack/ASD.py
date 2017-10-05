@@ -45,8 +45,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         replay=True
         tinteg=10.
         ntimelines=timelines.shape[0]
-        self.obsdate=self.read_date_from_filename(picklename)
-        if self.obsdate==None: self.obsdate=dt.datetime.utcnow()
+        self.assign_obsdate(self.read_date_from_filename(picklename))
         self.nsamples=100 # this should be read from file!
 
     if replay:
@@ -65,7 +64,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         self.assign_integration_time(tinteg)  # s
         client=self.connect_QubicStudio()
         self.nsamples = client.fetch('QUBIC_Nsample')
-        self.obsdate=dt.datetime.utcnow()
+        self.assign_obsdate()
 
     fs = 20000/self.NPIXELS*(100/self.nsamples)
     
