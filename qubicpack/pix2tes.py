@@ -99,15 +99,32 @@ def pix2tes(self,PIX):
     return TES    
 
 def assign_lookup_table(self):
+    '''
+    make the lookup table with results for comparison
+    '''
     filename='TES_translation_table.pickle'
-    if not os.path.exists(filename):
-        print('WARNING! Cannot find translation table file: %s' % filename)
+    cwd=os.getcwd()
+    dirs=[cwd]
+    if not isinstance(self.datadir,str):
+        self.assign_datadir()
+    if isinstance(self.datadir,str):
+        dirs.append(self.datadir)
+        
+    gotit=False
+    for d in dirs:
+        filename_fullpath='%s/%s' % (d,filename)
+        if os.path.exists(filename_fullpath):
+            gotit=True
+            break
+    if not gotit:
+        print('WARNING! Cannot find translation table file: %s' % filename_fullpath)
         print('Open loop and Room Temperature tests will not be noted in plots etc.')
         self.transdic=None
         return None
 
-    h=open(filename,'r')
+    h=open(filename_fullpath,'r')
     self.transdic=pickle.load(h)
+    h.close()
     return self.transdic
 
 def lookup_TEStable(self,key='PIX',value=100):
