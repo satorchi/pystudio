@@ -38,6 +38,9 @@ def write_fits(self):
         self.obsdate=dt.datetime.utcnow()
     datestr=self.obsdate.strftime(datefmt)
 
+    # data directory
+    if not isinstance(self.datadir,str):self.assign_datadir()
+    
     if self.endobs==None:
         self.endobs=self.obsdate
     
@@ -58,10 +61,12 @@ def write_fits(self):
 
     if isinstance(self.adu,np.ndarray):
         fitsfile=str('QUBIC_TES_%s.fits' % datestr)
-        if os.path.exists(fitsfile):
-            print('file already exists! %s' % fitsfile)
+        fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+        if os.path.exists(fitsfile_fullpath):
+            print('file already exists! %s' % fitsfile_fullpath)
             fitsfile=dt.datetime.utcnow().strftime('resaved-%Y%m%dT%H%M%SUTC__')+fitsfile
-            print('instead, saving to file: %s' % fitsfile)
+            fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+            print('instead, saving to file: %s' % fitsfile_fullpath)
 
         nbias=len(self.vbias)
         fmtstr=str('%iD' % self.adu.shape[1])
@@ -77,14 +82,16 @@ def write_fits(self):
         tbhdu2 = pyfits.BinTableHDU.from_columns(cols)
         
         thdulist = pyfits.HDUList([prihdu, tbhdu1, tbhdu2])
-        thdulist.writeto(fitsfile)
+        thdulist.writeto(fitsfile_fullpath)
 
     if isinstance(self.timelines,np.ndarray):
         fitsfile=str('QUBIC_timeline_%s.fits' % datestr)
-        if os.path.exists(fitsfile):
-            print('file already exists! %s' % fitsfile)
+        fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+        if os.path.exists(fitsfile_fullpath):
+            print('file already exists! %s' % fitsfile_fullpath)
             fitsfile=dt.datetime.utcnow().strftime('resaved-%Y%m%dT%H%M%SUTC__')+fitsfile
-            print('instead, saving to file: %s' % fitsfile)
+            fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+            print('instead, saving to file: %s' % fitsfile_fullpath)
 
         ntimelines=self.timelines.shape[0]
         fmtstr=str('%iD' % self.timelines.shape[2])
@@ -98,7 +105,7 @@ def write_fits(self):
             hdulist.append(tbhdu)
             
         thdulist = pyfits.HDUList(hdulist)
-        thdulist.writeto(fitsfile)
+        thdulist.writeto(fitsfile_fullpath)
 
     return
 
