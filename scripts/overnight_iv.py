@@ -136,6 +136,8 @@ if TESTMODE:
 
 # make a log file
 logfile=dt.datetime.utcnow().strftime('temperature_IV_logfile_%Y%m%dT%H%M%SUTC.txt')
+logfile_fullpath=go.output_filename(logfile)
+
 
 # run the measurement
 for T in Tbath_target:
@@ -144,10 +146,10 @@ for T in Tbath_target:
     # make sure the set point was accepted
     Tsetpt=go.oxford_read_set_point()
     if Tsetpt==None:
-        writelog(logfile,'ERROR! Could not read set point temperature.')
+        writelog(logfile_fullpath,'ERROR! Could not read set point temperature.')
         Tsetpt=T
-    writelog(logfile,'Temperature set point = %.2f mK' % (1000*Tsetpt))
-    Tbath=read_bath_temperature(go,logfile)
+    writelog(logfile_fullpath,'Temperature set point = %.2f mK' % (1000*Tsetpt))
+    Tbath=read_bath_temperature(go,logfile_fullpath)
     Tbath_previous=Tbath
     delta=np.abs(Tbath - T)
     delta_step=np.abs(Tbath - Tbath_previous)
@@ -160,35 +162,35 @@ for T in Tbath_target:
           or dt.datetime.utcnow()<min_endtime)\
           and dt.datetime.utcnow()<end_waiting:
 
-        writelog(logfile,wait_msg)
+        writelog(logfile_fullpath,wait_msg)
         time.sleep(tot_seconds(temp_wait))
-        writelog(logfile,'reading temperature')
-        Tbath=read_bath_temperature(go,logfile)
+        writelog(logfile_fullpath,'reading temperature')
+        Tbath=read_bath_temperature(go,logfile_fullpath)
         delta_step=np.abs(Tbath - Tbath_previous)
         Tbath_previous=Tbath
         delta=np.abs(Tbath - T)
-        writelog(logfile,'Tbath=%0.2f mK' %  (1000*go.temperature))
+        writelog(logfile_fullpath,'Tbath=%0.2f mK' %  (1000*go.temperature))
 
         # check heater percentage
         heatpercent=go.oxford_read_heater_level()
         if heatpercent>99:
-            writelog(logfile,'We need to increase the maximum current to the heater')
+            writelog(logfile_fullpath,'We need to increase the maximum current to the heater')
             cmdret=go.oxford_increase_heater_range()
             heater=go.oxford_read_heater_range()
-            writelog(logfile,'heater range: %f mA' % heater)
+            writelog(logfile_fullpath,'heater range: %f mA' % heater)
         
-    writelog(logfile,'starting I-V measurement')
+    writelog(logfile_fullpath,'starting I-V measurement')
     if delta>temp_precision:
-        writelog(logfile,'WARNING! Did not reach target temperature!')
-        writelog(logfile,'Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
+        writelog(logfile_fullpath,'WARNING! Did not reach target temperature!')
+        writelog(logfile_fullpath,'Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
     go.get_iv_data(TES=monitor_TES,replay=TESTMODE)
-    writelog(logfile,'end I-V measurement')
+    writelog(logfile_fullpath,'end I-V measurement')
     plt.close('all')
 
     # generate the test document
-    writelog(logfile,'generating test document')
+    writelog(logfile_fullpath,'generating test document')
     if not TESTMODE: pdfname=go.make_iv_report()
-    writelog(logfile,'test document generated')
+    writelog(logfile_fullpath,'test document generated')
 
     # reset the plotting figure size
     go.figsize=figsize
