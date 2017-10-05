@@ -113,7 +113,8 @@ def plot_iv_all(self,selection=None,xwin=True):
             colour_idx+=1
 
     pngname=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
     else: plt.close('all')
     return fig
@@ -172,7 +173,8 @@ def plot_iv_multi(self, xwin=True):
             TES_index+=1
 
     pngname=str('TES_IV_ASIC%i_thumbnail_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
     else: plt.close('all')
     
@@ -199,6 +201,7 @@ def plot_iv_physical_layout(self,xwin=True):
     if not ngood==None:
         subttl+=str(': %i flagged as bad pixels' % (self.NPIXELS-ngood))
     pngname=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname_fullpath=self.output_filename(pngname)
     if xwin: fig.canvas.set_window_title('plt:  '+ttl)
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
     
@@ -246,7 +249,7 @@ def plot_iv_physical_layout(self,xwin=True):
             ax[row,col].set_axis_bgcolor(face_colour)
             ax[row,col].text(self.max_bias,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
             
-    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
     else: plt.close('all')
 
@@ -710,7 +713,8 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     text_y=min(Iadjusted) + 0.98*(max(Iadjusted)-min(Iadjusted))
     plt.text(text_x,text_y,txt,va='top',ha='right',fontsize=12)
     pngname=str('TES%03i_IV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
     else: plt.close('all')
     return fig
@@ -791,7 +795,8 @@ def plot_rp(self,TES,xwin=True):
     plt.text(text_x,text_y,lbl)
     
     pngname=str('TES%03i_RP_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
     else: plt.close('all')
     return fig,ax
@@ -978,7 +983,7 @@ def read_ADU_file(self,filename):
         return None
 
     # try to get date from filename
-    self.obsdate=self.read_date_from_filename(filename)
+    self.assign_obsdate(self.read_date_from_filename(filename))
 
     handle=open(filename,'r')
     raw=handle.read()
