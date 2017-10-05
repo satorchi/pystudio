@@ -13,7 +13,7 @@ default values for various parameters in qubicpack
 """
 from __future__ import division, print_function
 import numpy as np
-import sys,os,time
+import sys,os,time,subprocess
 import datetime as dt
 import matplotlib.pyplot as plt
 from glob import glob
@@ -52,6 +52,9 @@ def assign_defaults(self):
     self.temperature=None
     self.oxford_assign_temperature_labels()
     self.oxford_assign_heater_ranges()
+    self.calsource_LF=None
+    self.calsource_HF=None
+    self.assign_datadir()
     return
 
 def assign_observer(self,observer='APC LaboMM'):
@@ -146,3 +149,68 @@ def assign_temperature(self,temp):
     else:
         self.temperature=temp
     return self.temperature
+
+def assign_datadir(self,d=None):
+    '''
+    find a place to write data
+    '''
+
+    # valid possibilities, in order of preference
+    home=os.environ['HOME']
+    cwd=os.getcwd()
+    datadirs=['/data/qubic',
+              '/home/qubic/data',
+              '/home/qubic/Bureau/PyStudio Work/data',
+              '/home/work/qubic/data',
+              home+'/data',
+              cwd]
+    fallback_dir='/tmp/qubic'
+
+    # if a directory is given, make this the priority possibility
+    if isinstance(d,str): datadirs=[d]+datadirs
+
+    # make sure we have write permission
+    tmpfile=dt.datetime.utcnow().strftime('tmpFile_%Y%m%dT%M%H%S.%f.UTC.tmp')
+    tmpdir_ok=False
+    for datadir in datadirs:
+        try:
+            tmpfile_full=datadir+'/'+tmpfile
+            h=open(tmpfile_full,'w')
+            h.write('check if we have write permission\n')
+            h.close()
+            os.remove(tmpfile_full)
+            tmpdir_ok=True
+            self.datadir=datadir
+            break
+        except:
+            tmpdir_ok=False
+            
+
+    if not tmpdir_ok:
+        # try the fall back directory
+        datadir=fallback_dir
+        try:
+            if not os.path.exists(fallback_dir): os.system('mkdir --parents %s' % fallback_dir)
+            tmpfile_full=datadir+'/'+tmpfile
+            h=open(tmpfile_full,'w')
+            h.write('check if we have write permission\n')
+            h.close()
+            os.remove(tmpfile_full)
+            tmpdir_ok=True
+            self.datadir=datadir
+        except:
+            print('ERROR! Could not find a suitable data directory!')
+            return None
+
+    print('Data will be written to directory: %s' % self.datadir)
+
+    # check how much space is available
+    cmd='df %s' % self.datadir
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out,err=proc.communicate()
+    gigs_available=eval(out.split('\n')[1].split()[3])/float(1024**2)
+    if gigs_available<1:
+        print('WARNING! running out of disk space.  Only %.1f GiB space left on disk' % gigs_available)
+        
+    
+    return self.datadir
