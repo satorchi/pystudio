@@ -198,7 +198,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
     else:
         client = self.connect_QubicStudio()
         if client==None: return None
-        self.obsdate=dt.datetime.utcnow()
+        self.assign_obsdate(dt.datetime.utcnow())
         if not isinstance(self.vbias,np.ndarray):
             vbias=make_Vbias()
         nbias=len(self.vbias)
