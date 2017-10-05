@@ -32,10 +32,14 @@ from __future__ import division, print_function
 import os,serial
 import numpy as np
 
-def calsource_init(self,source='LF'):
+def calsource_init(self,source=None):
     '''
     setup communication to the Low Frequency source
     '''
+    if source==None:
+        print('Please enter the calibration source: HF or LF')
+        return None
+
     if source.upper()=='LF':
         dev='/dev/calsource-LF'
         which_freq='Low'
