@@ -12,7 +12,7 @@ tools which are generally useful for scripts using pystudio
 """
 from __future__ import division, print_function
 import numpy as np
-import sys,os,time
+import sys,os,time,subprocess
 import datetime as dt
 import matplotlib.pyplot as plt
 from glob import glob
@@ -28,19 +28,65 @@ def read_date_from_filename(self,filename):
         date=None
     return date
 
+def data_subdir(self):
+    '''
+    make a subdirectory for output files based on the date of the data acquisition
+    '''
+    if not isinstance(self.obsdate,dt.datetime):
+        print('ERROR! No date for this data.')
+        return None
+
+    if not isinstance(self.datadir,str):
+        datadir=self.assign_datadir()
+        if datadir==None:return None
+
+    subdir=self.obsdate.strftime('%Y/%Y%m%d')
+    fullpath='%s/%s' % (self.datadir,subdir)
+    # make the subdirectory if necessary
+    if not os.path.exists(fullpath):
+        cmd='mkdir --parents %s' % fullpath
+        proc=subprocess.Popen(cmd,stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        out,err=proc.communicate()
+
+    if not os.path.exists(fullpath):
+        print('ERROR! Could not create subdirectory: %s' % fullpath)
+        return None
+    
+    return subdir
+
+def output_filename(self,rootname):
+    '''
+    assign a filename for plots, data, etc with the full path
+    '''
+    if not isinstance(rootname,str):
+        return None
+
+    if not isinstance(self.datadir,str):
+        self.assign_datadir()
+
+    if not isinstance(self.datadir,str):
+        print('ERROR! no appropriate location for file save.')
+        return None
+
+    subdir=self.data_subdir()
+    if isinstance(subdir,str):
+        filename='%s/%s/%s' % (self.datadir,subdir,rootname)
+    else:
+        filename='%s/%s' % (self.datadir,rootname)
+
+    return filename
+        
+    
+
 def write_fits(self):
     '''
     write data to file
     it could be timeline data or I-V data, or both
     '''
     datefmt='%Y%m%dT%H%M%SUTC'
-    if self.obsdate==None:
-        self.obsdate=dt.datetime.utcnow()
+    if self.obsdate==None: self.assign_obsdate()
     datestr=self.obsdate.strftime(datefmt)
 
-    # data directory
-    if not isinstance(self.datadir,str):self.assign_datadir()
-    
     if self.endobs==None:
         self.endobs=self.obsdate
     
@@ -61,11 +107,11 @@ def write_fits(self):
 
     if isinstance(self.adu,np.ndarray):
         fitsfile=str('QUBIC_TES_%s.fits' % datestr)
-        fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+        fitsfile_fullpath=self.output_filename(fitsfile)
         if os.path.exists(fitsfile_fullpath):
             print('file already exists! %s' % fitsfile_fullpath)
             fitsfile=dt.datetime.utcnow().strftime('resaved-%Y%m%dT%H%M%SUTC__')+fitsfile
-            fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+            fitsfile_fullpath=self.output_filename(fitsfile)
             print('instead, saving to file: %s' % fitsfile_fullpath)
 
         nbias=len(self.vbias)
@@ -86,11 +132,11 @@ def write_fits(self):
 
     if isinstance(self.timelines,np.ndarray):
         fitsfile=str('QUBIC_timeline_%s.fits' % datestr)
-        fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+        fitsfile_fullpath=self.output_filename(fitsfile)
         if os.path.exists(fitsfile_fullpath):
             print('file already exists! %s' % fitsfile_fullpath)
             fitsfile=dt.datetime.utcnow().strftime('resaved-%Y%m%dT%H%M%SUTC__')+fitsfile
-            fitsfile_fullpath='%s/%s' % (self.datadir,fitsfile)
+            fitsfile_fullpath=self.output_filename(fitsfile)
             print('instead, saving to file: %s' % fitsfile_fullpath)
 
         ntimelines=self.timelines.shape[0]
@@ -130,7 +176,8 @@ def read_fits(self,filename):
         return None
 
     self.observer=h[0].header['OBSERVER']
-    self.obsdate=dt.datetime.strptime(h[0].header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC')
+    self.assign_obsdate(dt.datetime.strptime(h[0].header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC'))
+            
     self.nsamples=h[0].header['NSAMPLES']
     if self.nsamples=='': self.nsamples=100 # data from 12/13 July 2017
     self.tinteg=h[0].header['INT-TIME']
