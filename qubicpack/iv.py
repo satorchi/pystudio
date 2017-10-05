@@ -803,14 +803,27 @@ def plot_rp(self,TES,xwin=True):
 
 
                 
-def make_Vbias(self,cycle=True,ncycles=2,vmin=5.0,vmax=9.0,dv=0.04,lowhigh=True):
+def make_Vbias(self,cycle=True,ncycles=2,vmin=0.5,vmax=3.0,dv=0.002,lowhigh=True):
     '''
     the bias voltage values used during the I-V curve measurement
     '''
 
+    if vmax<0.0:
+        vmax=np.abs(vmax)
+        print('No negative values for bias! Setting max bias to %.2f V' % vmax)
+
+    if vmax>self.max_permitted_bias:
+        print('It is dangerous to set the bias voltage greater than %.2f V.' % self.max_permitted_bias)
+        print('Setting maximum bias to %.2f V' % self.max_permitted_bias)
+        vmax=self.max_permitted_bias
+
+    if vmin<0.0:
+        print('No negative values! Setting minimum bias to 0 V')
+        vmin=0.0
+
     if ncycles<1:
-        print('Please enter a number of cycles greater than 0!')
-        return None
+        print('You need at least one cycle! Setting ncycles=1')
+        ncycles=1
     
     going_up=np.arange(vmin,vmax+dv,dv)
     going_dn=np.flip(going_up,0)
