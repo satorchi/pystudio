@@ -1084,7 +1084,12 @@ def make_iv_tex_report(self,tableonly=False):
     observer=self.observer.replace('<','$<$').replace('>','$>$')
     
     texfilename=str('TES_IV_ASIC%i_%s.tex' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    h=open(texfilename,'w')
+    texfilename_fullpath=self.output_filename(texfilename)
+    if not isinstance(texfilename_fullpath,str):
+        print('ERROR! Not possible to write tex file.')
+        return None
+    
+    h=open(texfilename_fullpath,'w')
     h.write('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n')
     h.write('%%%%% WARNING!  Automatically generated file.  Do not edit! %%%%%\n')
     h.write('%%%%% This file could be overwritten                        %%%%%\n')
@@ -1222,7 +1227,7 @@ def make_iv_tex_report(self,tableonly=False):
     if tableonly:
         h.write('\n\n\\end{document}\n')
         h.close()
-        return texfilename
+        return texfilename_fullpath
         
     
     h.write('\n\\noindent\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % thumbnailplot)
@@ -1234,7 +1239,7 @@ def make_iv_tex_report(self,tableonly=False):
     
     h.write('\n\n\\end{document}\n')
     h.close()
-    return texfilename
+    return texfilename_fullpath
 
 
 def make_iv_report(self):
@@ -1259,11 +1264,20 @@ def make_iv_report(self):
 
     # generate the LaTeX file
     texname=self.make_iv_tex_report()
+    if not isinstance(texname,str):return None
 
     # process the LaTeX file a couple of times
+    cwd=os.getcwd()
+    subdir=self.data_subdir()
+    if isinstance(subdir,str):
+        workdir='%s/%s' % (self.datadir,subdir)
+    else:
+        workdir=self.datadir
+    os.setcwd(workdir) # move to data directory
     cmd='pdflatex %s' % texname
     os.system(cmd)
     os.system(cmd)
+    os.setcwd(cwd) # and return to previous directory
     pdfname=texname.replace('.tex','.pdf')
     return
 
