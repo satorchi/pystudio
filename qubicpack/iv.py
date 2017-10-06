@@ -1273,11 +1273,11 @@ def make_iv_report(self):
         workdir='%s/%s' % (self.datadir,subdir)
     else:
         workdir=self.datadir
-    os.setcwd(workdir) # move to data directory
+    os.chdir(workdir) # move to data directory
     cmd='pdflatex %s' % texname
     os.system(cmd)
     os.system(cmd)
-    os.setcwd(cwd) # and return to previous directory
+    os.chdir(cwd) # and return to previous directory
     pdfname=texname.replace('.tex','.pdf')
     return
 
