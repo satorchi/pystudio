@@ -1075,7 +1075,18 @@ def make_iv_tex_report(self,tableonly=False):
     thumbnailplot=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     allplot=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pattern=str('TES???_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+
+    # do the globbing in working directory
+    cwd=os.getcwd()
+    subdir=self.data_subdir()
+    if isinstance(subdir,str):
+        workdir='%s/%s' % (self.datadir,subdir)
+    else:
+        workdir=self.datadir
+    os.chdir(workdir) # move to data directory
     iv_plots=glob(pattern)
+    os.chdir(cwd) # and return to previous directory
+
     iv_plots.sort()
 
     if len(iv_plots)<self.NPIXELS:
