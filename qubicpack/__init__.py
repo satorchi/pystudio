@@ -66,6 +66,7 @@ class qubicpack:
         plot_iv_physical_layout,\
         make_line,\
         filter_jumps,\
+        single_polynomial_fit_parameters,\
         fit_iv,\
         draw_tangent,\
         draw_iv,\
