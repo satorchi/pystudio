@@ -168,7 +168,7 @@ def plot_iv_multi(self, xwin=True):
             if (not self.is_good_iv()==None)\
                and (not self.is_good_iv()[TES_index]):
                 # axes[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
-                axes[row,col].set_axis_bgcolor('red')
+                axes[row,col].set_facecolor('red')
 
             TES_index+=1
 
@@ -246,7 +246,7 @@ def plot_iv_physical_layout(self,xwin=True):
                 label_colour='yellow'
                 face_colour='blue'
                 
-            ax[row,col].set_axis_bgcolor(face_colour)
+            ax[row,col].set_facecolor(face_colour)
             ax[row,col].text(self.max_bias,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
             
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
@@ -694,7 +694,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     if 'fit range' in fit.keys():
         fit_istart,fit_iend=fit['fit range']
         fit_vstart=self.vbias[fit_istart]
-        fit_vend=self.vbias[fit_iend]
+        fit_vend=self.vbias[fit_iend-1]
         plt.plot([fit_vstart,fit_vstart],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
         plt.plot([fit_vend,fit_vend],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
     
