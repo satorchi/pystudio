@@ -691,11 +691,12 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     plt.plot(self.vbias,f(self.vbias),linestyle='dashed',color='red')
 
     # draw vertical lines to show the range used for the fit
-    fit_istart,fit_iend=fit['fit range']
-    fit_vstart=self.vbias[fit_istart]
-    fit_vend=self.vbias[fit_iend]
-    plt.plot([fit_vstart,fit_vstart],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
-    plt.plot([fit_vend,fit_vend],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
+    if 'fit range' in fit.keys():
+        fit_istart,fit_iend=fit['fit range']
+        fit_vstart=self.vbias[fit_istart]
+        fit_vend=self.vbias[fit_iend]
+        plt.plot([fit_vstart,fit_vstart],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
+        plt.plot([fit_vend,fit_vend],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
     
 
     # note the turnover point
@@ -893,6 +894,7 @@ def filter_iv(self,TES,
     
     # dictionary to return stuff
     ret={}
+    ret['TES']=TES
     ret['is_good']=True
     ret['comment']='no comment'
 
