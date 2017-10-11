@@ -26,29 +26,30 @@ def squid_test(self,vmin=0.0,vmax=15.0,dv=1.0,tinteg=None):
     client = self.connect_QubicStudio()
     if client==None: return None
     
-    # return voltages
+    # ask for return values to be voltages
     client.sendSetScientificDataTfUsed(1)
 
     self.assign_integration_time(tinteg)
 
-    self.make_Vbias(vmin=vmin, vmax=vmax, dv=dv, cycle=False, ncycles=1)
-
-    mean_SQUIDs = np.empty((self.NPIXELS, voltages.size))
-    min_SQUIDs  = np.empty((self.NPIXELS, voltages.size))
-    max_SQUIDs  = np.empty((self.NPIXELS, voltages.size))
+    voltages=np.arange(vmin,vmax+dv,dv)
     
-    for idx, bias in enumerate(self.vbias):
-        client.sendSetAsicVicm(asic, 3)
+    mean_SQUIDs = np.zeros((self.NPIXELS, voltages.size))
+    min_SQUIDs  = np.zeros((self.NPIXELS, voltages.size))
+    max_SQUIDs  = np.zeros((self.NPIXELS, voltages.size))
+    timelines=[]
+    for idx, bias in enumerate(voltages):
+        client.sendSetAsicVicm(self.QS_asic_index, 3)
         client.waitMs(500)
-        client.sendSetAsicSpol(asic, bias)
+        client.sendSetAsicSpol(self.QS_asic_index, bias)
         client.waitMs(500)
         timeline = self.integrate_scientific_data()
+        timelines.append(timeline)
         mean_SQUIDs[:, idx] = timeline.mean(axis=-1)
         min_SQUIDs[:, idx] = timeline.min(axis=-1)
         max_SQUIDs[:, idx] = timeline.max(axis=-1)
 
 
-    
+    self.timelines=np.array(timelines)
     delta_SQUIDs = max_SQUIDs - min_SQUIDs
 
     # Recherche max
@@ -57,9 +58,10 @@ def squid_test(self,vmin=0.0,vmax=15.0,dv=1.0,tinteg=None):
         print('===>Pixel {:3}: delta max={}mV at bias={}'.format(idx, delta_SQUIDs[idx, maxidx]*1000, voltages[maxidx]))
 
 
+    '''
     for idx in range(len(delta_SQUIDs)):
         plt.plot(delta_SQUIDs[idx])
-    
+    '''
 
 
-    return
+    return delta_SQUIDs
