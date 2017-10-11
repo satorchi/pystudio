@@ -22,7 +22,7 @@ sys.setdefaultencoding('utf8')
 from satorchipy.datefunctions import *
 
 # set this to False for a real measurement
-TESTMODE=True
+TESTMODE=False
 
 # precision required for bath temperature
 temp_precision=0.005 # in Kelvin
@@ -132,7 +132,7 @@ if TESTMODE:
     go.adu=np.random.rand(go.NPIXELS,len(go.vbias))
     go.temperature=0.3
     go.nsamples=100
-    go.OxfordInstruments_ip='127.0.0.1'
+    # go.OxfordInstruments_ip='127.0.0.1'
 
 # make a log file
 logfile=dt.datetime.utcnow().strftime('temperature_IV_logfile_%Y%m%dT%H%M%SUTC.txt')
