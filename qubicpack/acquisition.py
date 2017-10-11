@@ -101,6 +101,7 @@ def integrate_scientific_data(self):
     timeline_size = int(np.ceil(self.tinteg / period))
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
     timeline = np.empty((self.NPIXELS, timeline_size))
+    self.assign_obsdate()
     parameter = 'QUBIC_PixelScientificDataTimeLine_{}'.format(self.QS_asic_index)
     req = client.request(parameter)
     istart = 0
