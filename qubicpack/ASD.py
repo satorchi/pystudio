@@ -91,12 +91,15 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
     txt_x=0.05
     txt_y=0.02
     idx=0
+    if not replay:self.obsdates=[]
     while idx<ntimelines or monitor_mode:
-        
 	if not replay:
+            self.assign_obsdate()
+            self.obsdates.append(self.obsdate)
             timeline = self.integrate_scientific_data()
             if not monitor_mode: saved_timelines.append(timeline)
         else:
+            self.assign_obsdate(self.obsdates[idx])
             timeline = self.timelines[idx,:,:]
             
         if not isinstance(timeline,np.ndarray):
@@ -104,7 +107,7 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
             return None
 
 
-        data_time=dt.datetime.utcnow()
+        data_time=self.obsdate
         time_txt=data_time.strftime('%Y-%m-%m %H:%M:%S UTC')
         
 	PSD, freqs = mlab.psd(timeline[TES_index],
