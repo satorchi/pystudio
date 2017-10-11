@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
 import hooks
-import os
-import sys
+import os,sys
 from distutils.spawn import find_executable
 from numpy.distutils.core import setup
 from numpy.distutils.extension import Extension
+import subprocess
 
 DISTNAME         = 'pystudio'
 DESCRIPTION      = 'Python interface for Qubic Studio'
@@ -98,3 +98,15 @@ setup(install_requires=['numpy'],
           )
       ]
 )
+
+
+# add dispatcherAccess to executable path
+if len(sys.argv)>1 and sys.argv[1]=='install':
+    print 'copying dispatcher executables...'
+    cmd='cp -puv pystudio/data/*.dispatcher /usr/bin;chown root:root /usr/bin/*.dispatcher;chmod 0755 /usr/bin/*.dispatcher'
+    proc=subprocess.Popen(cmd,stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out,err=proc.communicate()
+    if out!='':print out
+    if err!='':print err
+
+    
