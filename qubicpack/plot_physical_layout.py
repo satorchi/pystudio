@@ -136,7 +136,7 @@ def plot_physical_layout(xwin=True,figsize=(16,16),a1=None,a2=None):
                 label_colour='blue'
                 face_colour='yellow'
                 
-            ax[row,col].set_axis_bgcolor(face_colour)
+            ax[row,col].set_facecolor(face_colour)
             ax[row,col].text(text_x,text_y,pix_label,va='center',ha='center',color=label_colour,fontsize=fontsize)
             
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
