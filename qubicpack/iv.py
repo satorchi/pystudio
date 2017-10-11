@@ -349,97 +349,23 @@ def filter_jumps(self,I,jumplimit=2.0):
     self.debugmsg('best span of points in the curve is %i:%i' % (maxspan_idx1,maxspan_idx2))
     return maxspan_idx1,maxspan_idx2
 
-def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
+def single_polynomial_fit_parameters(self,fit):
     '''
-    fit the I-V curve to a polynomial
-
-    if we're cycling, we always go down-up-down or up-down-up for a single cycle
-    so a single IV curve is 1/(2*ncycles)
-
-    we work directly with the uncalibrated data.
-    The fit will be used to make the final adjustments
-
-    optional arguments: 
-       jumplimit:    this is the smallest step considered to be a jump in the data
-       curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
+    determine the TES characteristics from the fit of single polynomial fit
+    (see also the split function fit... to be written)
+    this is called from fit_iv()
     '''
-    if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No data!')
-        return None
-    
+    TES=fit['TES']
     TES_index=self.TES_index(TES)
-    
-    # a small number
-    zero=self.zero
-    
-    # return is a dictionary with various info
-    fit={}
-
     I=self.ADU2I(self.adu[TES_index,:])
     npts=len(I)
 
-    if self.cycle_vbias:
-        ncurves=self.nbiascycles*2
-    else:
-        ncurves=self.nbiascycles
-    npts_curve=int(npts/ncurves)
-    fit['ncurves']=ncurves
-    fit['npts_curve']=npts_curve
-    self.debugmsg('number of curves: %i' % ncurves)
-    self.debugmsg('npts per curve: %i' % npts_curve)
-    
-    # fit for each measured curve and find the best one
-    best_residual=1./zero
-    best_curve_index=0
-    allfits=[]
-    istart=0
-    for idx in range(ncurves):
-        iend=istart+npts_curve
-        ypts=I[istart:iend]
-        self.debugmsg('cycle %i: fitting curve istart=%i, iend=%i' % ((idx+1),istart,iend))
-        xpts=self.vbias[istart:iend]
-
-        # filter out the big jumps
-        # the return is the range of indexes of the acceptable points
-        good_start,good_end=self.filter_jumps(ypts,jumplimit)
-        npts_span=good_end-good_start
-        if npts_span<5:
-            self.debugmsg('couldn\'t find a large span without jumps! Fitting the whole curve...')
-            good_start=0
-            good_end=len(xpts)
-            npts_span=npts_curve
-        curve=ypts[good_start:good_end]
-        bias=xpts[good_start:good_end]
-        
-        # fit to polynomial degree 3
-        # normalize the residual to the number of points in the fit
-        polyfit=np.polyfit(bias,curve,3,full=True)
-        residual=polyfit[1][0]/npts_span
-        allfits.append(polyfit)
-        if abs(residual)<best_residual:
-            best_residual=abs(residual)
-            best_curve_index=idx
-        istart+=npts_curve
-
-    # from now on we use the best curve fit
-    # unless there is request to override with the curve_index option
-    fit['best curve index']=best_curve_index
-    if not curve_index==None:
-        if not isinstance(curve_index,int) or curve_index>=ncurves or curve_index<0:
-            print('Invalid option for curve index:  Please give an integer between 0 and %i' % (ncurves-1))
-            print('Using default:  best curve index=%i' % best_curve_index)
-            curve_index=best_curve_index
-    else:
-        curve_index=best_curve_index
-    fit['curve index']=curve_index
-    fitinfo=allfits[curve_index]
-    fit['fitinfo']=fitinfo
     
     # the coefficients of the polynomial fit
-    a3=fitinfo[0][0]
-    a2=fitinfo[0][1]
-    a1=fitinfo[0][2]
-    a0=fitinfo[0][3]
+    a3=fit['fitinfo'][0][0]
+    a2=fit['fitinfo'][0][1]
+    a1=fit['fitinfo'][0][2]
+    a0=fit['fitinfo'][0][3]
 
     # find turning where polynomial tangent is zero (i.e. first derivative is zero)
     t1=-a2/(3*a3)
@@ -557,11 +483,101 @@ def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
     slope=a1 + 2*a2*V + 3*a3*(V**2)
         
     # The line should have a slope equal to a circuit with resistance 1 Ohm
-    if abs(slope)>zero:
+    if abs(slope)>self.zero:
         R1 = 1/slope
     else:
-        R1=1/zero
+        R1=1/self.zero
     fit['R1']=R1
+    return fit
+
+def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
+    '''
+    fit the I-V curve to a polynomial
+
+    if we're cycling, we always go down-up-down or up-down-up for a single cycle
+    so a single IV curve is 1/(2*ncycles)
+
+    we work directly with the uncalibrated data.
+    The fit will be used to make the final adjustments
+
+    optional arguments: 
+       jumplimit:    this is the smallest step considered to be a jump in the data
+       curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
+    '''
+    if not isinstance(self.adu,np.ndarray):
+        print('ERROR! No data!')
+        return None
+    
+    TES_index=self.TES_index(TES)
+    
+    # return is a dictionary with various info
+    fit={}
+    fit['TES']=TES
+
+    I=self.ADU2I(self.adu[TES_index,:])
+    npts=len(I)
+
+    if self.cycle_vbias:
+        ncurves=self.nbiascycles*2
+    else:
+        ncurves=self.nbiascycles
+    npts_curve=int(npts/ncurves)
+    fit['ncurves']=ncurves
+    fit['npts_curve']=npts_curve
+    self.debugmsg('number of curves: %i' % ncurves)
+    self.debugmsg('npts per curve: %i' % npts_curve)
+    
+    # fit for each measured curve and find the best one
+    best_residual=1./self.zero
+    best_curve_index=0
+    allfits=[]
+    fitranges=[]
+    istart=0
+    for idx in range(ncurves):
+        iend=istart+npts_curve
+        ypts=I[istart:iend]
+        self.debugmsg('cycle %i: fitting curve istart=%i, iend=%i' % ((idx+1),istart,iend))
+        xpts=self.vbias[istart:iend]
+
+        # filter out the big jumps
+        # the return is the range of indexes of the acceptable points
+        good_start,good_end=self.filter_jumps(ypts,jumplimit)
+        npts_span=good_end-good_start
+        if npts_span<5:
+            self.debugmsg('couldn\'t find a large span without jumps! Fitting the whole curve...')
+            good_start=0
+            good_end=len(xpts)
+            npts_span=npts_curve
+        curve=ypts[good_start:good_end]
+        bias=xpts[good_start:good_end]
+        
+        # fit to polynomial degree 3
+        # normalize the residual to the number of points in the fit
+        polyfit=np.polyfit(bias,curve,3,full=True)
+        residual=polyfit[1][0]/npts_span
+        allfits.append(polyfit)
+        fitranges.append((good_start,good_end))
+        if abs(residual)<best_residual:
+            best_residual=abs(residual)
+            best_curve_index=idx
+        istart+=npts_curve
+
+    # from now on we use the best curve fit
+    # unless there is request to override with the curve_index option
+    fit['best curve index']=best_curve_index
+    if not curve_index==None:
+        if not isinstance(curve_index,int) or curve_index>=ncurves or curve_index<0:
+            print('Invalid option for curve index:  Please give an integer between 0 and %i' % (ncurves-1))
+            print('Using default:  best curve index=%i' % best_curve_index)
+            curve_index=best_curve_index
+    else:
+        curve_index=best_curve_index
+    fit['curve index']=curve_index
+    fitinfo=allfits[curve_index]
+    fit['fitinfo']=fitinfo
+    fit['fit range']=fitranges[curve_index]
+
+    fit=self.single_polynomial_fit_parameters(fit)
 
     keys=''
     for key in fit.keys():keys+=key+', '
@@ -613,9 +629,10 @@ def setup_plot_iv(self,TES,xwin=True):
     subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
     if xwin: plt.ion()
     else: plt.ioff()
-    fig,ax=plt.subplots(1,1,figsize=self.figsize)
+    fig=plt.figure(figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    ax=plt.gca()
     ax.set_xlabel('Bias Voltage  /  V')
     ax.set_ylabel('Current  /  $\mu$A')
     ax.set_xlim([self.min_bias,self.max_bias])
@@ -672,6 +689,14 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     txt+=str('\npolynomial fit residual: %.4e' % fit['fitinfo'][1][0])
     f=np.poly1d(fit['fitinfo'][0]) + offset
     plt.plot(self.vbias,f(self.vbias),linestyle='dashed',color='red')
+
+    # draw vertical lines to show the range used for the fit
+    fit_istart,fit_iend=fit['fit range']
+    fit_vstart=self.vbias[fit_istart]
+    fit_vend=self.vbias[fit_iend]
+    plt.plot([fit_vstart,fit_vstart],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
+    plt.plot([fit_vend,fit_vend],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
+    
 
     # note the turnover point
     if fit['turnover']==None:
@@ -741,7 +766,8 @@ def plot_pv(self,TES,xwin=True):
     plt.plot(bias,Ptes)
     
     pngname=str('TES%03i_PV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
     else: plt.close('all')
     return fig,ax
