@@ -62,11 +62,13 @@ def get_from_keyboard(msg,default=None):
 def writelog(filename,msg):
     '''
     write some output with a timestamp to a log file
+    and also write it on the screen
     '''
     handle=open(filename,'a')
     timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC -- ')
     handle.write(timestamp+msg+'\n')
     handle.close()
+    print(timestamp+msg)
     return
 
 def read_bath_temperature(qpobject,logfile):
