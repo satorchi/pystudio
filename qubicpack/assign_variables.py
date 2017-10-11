@@ -27,7 +27,7 @@ def assign_defaults(self):
     self.kBoltzmann=1.3806485279e-23
     self.Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
     self.Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
-    self.figsize=(12.80,7.68)
+    self.figsize=(12.80,6.40)
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
     self.assign_asic(1)
     self.assign_integration_time()
@@ -40,7 +40,8 @@ def assign_defaults(self):
     self.min_bias=None
     self.max_bias_position=None
     self.pausetime=0.3
-    self.obsdate=None
+    self.assign_obsdate()
+    self.obsdates=None
     self.endobs=None
     self.observer='APC LaboMM'
     self.nsamples=None
@@ -49,7 +50,7 @@ def assign_defaults(self):
     self.assign_pix2tes()
     self.filtersummary=[]
     for idx in range(self.NPIXELS): self.filtersummary.append(None)
-    self.assign_datadir()
+    #self.assign_datadir() # already called from assign_obsdate() above
     self.assign_lookup_table()
     self.temperature=None
     self.oxford_assign_temperature_labels()
