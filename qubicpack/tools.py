@@ -144,10 +144,16 @@ def write_fits(self):
         dimstr=str('%i' % self.timelines.shape[1])
 
         hdulist=[prihdu]
+        have_times=False
+        if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
+            have_times=True
         for n in range(ntimelines):
             col1  = pyfits.Column(name='timelines', format=fmtstr, dim=dimstr, unit='ADU', array=self.timelines[n,:,:])
             cols  = pyfits.ColDefs([col1])
             tbhdu = pyfits.BinTableHDU.from_columns(cols)
+            if have_times:
+                tbhdu.header['DATE-OBS']=(self.obsdates[n].strftime('%Y-%m-%d %H:%M:%S UTC'),'date of the observation in UTC')
+                
             hdulist.append(tbhdu)
             
         thdulist = pyfits.HDUList(hdulist)
@@ -206,6 +212,7 @@ def read_fits(self,filename):
         self.endobs=None
 
     timelines=[]
+    obsdates=[]
     for hdu in h[1:]:
         hdrtype=hdu.header['TTYPE1']
         
@@ -247,6 +254,10 @@ def read_fits(self,filename):
             timeline=np.empty((self.NPIXELS,npts))
             for n in range(self.NPIXELS):
                 timeline[n,:]=data[n][0]
+            if 'DATE-OBS' in hdu.header.keys():
+                obsdate=dt.datetime.strptime(hdu.header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC')
+                obsdates.append(obsdate)
+                
             timelines.append(timeline)
             
 
@@ -254,6 +265,7 @@ def read_fits(self,filename):
     if hdrtype=='timelines':
         print('assigning timeline data')
         self.timelines=np.array(timelines)
+        if len(obsdates)>0:self.obsdates=obsdates
     h.close()
 
 
