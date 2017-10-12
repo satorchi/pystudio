@@ -91,7 +91,7 @@ def calsource_outputFrequency(self,response):
                 if(int(i)):
                     s+=2**(-j)
                 j+=1
-    return (s+response[0])*24
+    return (s+response[0])
 
 
 def calsource_setFrequency(self,f=None,source=None):
@@ -106,22 +106,22 @@ def calsource_setFrequency(self,f=None,source=None):
 
     if source.upper()=='HF':        
         factor=24.
-        com=self.calsource_HF
         if self.calsource_HF==None:
             self.calsource_HF=self.calsource_init('HF')
-            if self.calsource_HF==None:return None
+        com=self.calsource_HF
 
     elif source.upper()=='LF':
         factor=12.
-        com=self.calsource_LF
         if self.calsource_LF==None:
             self.calsource_LF=self.calsource_init('LF')
-            if self.calsource_LF==None:return None
+        com=self.calsource_LF            
 
     else:
         print('ERROR! Please enter a valid calibration source: HF or LF')
         return None
 
+    if not isinstance(com,serial.serialposix.Serial):return None
+        
     cmd=self.calsource_setFreqCommand(f/factor)
     com.write(cmd)
     response=bytearray(com.read(6))
