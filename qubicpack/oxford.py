@@ -99,7 +99,17 @@ def oxford_set_point(self, T=None, heater=None, ramp=0.1):
 
     # first initialize Oxford Inst.
     d=self.oxford_init()
-        
+
+    # disable all the other sensors
+    for idx,label in enumerate(self.oxford_temperature_labels):
+        if not (label=='NOT USED' or label=='MC Plate RuO2'):
+            cmd='SET:DEV:T%i:TEMP:MEAS:ENAB:OFF\n' % (idx+1)
+            d=self.oxford_send_cmd(cmd)
+
+    # enable the bath temperature sensor
+    cmd='SET:DEV:T5:TEMP:MEAS:ENAB:ON\n'
+    d=self.oxford_send_cmd(cmd)
+
     # activate the loop:  This must be done first!
     # and then configure the temperature set-point
     cmd ='SET:DEV:T5:TEMP:LOOP:MODE:ON\n'        # ON/OFF
