@@ -102,6 +102,14 @@ class qubicpack:
         make_iv_report,\
         iv2txt
 
+    from .timeline import\
+        exist_timeline_data,\
+        amplitude2DAC,\
+        bias_offset2DAC,\
+        sample_period,\
+        timeline_npts
+
+
     from .oxford import\
         oxford_assign_temperature_labels,\
         oxford_assign_heater_ranges,\
@@ -133,13 +141,15 @@ class qubicpack:
         '''
         from .acquisition import\
             connect_QubicStudio,\
+            configure_PID,\
             get_amplitude,\
             get_mean,\
             integrate_scientific_data,\
             set_VoffsetTES,\
             set_diffDAC,\
             set_slowDAC,\
-            get_iv_data
+            get_iv_data,\
+            get_iv_timeline
 
         from .ASD import\
             plot_ASD
