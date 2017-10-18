@@ -52,10 +52,10 @@ def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
         '''
         replay data that is imported from file.  This is for testing.
         '''
-        if not isinstance(self.timelines,np.ndarray):
+        if not self.exist_timeline_data():
             print('Please read a timeline file, or run a new measurement!')
             return None
-        ntimelines=self.timelines.shape[0]
+        ntimelines=len(self.timelines)
         
     else:
         '''
