@@ -18,6 +18,38 @@ acquisition methods.  These require a connection to QubicStudio
       get_mean()
       integrate_scientific_data()
 
+
+Note on the use of sendSetCalibPolar()
+see comments by Pierre Chanial in dispatcheraccess.pyx
+translated here...
+
+sendSetCalibPolar(int asic, int mode, int shape, int frequency, int amplitude, int offset)
+
+this sets the shape of the Bias Voltage.  
+The French for "Bias Voltage" is "Polarisation", which is very confusing.
+and then the word is further truncated to "Polar"
+
+arguments:
+  asic:  
+       asic=0xFF : all ASIC's receive the command
+       asic<16 : command sent to the specified ASIC
+       asic bits 8 to 23 : send to a list of ASICs
+                           example: 0x00FF00 corresponds to ASIC 0 to 7
+                           example: 0x0AD200 corresponds to ASIC 0,3,6,9
+
+  mode:
+       mode=0 : no signal
+       mode=1 : apply Bias voltage
+
+  shape: 
+       shape=0 : sinus
+       shape=1 : triangle
+       shape=2 : continuous
+
+  frequency:
+       frequency=99 defaults to lowest possible value.  i.e. f=1Hz
+
+
 '''
 from __future__ import division, print_function
 import numpy as np
@@ -49,6 +81,24 @@ def connect_QubicStudio(self,client=None, ip=None):
     client.waitingForAckMode = True
     # client.sendSetScientificDataTfUsed(1) # data in Volts
     return client
+
+def configure_PID(self,P=0,I=20,D=0):
+    '''
+    configure the FLL (Flux Lock Loop) PID
+    '''
+    client = self.connect_QubicStudio()
+    if client==None:return False
+
+    # first switch off the loop
+    client.sendActivatePID(self.QS_asic_index,0)
+
+    # next, set the parameters
+    client.sendConfigurePID(self.QS_asic_index, P,I,D)
+
+    # and reactivate the loop
+    client.sendActivatePID(self.QS_asic_index,1)
+    return True
+
 
 def get_amplitude(self):
     """
@@ -86,23 +136,32 @@ def integrate_scientific_data(self):
     
     integration_time=self.tinteg
     asic=self.asic
-    
-    
+
+    # reconfigure the FLL (stop/start)
+    if not self.configure_PID(0,20,0):return None
+        
     nsample = client.fetch('QUBIC_Nsample')
     # QubicStudio returns an array of integer of length 1.
     # convert this to a simple integer
     nsample = int(nsample)
     self.debugmsg('nsample=%i' % nsample)
     self.nsamples=nsample
-    
-    period = 1 / (2e6 / self.NPIXELS / nsample)
+
+    period = self.sample_period()
     self.debugmsg('period=%.3f msec' % (1000*period))
     self.debugmsg ('integration_time=%.2f' % self.tinteg)
     timeline_size = int(np.ceil(self.tinteg / period))
+    self.debugmsg('timeline size=%i' % timeline_size)
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
     timeline = np.empty((self.NPIXELS, timeline_size))
+
+    # date of the observation
     self.assign_obsdate()
-    parameter = 'QUBIC_PixelScientificDataTimeLine_{}'.format(self.QS_asic_index)
+
+    # bath temperature
+    self.oxford_read_bath_temperature()
+    
+    parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
     req = client.request(parameter)
     istart = 0
     for i in range(int(np.ceil(timeline_size / chunk_size))):
@@ -110,31 +169,27 @@ def integrate_scientific_data(self):
         timeline[:, istart:istart+delta] = req.next()[:, :delta]
         istart += chunk_size
     req.abort()
-    return timeline
+    return timeline    
 
-def set_VoffsetTES(self,tension, amplitude):
+def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
+    '''
+    command the bias voltage for the TES array
+    integration time, asic, should be selected previously with the appropriate assign_() method
+    ''' 
     client = self.connect_QubicStudio()
     if client==None:return None
 
-    # conversion constant DAC <- Volts
-    # A = 2.8156e-4
-    A = 284.5e-6
-    if tension > 0 and tension <= 9:
-        DACoffset = tension / A - 1
-    else:
-        DACoffset = 65536 + tension / A
-    DACoffset = int(np.round(DACoffset))
-    print("DACoffset=%i" % DACoffset)
+    DACoffset=self.bias_offset2DAC(bias)
+    DACamplitude=self.amplitude2DAC(amplitude)
 
-    if amplitude > 0 and amplitude <= 9:
-        DACamplitude = amplitude / 0.001125 - 1
-    else:
-        DACamplitude = 65536 + amplitude / 0.001125
-    DACamplitude = int(np.round(DACamplitude))
-    client.sendSetCalibPolar(self.QS_asic_index, 1, 0, 99, DACamplitude, DACoffset)
+    
+    # arguments (see comments at top of file):
+    #                                      asic, on/off, shape, frequency, amplitude,   offset
+    self.bias_frequency=frequency
+    client.sendSetCalibPolar(self.QS_asic_index, 1,      shape, frequency, DACamplitude, DACoffset)
     # wait and send the command again to make sure
     self.wait_a_bit()
-    client.sendSetCalibPolar(self.QS_asic_index, 1, 0, 99, DACamplitude, DACoffset)
+    client.sendSetCalibPolar(self.QS_asic_index, 1, shape, frequency, DACamplitude, DACoffset)
     return
 
 
@@ -259,3 +314,44 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         self.write_fits()
     
     return adu
+
+
+def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
+    '''
+    get timeline data with Bias set to sinusoid shape and then extract the I-V data
+
+    integration time should be set previously with assign_integration_time()
+    if vmin,vmax are not given, try to get them from self.vbias
+    '''
+
+    if vmin==None:
+        if not isinstance(self.vbias,np.ndarray):
+            vbias=self.make_Vbias()
+        vmin=min(self.vbias)
+    if vmax==None:
+        if not isinstance(self.vbias,np.ndarray):
+            vbias=self.make_Vbias()
+        vmax=max(self.vbias)
+
+    self.min_bias=vmin
+    self.max_bias=vmax
+    
+    amplitude=0.5*(vmax-vmin)
+    offset=vmin+amplitude
+
+    if frequency==None:frequency=99
+    ret=self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0)
+
+    timeline=self.integrate_scientific_data()
+    if not isinstance(timeline,np.ndarray):
+        print('ERROR! could not acquire timeline data')
+        return None
+        
+    npts_timeline=timeline.shape[1]
+    self.debugmsg('number of points in timeline: %i' % npts_timeline)
+
+
+    # if this is the first one, assign a new timeline array
+    if not self.exist_timeline_data(): self.timelines=[]
+    self.timelines.append(timeline)
+    return timeline
