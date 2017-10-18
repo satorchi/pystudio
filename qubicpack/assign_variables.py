@@ -35,6 +35,7 @@ def assign_defaults(self):
     self.vbias=None
     self.cycle_vbias=True
     self.nbiascycles=None
+    self.bias_frequency=None
     self.max_permitted_bias=3.0
     self.max_bias=None
     self.min_bias=None
