@@ -103,6 +103,9 @@ def write_fits(self):
     prihdr['NCYCLES']=(self.nbiascycles,'number of cycles of the Bias voltage')
     prihdr['CYCBIAS']=(self.cycle_vbias,'ramp return Bias, yes or no')
     prihdr['TES_TEMP']=(self.temperature,'TES physical temperature in K')
+    prihdr['BIAS_MOD']=(self.bias_frequency,'bias modulation frequency')
+    prihdr['BIAS_MIN']=(self.min_bias,'minimum bias in V')
+    prihdr['BIAS_MAX']=(self.max_bias,'maximum bias in V')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
     if isinstance(self.adu,np.ndarray):
@@ -130,7 +133,7 @@ def write_fits(self):
         thdulist = pyfits.HDUList([prihdu, tbhdu1, tbhdu2])
         thdulist.writeto(fitsfile_fullpath)
 
-    if isinstance(self.timelines,np.ndarray):
+    if self.exist_timeline_data():
         fitsfile=str('QUBIC_timeline_%s.fits' % datestr)
         fitsfile_fullpath=self.output_filename(fitsfile)
         if os.path.exists(fitsfile_fullpath):
@@ -139,16 +142,16 @@ def write_fits(self):
             fitsfile_fullpath=self.output_filename(fitsfile)
             print('instead, saving to file: %s' % fitsfile_fullpath)
 
-        ntimelines=self.timelines.shape[0]
-        fmtstr=str('%iD' % self.timelines.shape[2])
-        dimstr=str('%i' % self.timelines.shape[1])
+        ntimelines=len(self.timelines)
 
         hdulist=[prihdu]
         have_times=False
         if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
             have_times=True
         for n in range(ntimelines):
-            col1  = pyfits.Column(name='timelines', format=fmtstr, dim=dimstr, unit='ADU', array=self.timelines[n,:,:])
+            fmtstr=str('%iD' % self.timelines[n].shape[1])
+            dimstr=str('%i' % self.timelines[n].shape[0])
+            col1  = pyfits.Column(name='timelines', format=fmtstr, dim=dimstr, unit='ADU', array=self.timelines[n])
             cols  = pyfits.ColDefs([col1])
             tbhdu = pyfits.BinTableHDU.from_columns(cols)
             if have_times:
@@ -211,6 +214,13 @@ def read_fits(self,filename):
     else:
         self.endobs=None
 
+    if 'BIAS_MOD' in h[0].header.keys():
+        self.bias_frequency=h[0].header['BIAS_MOD']
+    if 'BIAS_MIN' in h[0].header.keys():
+        self.min_bias=h[0].header['BIAS_MIN']
+    if 'BIAS_MAX' in h[0].header.keys():
+        self.max_bias=h[0].header['BIAS_MAX']
+
     timelines=[]
     obsdates=[]
     for hdu in h[1:]:
@@ -264,7 +274,7 @@ def read_fits(self,filename):
     # print('hdrtype=%s' % hdrtype)
     if hdrtype=='timelines':
         print('assigning timeline data')
-        self.timelines=np.array(timelines)
+        self.timelines=timelines
         if len(obsdates)>0:self.obsdates=obsdates
     h.close()
 
