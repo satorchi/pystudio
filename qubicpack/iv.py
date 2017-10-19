@@ -302,6 +302,11 @@ def filter_jumps(self,I,jumplimit=2.0):
     self.debugmsg('filtering jumps')
     npts_curve=len(I)
 
+    # don't do anything if jumplimit not given
+    if not (isinstance(jumplimit,float) or isinstance(jumplimit,int)):
+        self.debugmsg('no jump filtering.  returning full range.')
+        return (0,npts_curve-1)
+
     # find the step size between subsequent bias points
     # we make this relative to the lower point in the step
     # so that a big step is a big number
@@ -490,7 +495,7 @@ def single_polynomial_fit_parameters(self,fit):
     fit['R1']=R1
     return fit
 
-def fit_iv(self,TES,jumplimit=2.0,curve_index=None):
+def fit_iv(self,TES,jumplimit=None,curve_index=None):
     '''
     fit the I-V curve to a polynomial
 
@@ -885,7 +890,7 @@ def filter_iv(self,TES,
               abs_amplitude_limit=0.01,
               rel_amplitude_limit=0.1,
               bias_margin=0.2,
-              jumplimit=2.0,
+              jumplimit=None,
               curve_index=None):
     '''
     determine if this is a good TES from the I-V curve
@@ -964,7 +969,7 @@ def filter_iv(self,TES,
     # we only get this far if it's a good I-V
     return self.assign_filterinfo(TES,ret)
 
-def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=2.0):
+def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=None):
     '''
     find which TES are good
     '''
