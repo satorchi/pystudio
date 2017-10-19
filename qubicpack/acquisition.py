@@ -92,11 +92,21 @@ def configure_PID(self,P=0,I=20,D=0):
     # first switch off the loop
     client.sendActivatePID(self.QS_asic_index,0)
 
+    # wait a bit
+    self.wait_a_bit()
+
     # next, set the parameters
     client.sendConfigurePID(self.QS_asic_index, P,I,D)
 
+    # wait a bit
+    self.wait_a_bit()
+
     # and reactivate the loop
     client.sendActivatePID(self.QS_asic_index,1)
+
+    # wait a bit before returning
+    self.wait_a_bit()
+
     return True
 
 
@@ -237,7 +247,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
     '''
 
     monitor_iv=False
-    if not TES==None:
+    if isinstance(TES,int):
         monitor_TES_index=self.TES_index(TES)
         monitor_iv=True
 
@@ -269,7 +279,9 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         nrows=16
         ncols=8
         figmulti,axmulti=self.setup_plot_iv_multi()
-    
+
+    # before starting, reset the FLL
+    if not replay: self.configure_PID()
     for j in range(nbias) :
         self.debugmsg("Vbias=%gV " % vbias[j])
         if not replay:
