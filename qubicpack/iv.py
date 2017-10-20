@@ -313,7 +313,7 @@ def fitted_iv_curve(self,TES):
     bias=self.vbias[istart:iend]
 
     # polynomial fit
-    if fit['fitfunction']=='POLYNOMIAL':
+    if 'fitfunction' not in fit.keys() or fit['fitfunction']=='POLYNOMIAL':
         func=np.poly1d(fit['fitinfo'][0]) + offset
         f=func(bias)
         return bias,f
@@ -821,7 +821,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
 
     # draw a fit to the I-V curve
-    txt+=str('\nfit residual: %.4e' % fit['residual'])
+    txt+=str('\nfit residual: %.4e' % filterinfo['residual'])
     bias,f=self.fitted_iv_curve(TES)
     plt.plot(bias,f,linestyle='dashed',color='red')
 
