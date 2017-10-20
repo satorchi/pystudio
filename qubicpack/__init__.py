@@ -67,8 +67,13 @@ class qubicpack:
         make_line,\
         filter_jumps,\
         single_polynomial_fit_parameters,\
+        combined_fit_parameters,\
+        do_polyfit,\
+        do_combinedfit,\
+        iv_function,\
         fit_iv,\
         draw_tangent,\
+        fitted_iv_curve,\
         draw_iv,\
         setup_plot_iv,\
         adjusted_iv,\
@@ -107,7 +112,10 @@ class qubicpack:
         amplitude2DAC,\
         bias_offset2DAC,\
         sample_period,\
-        timeline_npts
+        timeline_npts,\
+        determine_bias_modulation,\
+        timeline2adu,\
+        plot_timeline
 
 
     from .oxford import\
