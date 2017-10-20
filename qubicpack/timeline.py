@@ -76,7 +76,46 @@ def timeline_npts(self):
     timeline_size = int(np.ceil(self.tinteg / sample_period))
     return timeline_size
 
-def plot_timeline(self,n=None):
+def determine_bias_modulation(self,TES,timeline_index=None):
+    '''
+    determine the modulation of the bias voltage
+    It should be close to the "bias_frequency" which is actually the period.
+    '''
+    if not self.exist_timeline_data():return None
+    if not isinstance(timeline_index,int):timeline_index=0
+    ntimelines=len(self.timelines)
+    if timeline_index>=ntimelines:
+        print('Please enter a timeline between 0 and %i' % (ntimelines-1))
+        return None
+    
+    TES_index=self.TES_index(TES)
+    timeline=self.timelines[timeline_index][TES_index,:]
+    timeline_npts=len(timeline)
+
+    sample_period=self.sample_period()
+    time_axis=sample_period*np.arange(timeline_npts)
+
+    # the so-called frequency of the bias modulation is, in fact, the period
+    bias_period_npts=int(self.bias_frequency/sample_period)
+
+    # skip the first couple of seconds which are often noisy
+    skip=int(2.0/sample_period)
+    self.debugmsg('looking for peaks in I-V timeline.  Skipping the first %i points.' % skip)
+    peak0_range=(skip,bias_period_npts)
+    peak1_range_end=2*bias_period_npts
+    if peak1_range_end>=timeline_npts:
+        peak1_range_end=timeline_npts-1
+    peak1_range=(bias_period_npts,peak1_range_end)
+
+    ipeak0=np.argmax(timeline[peak0_range[0]:peak0_range[1]])
+    ipeak0+=peak0_range[0]
+    peak0=time_axis[ipeak0]
+    ipeak1=np.argmax(timeline[peak1_range[0]:peak1_range[1]])
+    ipeak1+=peak1_range[0]
+    peak1=time_axis[ipeak1]
+    return (ipeak0,ipeak1)
+
+def plot_timeline(self,TES,timeline_index=None,xwin=True):
     '''
     plot the timeline
     '''
@@ -84,23 +123,17 @@ def plot_timeline(self,n=None):
         print('ERROR! No timeline data.')
         return None
 
-    if not isinstance(n,int):
+    if not isinstance(timeline_index,int):
         # by default, plot the first one.  this could change
-        n=0
+        timeline_index=0
 
     ntimelines=len(self.timelines)
-    if n>=ntimelines:
+    if timeline_index>=ntimelines:
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
 
-    sample_period=self.sample_period()
-    timeline_npts = self.timeline_npts()
-    time_axis=sample_period*np.arange(timeline_npts)
-    current=self.ADU2I(self.timelines[n])
-
-    
     if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
-        timeline_date=self.obsdates[n]
+        timeline_date=self.obsdates[timeline_index]
     else:
         timeline_date=self.obsdate
     
@@ -122,7 +155,97 @@ def plot_timeline(self,n=None):
     ax.set_xlabel('time  /  seconds')
     ax.set_ylabel('Current  /  $\mu$A')
     
+    TES_index=self.TES_index(TES)
+    timeline=self.timelines[timeline_index][TES_index,:]
+    current=self.ADU2I(timeline)
+    timeline_date=self.obsdate
+    timeline_npts=len(timeline)
 
+    sample_period=self.sample_period()
+    time_axis=sample_period*np.arange(timeline_npts)
+
+    ipeak0,ipeak1=self.determine_bias_modulation(TES,timeline_index)
     
-    
+    peak0=time_axis[ipeak0]
+    peak1=time_axis[ipeak1]
+
+    bias_period=peak1-peak0
+
+    amplitude=0.5*(current[ipeak0]-min(current))
+    offset=min(current)+amplitude
+    ysine=offset+amplitude*np.sin((time_axis-peak0)*2*np.pi/bias_period + 0.5*np.pi)
+    sinelabel='sine curve period=%.2f seconds' % bias_period
+    plt.plot(time_axis,ysine,label=sinelabel,color='green')
+    plt.plot(time_axis,current,label='I-V timeline',color='blue')
+
+    ttl=str('QUBIC Timeline curve for TES#%3i (%s)' % (TES,timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
+    fig=plt.gcf()
+    fig.suptitle(ttl,fontsize=16)
+    fig.canvas.set_window_title('plt: '+ttl) 
+    ax=plt.gca()
+    ax.set_xlabel('time  /  seconds')
+    ax.set_ylabel('Current  /  $\mu$A')
+    ymax=max([current[ipeak0],current[ipeak1]])
+    ymin=min(current)
+    yrange=ymax-ymin
+    yminmax=(ymin-0.02*yrange,ymax+0.02*yrange)
+    plt.plot([peak0,peak0],yminmax,color='red')
+    plt.plot([peak1,peak1],yminmax,color='red')
+    ax.set_ylim(yminmax)
+    plt.legend()
+
+    pngname=str('TES%03i_timeline_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
+
     return
+
+def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0):
+    '''
+    transfer timeline data with I-V curves to the ADU matrix 
+    this is done so that we can directly use all the I-V methods
+    '''
+    if not self.exist_timeline_data():return None
+    ntimelines=len(self.timelines)
+    if timeline_index>=ntimelines:
+        print('Please enter a timeline between 0 and %i' % (ntimelines-1))
+        return None
+
+    if not isinstance(TES,int):TES=70
+    
+    ip0,ip1=self.determine_bias_modulation(TES,timeline_index)
+    if not isinstance(ipeak0,int):ipeak0=ip0
+    if not isinstance(ipeak1,int):ipeak1=ip1
+    
+    timeline_npts=self.timeline_npts()
+    sample_period=self.sample_period()
+    if sample_period==None:
+        print('ERROR! Could not determine sample period.  Missing nsamples?')
+        return None
+    time_axis=sample_period*np.arange(timeline_npts)
+    peak0=time_axis[ipeak0]
+    peak1=time_axis[ipeak1]
+
+    # find the number of cycles from the bias modulation "frequency" which is the period
+    ncycles=int( np.round((peak1-peak0)/self.bias_frequency) )
+    if ncycles==0:
+        # it's not down/up
+        self.nbiascycles=1
+        self.cycle_vbias=False
+    else:
+        self.nbiascycles=ncycles
+        self.cycle_vbias=True    
+    
+    amplitude=0.5*(self.max_bias-self.min_bias)
+    offset=self.min_bias+amplitude
+    ysine=offset+amplitude*np.sin((time_axis-peak0)*2*np.pi/self.bias_frequency + 0.5*np.pi)
+    self.vbias=ysine[ipeak0:ipeak1]
+    self.min_bias=min(self.vbias)
+    self.max_bias=max(self.vbias)
+
+    npts=len(self.vbias)
+    self.adu=np.empty((self.NPIXELS,npts))
+    for idx in range(self.NPIXELS):
+        self.adu[idx,:]=self.timelines[timeline_index][idx,ipeak0:ipeak1]
+
+    return True
