@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from glob import glob
 import math
 import pickle
+from scipy.optimize import curve_fit
 
 def wait_a_bit(self,pausetime=None):
     if pausetime==None:
@@ -269,31 +270,58 @@ def make_line(self,pt1,pt2,xmin,xmax):
     print('straight line should go through the origin: b=%.5e =  0?' % b)
     return [ymin,ymax]
 
-def draw_tangent(self,fit=None):
+def draw_tangent(self,TES):
     '''
     make a tangent line of the I-V curve fit at the maximum bias
     '''
-    if fit==None: return None,None
-    if fit['R1']==None: return None,None
+    R1=self.R1(TES)
+    if R1==None: return None,None
 
+    offset=self.offset(TES)
+    
     # tangent is determined by the fit
-    R1=fit['R1']
     slope=1/R1
     
-    V=self.vbias[self.max_bias_position]
+    V=self.max_bias
     Imax=V
 
     # The line is described by: y=slope*x + I0 + offset
-    I0=Imax - slope*V - fit['offset']
+    I0=Imax - slope*V - offset
 
     V2=self.min_bias
-    I2=slope*V2 + I0 + fit['offset']
+    I2=slope*V2 + I0 + offset
 
     xpts=[V2,V]
     ypts=[I2,Imax]
     plt.plot(xpts,ypts,linestyle='dashed',color='green')
     
     return R1,I0
+
+def fitted_iv_curve(self,TES):
+    '''
+    make a curve from the fit parameters
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo==None:return None
+
+    offset=self.offset(TES)
+    if offset==None:return None
+
+    fit=filterinfo['fit']
+
+    istart,iend=self.selected_iv_curve(TES)
+    bias=self.vbias[istart:iend]
+
+    # polynomial fit
+    if fit['fitfunction']=='POLYNOMIAL':
+        func=np.poly1d(fit['fitinfo'][0]) + offset
+        f=func(bias)
+        return bias,f
+
+    # combined polynomial fit
+    Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1=fit['fitinfo'][0]
+    f=self.iv_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)   
+    return bias,f
 
 def filter_jumps(self,I,jumplimit=2.0):
     '''
@@ -450,7 +478,7 @@ def single_polynomial_fit_parameters(self,fit):
         ypts=I[ibeg:istop]
         fit['linefit xpts']=xpts
         fit['linefit ypts']=ypts
-        self.debugmsg('fit_iv(%i): ibeg=%i, istop=%i' % (TES,ibeg,istop))
+        self.debugmsg('single_polynomial_fit_parameters(%i): ibeg=%i, istop=%i' % (TES,ibeg,istop))
         linefit=np.polyfit(xpts,ypts,1,full=True)
         slope=linefit[0][0]
         b=linefit[0][1]
@@ -474,7 +502,7 @@ def single_polynomial_fit_parameters(self,fit):
     # if the above didn't work, we use the original curve fit 
     # we shift the fit curve up/down to have I(max_bias)=max_bias
     # which puts the max bias position at a point on the R=1 Ohm line
-    V=self.vbias[self.max_bias_position]
+    V=self.max_bias
     Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
     offset=V-Imax
     fit['offset']=offset
@@ -495,7 +523,101 @@ def single_polynomial_fit_parameters(self,fit):
     fit['R1']=R1
     return fit
 
-def fit_iv(self,TES,jumplimit=None,curve_index=None):
+def combined_fit_parameters(self,fit):
+    '''
+    determine the TES characteristics from the fit of multiple polynomials
+    this is called from fit_iv()
+    '''
+    TES=fit['TES']
+    TES_index=self.TES_index(TES)
+    I=self.ADU2I(self.adu[TES_index,:])
+    npts=len(I)
+
+    # these are for compatibility with 3rd degree polynomial fit
+    fit['turning']=[None,None]
+    fit['concavity']=[None,None]
+    fit['inflection']=None
+
+    return fit
+
+
+def do_polyfit(self,bias,curve):
+    '''
+    fit I-V curve to polynomial degree 3
+    normalize the residual to the number of points in the fit
+    '''
+    self.debugmsg('I-V polyfit.  Single polynomial for the whole I-V curve.')
+    npts=len(bias)
+    polyfit=np.polyfit(bias,curve,3,full=True)
+    residual=polyfit[1][0]/npts
+    ret={}
+    ret['fitinfo']=polyfit
+    ret['residual']=residual
+    return ret
+
+def do_combinedfit(self,bias,curve):
+    '''
+    fit I-V curve to a combined polynomial 
+    (see iv_function() below)
+    '''
+    self.debugmsg('I-V combined fit.  Multiple polynomials.')
+
+    # initial guess
+    turnover_idx=np.argmin(curve)
+    Vturnover=bias[turnover_idx]
+    Vmax=max(bias)
+    Vmin=min(bias)
+    Vnormal=Vturnover + 0.5*(Vmax-Vturnover)
+    a0=1.0
+    a1=1.0
+    a2=1.0
+    b0=1.0
+    b1=1.0
+    b2=1.0
+    c0=1.0
+    c1=5.0
+    p0=[Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1]
+
+    popt,pcov=curve_fit(self.iv_function,bias,curve,p0=p0)
+    fitinfo=[popt,pcov]
+
+    # calculate a performance measure
+    npts=len(bias)
+    Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1=popt
+    Vfit=self.iv_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)
+    sigma2=(curve-Vfit)**2
+    residual = np.sqrt( np.sum(sigma2) )/npts
+    ret={}
+    ret['fitinfo']=fitinfo
+    ret['residual']=residual
+    ret['turnover']=Vturnover
+    ret['R1']=1.0/c1
+    ret['offset']=c0
+    ret['Iturnover']=self.iv_function([Vturnover],Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)
+    return ret
+
+def iv_function(self,Vpts,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1):
+    '''
+    function to fit I-V curve in three parts
+      1. polynomial 2nd order below turnover bias
+      2. polynomial 2nd order above turnover bias
+      3. straight line in normal region
+
+    there are 10 parameters to fit!
+    '''    
+    I=np.empty( (len(Vpts)) )
+    for idx,V in enumerate(Vpts):
+        if V<Vturnover:
+            I[idx]=a0 + a1*V + a2*V*V
+        elif V<Vnormal:
+            I[idx]=b0 + b1*V + b2*V*V
+        else:
+            I[idx]=c0 + c1*V
+    return I
+
+
+
+def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL'):
     '''
     fit the I-V curve to a polynomial
 
@@ -508,6 +630,7 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None):
     optional arguments: 
        jumplimit:    this is the smallest step considered to be a jump in the data
        curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
+       fitfunction:  use a 3rd degree polynomial, or a combination of polynomials
     '''
     if not isinstance(self.adu,np.ndarray):
         print('ERROR! No data!')
@@ -518,6 +641,7 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None):
     # return is a dictionary with various info
     fit={}
     fit['TES']=TES
+    fit['fitfunction']=fitfunction.upper()
 
     I=self.ADU2I(self.adu[TES_index,:])
     npts=len(I)
@@ -555,12 +679,15 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None):
             npts_span=npts_curve
         curve=ypts[good_start:good_end]
         bias=xpts[good_start:good_end]
-        
-        # fit to polynomial degree 3
-        # normalize the residual to the number of points in the fit
-        polyfit=np.polyfit(bias,curve,3,full=True)
-        residual=polyfit[1][0]/npts_span
-        allfits.append(polyfit)
+
+        if fitfunction=='POLYNOMIAL':
+            ivfit=self.do_polyfit(bias,curve)
+        else:
+            ivfit=self.do_combinedfit(bias,curve)
+
+        for key in ivfit.keys(): fit[key]=ivfit[key] # it's a hack.    
+        residual=ivfit['residual']
+        allfits.append(ivfit['fitinfo'])
         fitranges.append((good_start,good_end))
         if abs(residual)<best_residual:
             best_residual=abs(residual)
@@ -582,7 +709,10 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None):
     fit['fitinfo']=fitinfo
     fit['fit range']=fitranges[curve_index]
 
-    fit=self.single_polynomial_fit_parameters(fit)
+    if fitfunction=='POLYNOMIAL':
+        fit=self.single_polynomial_fit_parameters(fit)
+    else:
+        fit=self.combined_fit_parameters(fit)
 
     keys=''
     for key in fit.keys():keys+=key+', '
@@ -644,7 +774,7 @@ def setup_plot_iv(self,TES,xwin=True):
     # ax.set_ylim([self.min_bias,self.max_bias])
     return fig,ax
 
-def adjusted_iv(self,TES,fit=None):
+def adjusted_iv(self,TES):
     '''
     return the adjusted I-V curve
     '''
@@ -653,9 +783,9 @@ def adjusted_iv(self,TES,fit=None):
     Iadjusted=self.ADU2I(self.adu[self.TES_index(TES),:],offset=offset)
     return Iadjusted
 
-def oplot_iv(self,TES,fit=None,label=None):
+def oplot_iv(self,TES,label=None):
 
-    Iadjusted=self.adjusted_iv(TES,fit=fit)
+    Iadjusted=self.adjusted_iv(TES)
     self.draw_iv(Iadjusted,label=label)
     
     return
@@ -680,20 +810,20 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     # normalize the Current so that R=1 Ohm at the highest Voffset
     offset=self.offset(TES)
     txt=str('offset=%.4e' % offset)
-    Iadjusted=self.adjusted_iv(TES,fit)
-    self.oplot_iv(TES,fit)
+    Iadjusted=self.adjusted_iv(TES)
+    self.oplot_iv(TES)
         
     # draw a line tangent to the fit at the highest Vbias
     # I0 here is the current extrapolated to Vbias=0
-    R1,I0=self.draw_tangent(fit)
-
+    R1,I0=self.draw_tangent(TES)
+    
     R1=self.R1(TES)
     if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
 
-    # draw a polynomial fit to the I-V curve
-    txt+=str('\npolynomial fit residual: %.4e' % fit['fitinfo'][1][0])
-    f=np.poly1d(fit['fitinfo'][0]) + offset
-    plt.plot(self.vbias,f(self.vbias),linestyle='dashed',color='red')
+    # draw a fit to the I-V curve
+    txt+=str('\nfit residual: %.4e' % fit['residual'])
+    bias,f=self.fitted_iv_curve(TES)
+    plt.plot(bias,f,linestyle='dashed',color='red')
 
     # draw vertical lines to show the range used for the fit
     if 'fit range' in fit.keys():
@@ -891,7 +1021,8 @@ def filter_iv(self,TES,
               rel_amplitude_limit=0.1,
               bias_margin=0.2,
               jumplimit=None,
-              curve_index=None):
+              curve_index=None,
+              fitfunction='POLYNOMIAL'):
     '''
     determine if this is a good TES from the I-V curve
     '''
@@ -904,9 +1035,9 @@ def filter_iv(self,TES,
     ret['comment']='no comment'
 
     # fit to a polynomial. The fit will be for the best measured curve if it's cycled bias
-    fit=self.fit_iv(TES,jumplimit,curve_index)
+    fit=self.fit_iv(TES,jumplimit,curve_index,fitfunction)
     ret['fit']=fit
-    residual=fit['fitinfo'][1][0]
+    residual=fit['residual']
     ret['residual']=residual
     offset=fit['offset']
     ret['offset']=offset
