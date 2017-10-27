@@ -172,14 +172,16 @@ def assign_datadir(self,d=None):
     '''
 
     # valid possibilities, in order of preference
-    home=os.environ['HOME']
     cwd=os.getcwd()
     datadirs=['/data/qubic',
               '/home/qubic/data',
               '/home/qubic/Bureau/PyStudio Work/data',
               '/home/work/qubic/data',
-              home+'/data',
               cwd]
+    if 'HOME' in os.environ.keys():
+        home=os.environ['HOME']
+        datadirs.append(home+'/data')
+    datadirs.append(cwd)
     fallback_dir='/tmp/qubic'
 
     # if a directory is given, make this the priority possibility
@@ -190,7 +192,8 @@ def assign_datadir(self,d=None):
     tmpdir_ok=False
     for datadir in datadirs:
         try:
-            tmpfile_full=datadir+'/'+tmpfile
+            tmpfile_full=datadir+os.sep+tmpfile
+            tmpfile_full.replace('/',os.sep)
             h=open(tmpfile_full,'w')
             h.write('check if we have write permission\n')
             h.close()
@@ -204,10 +207,10 @@ def assign_datadir(self,d=None):
 
     if not tmpdir_ok:
         # try the fall back directory
-        datadir=fallback_dir
+        datadir=fallback_dir.replace('/',os.sep)
         try:
             if not os.path.exists(fallback_dir): os.system('mkdir --parents %s' % fallback_dir)
-            tmpfile_full=datadir+'/'+tmpfile
+            tmpfile_full=datadir+os.sep+tmpfile
             h=open(tmpfile_full,'w')
             h.write('check if we have write permission\n')
             h.close()

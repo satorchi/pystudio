@@ -41,7 +41,7 @@ def data_subdir(self):
         if datadir==None:return None
 
     subdir=self.obsdate.strftime('%Y/%Y%m%d')
-    fullpath='%s/%s' % (self.datadir,subdir)
+    fullpath='%s%s%s' % (self.datadir,os.sep,subdir)
     # make the subdirectory if necessary
     if not os.path.exists(fullpath):
         cmd='mkdir --parents %s' % fullpath
@@ -70,9 +70,9 @@ def output_filename(self,rootname):
 
     subdir=self.data_subdir()
     if isinstance(subdir,str):
-        filename='%s/%s/%s' % (self.datadir,subdir,rootname)
+        filename='%s%s%s%s%s' % (self.datadir,os.sep,subdir,os.sep,rootname)
     else:
-        filename='%s/%s' % (self.datadir,rootname)
+        filename='%s%s%s' % (self.datadir,os.sep,rootname)
 
     return filename
         
