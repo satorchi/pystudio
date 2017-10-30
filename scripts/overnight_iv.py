@@ -188,6 +188,9 @@ for T in Tbath_target:
     if delta>temp_precision:
         writelog(logfile_fullpath,'WARNING! Did not reach target temperature!')
         writelog(logfile_fullpath,'Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
+
+    # reset FLL before measurement
+    if not TESTMODE: go.configure_PID()
     go.get_iv_data(TES=monitor_TES,replay=TESTMODE)
     writelog(logfile_fullpath,'end I-V measurement')
     plt.close('all')
