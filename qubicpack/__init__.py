@@ -53,7 +53,9 @@ class qubicpack:
         read_fits,\
         read_bins,\
         output_filename,\
-        data_subdir
+        data_subdir,\
+        get_from_keyboard,\
+        writelog
 
     from .iv import\
         wait_a_bit,\
