@@ -319,4 +319,34 @@ def read_bins(self,filename):
     f.close()
     return
         
+def get_from_keyboard(self,msg,default=None):
+    ''''
+    get interactive input from the keyboard
+    '''
+    prompt='%s (default: %s) ' % (msg,str(default))
+    ans=raw_input(prompt)
+    if ans=='':return default
+    if type(default)==str:
+        return ans
+    
+    try:
+        x=eval(ans)
+    except:
+        print('invalid response.')
+        return None
+    return x
+    
+
+def writelog(self,logfile,msg):
+    '''
+    write some output with a timestamp to a log file
+    and also write it on the screen
+    '''
+    
+    handle=open(filename,'a')
+    timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC -- ')
+    handle.write(timestamp+msg+'\n')
+    handle.close()
+    print(timestamp+msg)
+    return
          
