@@ -148,7 +148,7 @@ def integrate_scientific_data(self):
     asic=self.asic
 
     # reconfigure the FLL (stop/start)
-    if not self.configure_PID(0,20,0):return None
+    #if not self.configure_PID(0,20,0):return None ### this shouldn't go here.
         
     nsample = client.fetch('QUBIC_Nsample')
     # QubicStudio returns an array of integer of length 1.
@@ -281,7 +281,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         figmulti,axmulti=self.setup_plot_iv_multi()
 
     # before starting, reset the FLL
-    if not replay: self.configure_PID()
+    #if not replay: self.configure_PID() ### this is causing problems
     for j in range(nbias) :
         self.debugmsg("Vbias=%gV " % vbias[j])
         if not replay:
