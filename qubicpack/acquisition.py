@@ -350,8 +350,9 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     
     amplitude=0.5*(vmax-vmin)
     offset=vmin+amplitude
-
+    
     if frequency==None:frequency=99
+    self.debugmsg('amplitude=%.2f, offset=%.2f, frequency=%.2f' % (amplitude,offset,frequency))
     ret=self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0)
 
     timeline=self.integrate_scientific_data()
