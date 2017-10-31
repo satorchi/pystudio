@@ -320,7 +320,7 @@ def fitted_iv_curve(self,TES):
 
     # combined polynomial fit
     Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1=fit['fitinfo'][0]
-    f=self.iv_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)   
+    f=self.iv_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
     return bias,f
 
 def filter_jumps(self,I,jumplimit=2.0):
@@ -592,8 +592,16 @@ def do_combinedfit(self,bias,curve):
     ret['residual']=residual
     ret['turnover']=Vturnover
     ret['R1']=1.0/c1
-    ret['offset']=c0
-    ret['Iturnover']=self.iv_function([Vturnover],Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)
+
+    # find offset that puts current equal to max bias voltage (R=1 at Vbias=maximum)
+    max_bias_idx=np.argmax(bias)
+    max_bias=bias[max_bias_idx]
+    Imax=curve[max_bias_idx]
+    offset=max_bias-Imax
+    ret['offset']=offset
+    
+    ret['Iturnover']=self.iv_function([Vturnover],Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
+
     return ret
 
 def iv_function(self,Vpts,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1):
@@ -807,9 +815,14 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     
     fig,ax=self.setup_plot_iv(TES,xwin)
 
+    # identify which fit function was used
+    if 'fitfunction' not in fit.keys():
+        fit['fitfunction']='POLYNOMIAL'
+    txt='fit function = %s' % fit['fitfunction']
+    
     # normalize the Current so that R=1 Ohm at the highest Voffset
     offset=self.offset(TES)
-    txt=str('offset=%.4e' % offset)
+    txt+=str('\noffset=%.4e' % offset)
     Iadjusted=self.adjusted_iv(TES)
     self.oplot_iv(TES)
         
