@@ -34,8 +34,8 @@ def amplitude2DAC(self,amplitude):
     convert bias voltage amplitude in Volts to DAC to send to QubicStudio
     '''
     if amplitude > 0 and amplitude <= 9:
-        # DACamplitude = amplitude / 0.001125 - 1
-        DACamplitude = amplitude / 0.001125  # "-1" removed Tue 17 Oct 2017 14:09:47 CEST
+        DACamplitude = amplitude / 0.001125 - 1 # "-1" is back Mon 30 Oct 2017 19:51:42 CET
+        #DACamplitude = amplitude / 0.001125  # "-1" removed Tue 17 Oct 2017 14:09:47 CEST
     else:
         DACamplitude = 65536 + amplitude / 0.001125
     DACamplitude = int(np.round(DACamplitude))
@@ -50,8 +50,8 @@ def bias_offset2DAC(self,bias):
     # A = 2.8156e-4
     A = 284.5e-6
     if bias > 0 and bias <= 9:
-        # DACoffset = bias / A - 1
-        DACoffset = bias / A # "-1" removed Tue 17 Oct 2017 15:47:03 CEST
+        DACoffset = bias / A - 1 # "-1" is back Mon 30 Oct 2017 19:51:57 CET
+        #DACoffset = bias / A # "-1" removed Tue 17 Oct 2017 15:47:03 CEST
     else:
         DACoffset = 65536 + bias / A
     DACoffset = int(np.round(DACoffset))
