@@ -680,7 +680,7 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL'):
         # the return is the range of indexes of the acceptable points
         good_start,good_end=self.filter_jumps(ypts,jumplimit)
         npts_span=good_end-good_start
-        if npts_span<5:
+        if npts_span<11:
             self.debugmsg('couldn\'t find a large span without jumps! Fitting the whole curve...')
             good_start=0
             good_end=len(xpts)
@@ -1113,7 +1113,13 @@ def filter_iv(self,TES,
     # we only get this far if it's a good I-V
     return self.assign_filterinfo(TES,ret)
 
-def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude_limit=0.1,bias_margin=0.2,jumplimit=None):
+def filter_iv_all(self,
+                  residual_limit=3.0,
+                  abs_amplitude_limit=0.01,
+                  rel_amplitude_limit=0.1,
+                  bias_margin=0.2,
+                  jumplimit=None,
+                  fitfunction='POLYNOMIAL'):
     '''
     find which TES are good
     '''
@@ -1128,7 +1134,14 @@ def filter_iv_all(self,residual_limit=3.0,abs_amplitude_limit=0.01,rel_amplitude
     for TES_index in range(self.NPIXELS):
         TES=TES_index+1
         self.debugmsg('running filter on TES %03i' % TES)
-        filterinfo=self.filter_iv(TES,residual_limit,abs_amplitude_limit,rel_amplitude_limit,bias_margin,jumplimit)
+        filterinfo=self.filter_iv(TES,
+                                  residual_limit,
+                                  abs_amplitude_limit,
+                                  rel_amplitude_limit,
+                                  bias_margin,
+                                  jumplimit,
+                                  curve_index=None,
+                                  fitfunction=fitfunction)
         filtersummary.append(filterinfo)
         
     self.filtersummary=filtersummary
