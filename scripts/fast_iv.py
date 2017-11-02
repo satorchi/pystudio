@@ -30,14 +30,14 @@ asic=go.get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
 
+monitor_TES=get_from_keyboard('which TES would you like to monitor during the measurement? ',88)
+if monitor_TES==None:quit()
+
 go.assign_integration_time(240)
 go.configure_PID()
 go.get_iv_timeline(vmin=0.5,vmax=3.0)
 
-for idx in range(go.NPIXELS):
-    TES=idx+1
-    go.timeline2adu(TES)
+go.timeline2adu(monitor_TES)
 
-plt.ion()
-go.plot_iv(70)
 go.write_fits()
+#go.plot_iv(monitor_TES)
