@@ -27,6 +27,7 @@ from scipy.optimize import curve_fit
 kBoltzmann=1.3806485279e-23
 Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
 Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
+temperature_precision = 0.005 # close enough for temperature
 
 def read_data_from_20170804():
     '''
@@ -473,10 +474,10 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     # find the data at 300mK
     go300=None
     for go in qplist:
-        if go.temperature==0.3:
+        if go.temperature>=0.3-temperature_precision and go.temperature<=0.3+temperature_precision:
             go300=go
     if go300==None:
-        go300=qplist[0]
+        go300=qplist[-1]
         
     asic=go300.asic
     datadate=go.obsdate
@@ -545,10 +546,10 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     # find the data at 300mK
     go300=None
     for go in qplist:
-        if go.temperature==0.3:
+        if go.temperature>=0.3-temperature_precision and go.temperature<=0.3+temperature_precision:
             go300=go
     if go300==None:
-        go300=qplist[0]
+        go300=qplist[-1]
         
     asic=go300.asic
     observer=go300.observer.replace('<','$<$').replace('>','$>$')
