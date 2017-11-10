@@ -286,7 +286,12 @@ def fit_Pbath(T_pts, P_pts):
     '''
     find best fit to the P_bath function
     '''
-    ret=curve_fit(P_bath_function,T_pts,P_pts)
+
+    # make sure T_pts and P_pts are 1d arrays
+    npts=len(T_pts)
+    T=np.array(T_pts).reshape(npts)
+    P=np.array(P_pts).reshape(npts)
+    ret=curve_fit(P_bath_function,T,P)
     return ret
 
 def calculate_TES_NEP(qplist,TES,quiet=False):
@@ -325,7 +330,7 @@ def calculate_TES_NEP(qplist,TES,quiet=False):
         T.append(Tbath)
 
     try:
-        temperature_fit=curve_fit(P_bath_function,T,P)
+        temperature_fit=fit_Pbath(T,P)
     except:
         if not quiet:print('insufficient data for TES %i' % TES)
         temperature_fit=None
