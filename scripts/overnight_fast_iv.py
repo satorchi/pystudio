@@ -39,6 +39,7 @@ if TESTMODE:
     wait_msg='waiting %.0f seconds for temperature to settle' % tot_seconds(temp_wait)
 else:
     temp_minwait=dt.timedelta(minutes=30)
+    temp_minwait=dt.timedelta(minutes=5)
     temp_timeout=dt.timedelta(minutes=60)
     temp_wait=dt.timedelta(minutes=1)
     wait_msg='waiting %.1f minutes for temperature to settle' % (tot_seconds(temp_wait)/60.)
@@ -98,6 +99,10 @@ asic=get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
 
+# verify that we can get stuff from QubicStudio
+ret=go.verify_QS_connection()
+if not ret:quit()
+
 # setup bias voltage range
 min_bias=get_from_keyboard('minimum bias voltage ',0.5)
 if min_bias==None:quit()
@@ -145,7 +150,7 @@ nsteps=len(Tbath_target)
 writelog(logfile_fullpath,'number of temperatures=%i' % nsteps)
 
 # estimated time: half hour for temperature to settle, 4 minutes for I-V measurement
-duration_estimate=nsteps*(dt.timedelta(minutes=30)+dt.timedelta(minutes=4))
+duration_estimate=nsteps*(temp_minwait+dt.timedelta(minutes=4))
 endtime_estimate=dt.datetime.utcnow()+duration_estimate
 writelog(logfile_fullpath,endtime_estimate.strftime('estimated end at %Y-%m-%d %H:%M:%S'))
 
