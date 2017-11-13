@@ -151,6 +151,7 @@ class qubicpack:
         '''
         from .acquisition import\
             connect_QubicStudio,\
+            verify_QS_connection,\
             configure_PID,\
             get_amplitude,\
             get_mean,\

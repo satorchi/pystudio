@@ -82,6 +82,29 @@ def connect_QubicStudio(self,client=None, ip=None):
     # client.sendSetScientificDataTfUsed(1) # data in Volts
     return client
 
+def verify_QS_connection(self):
+    '''
+    verify that we have a valid connection to QubicStudio
+    This is useful for verifying that we're trying to connect to the correct ASIC
+    '''
+    client = self.connect_QubicStudio()
+    if client==None:return False
+
+    parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
+    req = client.request(parameter)
+
+    try:
+        timeline=req.next()
+    except Exception as e:
+        msg=   'ERROR! Could not get data from QubicStudio.  Did you choose the correct ASIC?'
+        msg+='\n       ASIC=%i' % self.asic
+        msg+='\n       %s' % e
+        print(msg)
+        return False
+
+    return True
+    
+
 def configure_PID(self,P=0,I=20,D=0):
     '''
     configure the FLL (Flux Lock Loop) PID
