@@ -38,6 +38,7 @@ if TESTMODE:
     wait_msg='waiting %.0f seconds for temperature to settle' % tot_seconds(temp_wait)
 else:
     temp_minwait=dt.timedelta(minutes=30)
+    temp_minwait=dt.timedelta(minutes=5)
     temp_timeout=dt.timedelta(minutes=60)
     temp_wait=dt.timedelta(minutes=1)
     wait_msg='waiting %.1f minutes for temperature to settle' % (tot_seconds(temp_wait)/60.)
@@ -97,6 +98,11 @@ asic=get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
 
+# verify that we can get stuff from QubicStudio
+ret=go.verify_QS_connection()
+if not ret:quit()
+
+
 # setup bias voltage range
 min_bias=get_from_keyboard('minimum bias voltage ',0.5)
 if min_bias==None:quit()
@@ -142,6 +148,21 @@ if TESTMODE:
 # make a log file
 logfile=dt.datetime.utcnow().strftime('temperature_IV_logfile_%Y%m%dT%H%M%SUTC.txt')
 logfile_fullpath=go.output_filename(logfile)
+
+writelog(logfile_fullpath,'starting I-V measurements at different temperatures using the stepped bias (slow) method')
+writelog(logfile_fullpath,'ASIC=%i' % go.asic)
+writelog(logfile_fullpath,'minimum bias=%.2f V' % min_bias)
+writelog(logfile_fullpath,'maximum bias=%.2f V' % max_bias)
+writelog(logfile_fullpath,'start temperature=%.3f K' % start_temp)
+writelog(logfile_fullpath,'end temperature=%.3f K' % end_temp)
+writelog(logfile_fullpath,'temperature step=%.3f K' % step_temp)
+nsteps=len(Tbath_target)
+writelog(logfile_fullpath,'number of temperatures=%i' % nsteps)
+
+# estimated time: half hour for temperature to settle, 25 minutes for I-V measurement
+duration_estimate=nsteps*(temp_minwait+dt.timedelta(minutes=25))
+endtime_estimate=dt.datetime.utcnow()+duration_estimate
+writelog(logfile_fullpath,endtime_estimate.strftime('estimated end at %Y-%m-%d %H:%M:%S'))
 
 
 # run the measurement
