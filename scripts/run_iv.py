@@ -37,11 +37,15 @@ def get_from_keyboard(msg,default=None):
 go=qp()
 
 # set debuglevel to 1 if you want lots of messages on the screen
-# go.debuglevel=1
+go.debuglevel=1
 
 asic=get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
+
+# verify that we can get stuff from QubicStudio
+ret=go.verify_QS_connection()
+if not ret:quit()
 
 min_bias=get_from_keyboard('minimum bias voltage ',0.5)
 if min_bias==None:quit()
