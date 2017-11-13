@@ -96,9 +96,11 @@ def verify_QS_connection(self):
     try:
         timeline=req.next()
     except Exception as e:
-        msg=   'ERROR! Could not get data from QubicStudio.  Did you choose the correct ASIC?'
+        msg= '\n*****************************************************************************'
+        msg+='\nERROR! Could not get data from QubicStudio.  Did you choose the correct ASIC?'
         msg+='\n       ASIC=%i' % self.asic
         msg+='\n       %s' % e
+        msg+='\n*****************************************************************************\n'
         print(msg)
         return False
 
