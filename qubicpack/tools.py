@@ -343,7 +343,7 @@ def writelog(self,logfile,msg):
     and also write it on the screen
     '''
     
-    handle=open(filename,'a')
+    handle=open(logfile,'a')
     timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC -- ')
     handle.write(timestamp+msg+'\n')
     handle.close()
