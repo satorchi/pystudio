@@ -390,6 +390,11 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
 
 
     # if this is the first one, assign a new timeline array
-    if not self.exist_timeline_data(): self.timelines=[]
+    if not self.exist_timeline_data():
+        self.timelines=[]
+        self.obsdates=[]
+        self.temperatures=[]
     self.timelines.append(timeline)
+    self.obsdates.append(self.obsdate)
+    self.temperatures.append(self.temperature)
     return timeline
