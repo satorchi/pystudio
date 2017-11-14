@@ -54,6 +54,7 @@ def assign_defaults(self):
     #self.assign_datadir() # already called from assign_obsdate() above
     self.assign_lookup_table()
     self.temperature=None
+    self.temperatures=None
     self.oxford_assign_temperature_labels()
     self.oxford_assign_heater_ranges()
     self.calsource_LF=None
