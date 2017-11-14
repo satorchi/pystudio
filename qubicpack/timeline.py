@@ -102,10 +102,10 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     skip=int(2.0/sample_period)
     self.debugmsg('looking for peaks in I-V timeline.  Skipping the first %i points.' % skip)
     peak0_range=(skip,bias_period_npts)
-    peak1_range_end=2*bias_period_npts
+    peak1_range_end=skip+2*bias_period_npts
     if peak1_range_end>=timeline_npts:
         peak1_range_end=timeline_npts-1
-    peak1_range=(bias_period_npts,peak1_range_end)
+    peak1_range=(skip+bias_period_npts,peak1_range_end)
 
     ipeak0=np.argmax(timeline[peak0_range[0]:peak0_range[1]])
     ipeak0+=peak0_range[0]
