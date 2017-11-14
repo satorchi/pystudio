@@ -10,6 +10,8 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 
 plot a poster of the layout of the QUBIC TES array
 '''
+from __future__ import division, print_function
+import numpy as np
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 
