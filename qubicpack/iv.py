@@ -199,6 +199,8 @@ def plot_iv_physical_layout(self,xwin=True):
     else: plt.ioff()
     fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
     subttl=str('ASIC #%i' % self.asic)
+    if not self.temperature==None:
+        subttl+=', T_{bath}=%.2f mK' % (1000*self.temperature)
     if not ngood==None:
         subttl+=str(': %i flagged as bad pixels' % (self.NPIXELS-ngood))
     pngname=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
