@@ -148,6 +148,10 @@ def write_fits(self):
         have_times=False
         if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
             have_times=True
+        have_temperatures=False
+        if isinstance(self.temperatures,list) and len(self.temperatures)==ntimelines:
+            have_temperatures=True
+        
         for n in range(ntimelines):
             fmtstr=str('%iD' % self.timelines[n].shape[1])
             dimstr=str('%i' % self.timelines[n].shape[0])
@@ -156,7 +160,9 @@ def write_fits(self):
             tbhdu = pyfits.BinTableHDU.from_columns(cols)
             if have_times:
                 tbhdu.header['DATE-OBS']=(self.obsdates[n].strftime('%Y-%m-%d %H:%M:%S UTC'),'date of the observation in UTC')
-                
+            if have_temperatures:
+                tbhdu.header['TES_TEMP']=(self.temperatures[n],'TES physical temperature in K')
+
             hdulist.append(tbhdu)
             
         thdulist = pyfits.HDUList(hdulist)
@@ -223,6 +229,7 @@ def read_fits(self,filename):
 
     timelines=[]
     obsdates=[]
+    temperatures=[]
     for hdu in h[1:]:
         hdrtype=hdu.header['TTYPE1']
         
@@ -267,6 +274,9 @@ def read_fits(self,filename):
             if 'DATE-OBS' in hdu.header.keys():
                 obsdate=dt.datetime.strptime(hdu.header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC')
                 obsdates.append(obsdate)
+            if 'TES_TEMP' in hdu.header.keys():
+                temperature=hdu.header['TES_TEMP']
+                temperatures.append(temperature)
                 
             timelines.append(timeline)
             
@@ -276,6 +286,7 @@ def read_fits(self,filename):
         print('assigning timeline data')
         self.timelines=timelines
         if len(obsdates)>0:self.obsdates=obsdates
+        if len(temperatures)>0:self.temperatures=temperatures
     h.close()
 
 
