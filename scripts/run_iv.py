@@ -18,28 +18,12 @@ import subprocess,os,sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-def get_from_keyboard(msg,default=None):
-    prompt='%s (default: %s) ' % (msg,str(default))
-    ans=raw_input(prompt)
-    if ans=='':return default
-    if type(default)==str:
-        return ans
-    
-    try:
-        x=eval(ans)
-    except:
-        print('invalid response.')
-        return None
-    return x
-    
-
-
 go=qp()
 
 # set debuglevel to 1 if you want lots of messages on the screen
 go.debuglevel=1
 
-asic=get_from_keyboard('Which ASIC?  ',2)
+asic=go.get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
 
@@ -47,20 +31,20 @@ ret=go.assign_asic(asic)
 ret=go.verify_QS_connection()
 if not ret:quit()
 
-min_bias=get_from_keyboard('minimum bias voltage ',0.5)
+min_bias=go.get_from_keyboard('minimum bias voltage ',0.5)
 if min_bias==None:quit()
-max_bias=get_from_keyboard('maximum bias voltage ',3.0)
+max_bias=go.get_from_keyboard('maximum bias voltage ',3.0)
 if max_bias==None:quit()
-dv=get_from_keyboard('bias step size ',0.004)
-cycle=get_from_keyboard('cycle bias up/down? ','y')
+dv=go.get_from_keyboard('bias step size ',0.004)
+cycle=go.get_from_keyboard('cycle bias up/down? ','y')
 if cycle==None:quit()
 if cycle.upper()=='N':
     cyclebias=False
 else:
     cyclebias=True
-ncycles=get_from_keyboard('number of bias cycles ',3)
+ncycles=go.get_from_keyboard('number of bias cycles ',3)
 if ncycles==None:quit()
-monitor_TES=get_from_keyboard('which TES would you like to monitor during the measurement? ',70)
+monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',70)
 if monitor_TES==None:quit()
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
