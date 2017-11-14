@@ -867,7 +867,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     # add room temp results, if loaded
     if not self.transdic==None:
         PIX=self.tes2pix(TES)
-        self.debugmsg('table lookup for PIX=%i' % PIX)
+        # self.debugmsg('table lookup for PIX=%i' % PIX)
         entry=self.lookup_TEStable(key='PIX',value=PIX)
         R300=entry['R300']
         if isinstance(R300,float):
@@ -1235,7 +1235,7 @@ def iv_tex_table_entry(self,TES):
         openloop='--'
         cf='--'
     else:
-        self.debugmsg('table lookup for PIX=%i' % PIX)
+        # self.debugmsg('table lookup for PIX=%i' % PIX)
         entry=self.lookup_TEStable(key='PIX',value=PIX)
         R300=entry['R300']
         if isinstance(R300,float):
