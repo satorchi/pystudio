@@ -158,7 +158,6 @@ def plot_timeline(self,TES,timeline_index=None,xwin=True):
     TES_index=self.TES_index(TES)
     timeline=self.timelines[timeline_index][TES_index,:]
     current=self.ADU2I(timeline)
-    timeline_date=self.obsdate
     timeline_npts=len(timeline)
 
     sample_period=self.sample_period()
@@ -178,7 +177,6 @@ def plot_timeline(self,TES,timeline_index=None,xwin=True):
     plt.plot(time_axis,ysine,label=sinelabel,color='green')
     plt.plot(time_axis,current,label='I-V timeline',color='blue')
 
-    ttl=str('QUBIC Timeline curve for TES#%3i (%s)' % (TES,timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
     fig=plt.gcf()
     fig.suptitle(ttl,fontsize=16)
     fig.canvas.set_window_title('plt: '+ttl) 
