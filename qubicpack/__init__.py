@@ -22,6 +22,7 @@ try:
     with_pystudio=True
 except:
     with_pystudio=False
+    print('WARNING: importing qubicpack without pystudio')
 
     
 class qubicpack:
@@ -37,7 +38,9 @@ class qubicpack:
         assign_pausetime,\
         assign_temperature,\
         assign_datadir,\
-        assign_obsdate
+        assign_obsdate,\
+        assign_bias_factor,\
+        assign_detector_name
 
     from .pix2tes import\
         assign_pix_grid,\
