@@ -307,7 +307,6 @@ def fitted_iv_curve(self,TES):
     if filterinfo==None:return None
 
     offset=self.offset(TES)
-    if offset==None:return None
 
     fit=filterinfo['fit']
 
@@ -676,7 +675,7 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL'):
         iend=istart+npts_curve
         ypts=I[istart:iend]
         self.debugmsg('cycle %i: fitting curve istart=%i, iend=%i' % ((idx+1),istart,iend))
-        xpts=self.vbias[istart:iend]
+        xpts=self.bias_factor*self.vbias[istart:iend] # should maybe use Vtes here? but there's a chance of recursion with Voffset.
 
         # filter out the big jumps
         # the return is the range of indexes of the acceptable points
@@ -789,7 +788,6 @@ def adjusted_iv(self,TES):
     return the adjusted I-V curve
     '''
     offset=self.offset(TES)
-    if offset==None:offset=0.0
     Iadjusted=self.ADU2I(self.adu[self.TES_index(TES),:],offset=offset)
     return Iadjusted
 
@@ -1600,7 +1598,7 @@ def offset(self,TES=None):
     if TES==None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo==None:return 0.0
         
     if TES==None:
         filtersummary=filterinfo
@@ -1666,7 +1664,7 @@ def Vtes(self,TES):
     Ites=self.Ites(TES)
     if not isinstance(Ites,np.ndarray):return None
     
-    Vtes=self.Rshunt*(self.vbias/self.Rbias-Ites)
+    Vtes=self.Rshunt*((self.vbias*self.bias_factor)/self.Rbias-Ites)
     return Vtes
 
 def Ptes(self,TES):
