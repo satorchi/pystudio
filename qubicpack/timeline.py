@@ -98,8 +98,8 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     # the so-called frequency of the bias modulation is, in fact, the period
     bias_period_npts=int(self.bias_frequency/sample_period)
 
-    # skip the first couple of seconds which are often noisy
-    skip=int(2.0/sample_period)
+    # skip the first few seconds which are often noisy
+    skip=int(3.0/sample_period)
     self.debugmsg('looking for peaks in I-V timeline.  Skipping the first %i points.' % skip)
     peak0_range=(skip,bias_period_npts)
     peak1_range_end=skip+2*bias_period_npts
@@ -139,11 +139,14 @@ def plot_timeline(self,TES,timeline_index=None,xwin=True):
     
     ttl=str('QUBIC Timeline curve for TES#%3i (%s)' % (TES,timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
 
-    if self.temperature==None:
-        tempstr='unknown'
+    if isinstance(self.temperatures,list) and len(self.temperatures)==ntimelines:
+        tempstr=str('%.0f mK' % (1000*self.temperatures[timeline_index]))
     else:
-        tempstr=str('%.0f mK' % (1000*self.temperature))
-    subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
+        if self.temperature==None:
+            tempstr='unknown'
+        else:
+            tempstr=str('%.0f mK' % (1000*self.temperature))
+    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
     
     if xwin: plt.ion()
     else: plt.ioff()
@@ -192,11 +195,103 @@ def plot_timeline(self,TES,timeline_index=None,xwin=True):
     ax.set_ylim(yminmax)
     plt.legend()
 
-    pngname=str('TES%03i_timeline_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES%03i_array-%s_ASIC%i_timeline_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
 
     return
+
+
+def plot_timeline_physical_layout(self,timeline_index=0,xwin=True):
+    '''
+    plot the timeline curves in thumbnails mapped to the physical location of each detector
+    '''
+    if not self.exist_timeline_data():return None
+    ntimelines=len(self.timelines)
+
+    if not isinstance(timeline_index,int):
+        # by default, plot the first one.
+        timeline_index=0
+    
+    if timeline_index>=ntimelines:
+        print('Please enter a timeline between 0 and %i' % (ntimelines-1))
+        return None
+    
+    if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
+        timeline_date=self.obsdates[timeline_index]
+    else:
+        timeline_date=self.obsdate
+
+    ttl=str('QUBIC Timeline curves (%s)' % (timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
+
+    if isinstance(self.temperatures,list) and len(self.temperatures)==ntimelines:
+        tempstr=str('%.0f mK' % (1000*self.temperatures[timeline_index]))
+    else:
+        if self.temperature==None:
+            tempstr='unknown'
+        else:
+            tempstr=str('%.0f mK' % (1000*self.temperature))
+    subttl=str('Array %s, ASIC #%i, T$_\mathrm{bath}$=%s' % (self.detector_name,self.asic,tempstr))
+
+    nrows=self.pix_grid.shape[0]
+    ncols=self.pix_grid.shape[1]
+
+    if xwin: plt.ion()
+    else: plt.ioff()
+    fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
+    pngname=str('QUBIC_TES_array-%s_ASIC%i_timeline_%s.png' % (self.detector_name,self.asic,timeline_date.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname_fullpath=self.output_filename(pngname)
+    if xwin: fig.canvas.set_window_title('plt:  '+ttl)
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    
+
+    # the pixel number is between 1 and 248
+    TES_translation_table=self.TES2PIX[self.asic_index()]
+
+    for row in range(nrows):
+        for col in range(ncols):
+            ax[row,col].get_xaxis().set_visible(False)
+            ax[row,col].get_yaxis().set_visible(False)
+
+            # the pixel identity associated with its physical location in the array
+            physpix=self.pix_grid[row,col]
+            pix_index=physpix-1
+            self.debugmsg('processing PIX %i' % physpix)
+
+            text_y=0.0
+            text_x=1.0
+            if physpix==0:
+                pix_label='EMPTY'
+                label_colour='black'
+                face_colour='black'
+            elif physpix in TES_translation_table:
+                TES=self.pix2tes(physpix)
+                pix_label=str('%i' % TES)
+                label_colour='black'
+                face_colour='white'
+                TES_index=self.TES_index(TES)
+                timeline=self.timelines[timeline_index][TES_index,:]
+                I=self.ADU2I(timeline)
+                text_y=min(I)
+                text_x=len(timeline)
+                self.debugmsg('plotting TES %i' % TES)
+                plt.sca(ax[row,col])
+                plt.plot(I,color='blue')
+
+            else:
+                pix_label='other\nASIC'
+                label_colour='yellow'
+                face_colour='blue'
+
+            ax[row,col].set_facecolor(face_colour)
+            ax[row,col].text(text_x,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
+            
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
+
+    return
+
 
 def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0):
     '''
@@ -214,7 +309,9 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0):
     ip0,ip1=self.determine_bias_modulation(TES,timeline_index)
     if not isinstance(ipeak0,int):ipeak0=ip0
     if not isinstance(ipeak1,int):ipeak1=ip1
-    
+    self.debugmsg('timeline2adu: ipeak0=%i' % ipeak0)
+    self.debugmsg('timeline2adu: ipeak1=%i' % ipeak1)
+        
     timeline_npts=self.timeline_npts()
     sample_period=self.sample_period()
     if sample_period==None:
