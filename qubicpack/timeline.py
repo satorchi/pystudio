@@ -180,12 +180,6 @@ def plot_timeline(self,TES,timeline_index=None,xwin=True):
     plt.plot(time_axis,ysine,label=sinelabel,color='green')
     plt.plot(time_axis,current,label='I-V timeline',color='blue')
 
-    fig=plt.gcf()
-    fig.suptitle(ttl,fontsize=16)
-    fig.canvas.set_window_title('plt: '+ttl) 
-    ax=plt.gca()
-    ax.set_xlabel('time  /  seconds')
-    ax.set_ylabel('Current  /  $\mu$A')
     ymax=max([current[ipeak0],current[ipeak1]])
     ymin=min(current)
     yrange=ymax-ymin
