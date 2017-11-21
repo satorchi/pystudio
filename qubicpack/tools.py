@@ -106,6 +106,7 @@ def write_fits(self):
     prihdr['BIAS_MOD']=(self.bias_frequency,'bias modulation frequency')
     prihdr['BIAS_MIN']=(self.min_bias,'minimum bias in V')
     prihdr['BIAS_MAX']=(self.max_bias,'maximum bias in V')
+    prihdr['DET_NAME']=(self.detector_name,'ID of the detector array')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
     if isinstance(self.adu,np.ndarray):
@@ -226,6 +227,9 @@ def read_fits(self,filename):
         self.min_bias=h[0].header['BIAS_MIN']
     if 'BIAS_MAX' in h[0].header.keys():
         self.max_bias=h[0].header['BIAS_MAX']
+
+    if 'DET_NAME' in h[0].header.keys():
+        self.detector_name=h[0].header['DET_NAME']
 
     timelines=[]
     obsdates=[]
