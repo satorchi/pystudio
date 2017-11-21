@@ -24,6 +24,7 @@ def assign_defaults(self):
     self.QubicStudio_ip='134.158.186.233'
     self.OxfordInstruments_ip='134.158.186.162'
     self.NPIXELS=128
+    self.detector_name='undefined'
     self.kBoltzmann=1.3806485279e-23
     self.Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
     self.Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
@@ -40,6 +41,7 @@ def assign_defaults(self):
     self.max_bias=None
     self.min_bias=None
     self.max_bias_position=None
+    self.bias_factor=1.0
     self.pausetime=0.3
     self.assign_obsdate()
     self.obsdates=None
@@ -234,3 +236,30 @@ def assign_datadir(self,d=None):
         
     
     return self.datadir
+
+
+def assign_bias_factor(self,factor):
+    '''
+    assign the multiplicative factor for the bias voltage
+    '''
+    if not (isinstance(factor,float) or isinstance(factor,int)):
+        print('ERROR! Bias factor should be a number.  Assigning default: 1.0')
+        self.bias_factor=1.0
+        return
+    self.bias_factor=factor
+    return
+
+def assign_detector_name(self,det_name):
+    '''
+    assign the name of the detector array
+    examples: P73 (tested July-October 2017)
+              P82 (tested October-November 2017)
+    '''
+    if not isinstance(det_name,str):
+        print('ERROR! Please enter a valid name of the detector array (eg. P73, P82)')
+        self.detector_name='undefined'
+        return
+    self.detector_name=det_name
+    return
+
+              
