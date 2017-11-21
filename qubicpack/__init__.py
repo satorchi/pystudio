@@ -40,7 +40,8 @@ class qubicpack:
         assign_datadir,\
         assign_obsdate,\
         assign_bias_factor,\
-        assign_detector_name
+        assign_detector_name,\
+        guess_detector_name
 
     from .pix2tes import\
         assign_pix_grid,\

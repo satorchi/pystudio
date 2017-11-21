@@ -263,3 +263,24 @@ def assign_detector_name(self,det_name):
     return
 
               
+def guess_detector_name(self):
+    '''
+    guess which detector matrix it is for this data
+    the DET_NAME keyword was added Tue 21 Nov 2017
+    We tested P73 from July to 4 Nov 2017 and then P82
+    '''
+    if not self.detector_name=='undefined':
+        return self.detector_name
+
+    P73_lastdate=dt.datetime.strptime('2017-11-05','%Y-%m-%d')
+    if self.obsdate<P73_lastdate:
+        self.detector_name='P73'
+        return self.detector_name
+
+    P82_lastdate=dt.datetime.strptime('2017-11-30','%Y-%m-%d'):
+    if self.obsdate<P82_lastdate:
+        self.detector_name='P82'
+        return self.detector_name
+
+    return self.detector_name
+
