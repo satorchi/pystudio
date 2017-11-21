@@ -277,7 +277,7 @@ def guess_detector_name(self):
         self.detector_name='P73'
         return self.detector_name
 
-    P82_lastdate=dt.datetime.strptime('2017-11-30','%Y-%m-%d'):
+    P82_lastdate=dt.datetime.strptime('2017-11-30','%Y-%m-%d')
     if self.obsdate<P82_lastdate:
         self.detector_name='P82'
         return self.detector_name
