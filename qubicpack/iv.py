@@ -113,7 +113,7 @@ def plot_iv_all(self,selection=None,xwin=True):
             plt.plot(bias,Iadjusted,color=self.colours[colour_idx])
             colour_idx+=1
 
-    pngname=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES_IV_array-%s_ASIC%i_all_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
@@ -173,7 +173,7 @@ def plot_iv_multi(self, xwin=True):
 
             TES_index+=1
 
-    pngname=str('TES_IV_ASIC%i_thumbnail_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES_IV_array-%s_ASIC%i_thumbnail_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
@@ -198,12 +198,12 @@ def plot_iv_physical_layout(self,xwin=True):
     if xwin: plt.ion()
     else: plt.ioff()
     fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
-    subttl=str('ASIC #%i' % self.asic)
+    subttl=str('Array %s, ASIC #%i' % (self.detector_name,self.asic))
     if not self.temperature==None:
         subttl+=', T_{bath}=%.2f mK' % (1000*self.temperature)
     if not ngood==None:
         subttl+=str(': %i flagged as bad pixels' % (self.NPIXELS-ngood))
-    pngname=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES_IV_array-%s_ASIC%i_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if xwin: fig.canvas.set_window_title('plt:  '+ttl)
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
@@ -770,7 +770,7 @@ def setup_plot_iv(self,TES,xwin=True):
         tempstr='unknown'
     else:
         tempstr=str('%.0f mK' % (1000*self.temperature))
-    subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
+    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
     if xwin: plt.ion()
     else: plt.ioff()
     fig=plt.figure(figsize=self.figsize)
@@ -886,7 +886,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     text_x=self.min_bias + 0.95*(self.max_bias-self.min_bias)
     text_y=min(Iadjusted) + 0.98*(max(Iadjusted)-min(Iadjusted))
     plt.text(text_x,text_y,txt,va='top',ha='right',fontsize=12)
-    pngname=str('TES%03i_IV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES%03i_IV_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
@@ -899,7 +899,7 @@ def plot_pv(self,TES,xwin=True):
         tempstr='unknown'
     else:
         tempstr=str('%.0f mK' % (1000*self.temperature))
-    subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
+    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
     if xwin: plt.ion()
     else: plt.ioff()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
@@ -914,7 +914,7 @@ def plot_pv(self,TES,xwin=True):
     bias=self.vbias[istart:iend]
     plt.plot(bias,Ptes)
     
-    pngname=str('TES%03i_PV_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES%03i_PV_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
@@ -950,7 +950,7 @@ def plot_rp(self,TES,xwin=True):
         tempstr='unknown'
     else:
         tempstr=str('%.0f mK' % (1000*self.temperature))
-    subttl=str('ASIC #%i, Pixel #%i, Temperature %s' % (self.asic,self.tes2pix(TES),tempstr))
+    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
     if xwin: plt.ion()
     else: plt.ioff()
     fig,ax=plt.subplots(1,1,figsize=self.figsize)
@@ -969,7 +969,7 @@ def plot_rp(self,TES,xwin=True):
     text_y=plot_Rmin+0.5*Rspan
     plt.text(text_x,text_y,lbl)
     
-    pngname=str('TES%03i_RP_ASIC%i_%s.png' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES%03i_RP_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
@@ -1262,9 +1262,9 @@ def make_iv_tex_report(self,tableonly=False):
         print('ERROR! No data!')
         return None
     
-    thumbnailplot=str('TES_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    allplot=str('TES_IV_ASIC%i_all_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    pattern=str('TES???_IV_ASIC%i_%s.png' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    thumbnailplot=str('TES_IV_array-%s_ASIC%i_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    allplot=str('TES_IV_array-%s_ASIC%i_all_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pattern=str('TES???_IV_array-%s_ASIC%i_%s.png' % (self.asic,self.detector_name,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
 
     # do the globbing in working directory
     cwd=os.getcwd()
@@ -1284,7 +1284,7 @@ def make_iv_tex_report(self,tableonly=False):
 
     observer=self.observer.replace('<','$<$').replace('>','$>$')
     
-    texfilename=str('TES_IV_ASIC%i_%s.tex' % (self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    texfilename=str('TES_IV_array-%s_ASIC%i_%s.tex' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     texfilename_fullpath=self.output_filename(texfilename)
     if not isinstance(texfilename_fullpath,str):
         print('ERROR! Not possible to write tex file.')
@@ -1320,6 +1320,7 @@ def make_iv_tex_report(self,tableonly=False):
     h.write('\\vspace*{3ex}\n')
     h.write('\\noindent Summary:\n')
     h.write('\\noindent\\begin{itemize}\n')
+    h.write('\\item Array %s\n' % self.detector_name)
     h.write('\\item ASIC %i\n' % self.asic)
     if self.temperature==None:
         tempstr='unknown'
@@ -1490,7 +1491,7 @@ def iv2txt(self,TES):
         print('ERROR! No Data.')
         return None
     
-    fname='QUBIC_TES%03i_ASIC%i_IV_%s.txt' % (TES,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%S'))
+    fname='QUBIC_TES%03i_array-%s_ASIC%i_IV_%s.txt' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%S'))
     h=open(fname,'w')
     Ites=self.Ites(TES)
     if not isinstance(Ites,np.ndarray):return None
