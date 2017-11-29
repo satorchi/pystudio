@@ -1262,9 +1262,9 @@ def make_iv_tex_report(self,tableonly=False):
         print('ERROR! No data!')
         return None
     
-    thumbnailplot=str('TES_IV_array-%s_ASIC%i_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    allplot=str('TES_IV_array-%s_ASIC%i_all_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    pattern=str('TES???_IV_array-%s_ASIC%i_%s.png' % (self.asic,self.detector_name,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    thumbnailplot=str('TES_IV_array-%s_ASIC%i_%s.png'     % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    allplot      =str('TES_IV_array-%s_ASIC%i_all_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pattern      =str('TES???_IV_array-%s_ASIC%i_%s.png'  % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
 
     # do the globbing in working directory
     cwd=os.getcwd()
