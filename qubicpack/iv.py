@@ -742,8 +742,8 @@ def draw_iv(self,I,colour='blue',axis=plt,label=None):
         # axis.set_ylim([min(self.vbias),max(self.vbias)])
 
         # we mark the last point
-        axis.plot(self.vbias[0:npts],I,color=colour)
-        axis.plot(self.vbias[npts-1],I[npts-1],color='red',marker='D',linestyle='none')
+        axis.plot(self.bias_factor*self.vbias[0:npts],I,color=colour)
+        axis.plot(self.bias_factor*self.vbias[npts-1],I[npts-1],color='red',marker='D',linestyle='none')
 
         tempstr='T$_{bath}$=%0.2f mK' % (1000*self.temperature)
         axis.text(0.05,0.95,tempstr,va='top',ha='left',fontsize=14,transform=axis.transAxes)
@@ -753,12 +753,12 @@ def draw_iv(self,I,colour='blue',axis=plt,label=None):
     
     if self.cycle_vbias:
         # plot down and up voltage with different linestyles
-        mid=int(len(self.vbias)/2)
-        axis.plot(self.vbias[0:mid],I[0:mid],linestyle='solid', color=colour)
-        axis.plot(self.vbias[mid:-1], I[mid:-1], linestyle='dashed',color=colour)
+        mid=int(len(self.bias_factor*self.vbias)/2)
+        axis.plot(self.bias_factor*self.vbias[0:mid],I[0:mid],linestyle='solid', color=colour)
+        axis.plot(self.bias_factor*self.vbias[mid:-1], I[mid:-1], linestyle='dashed',color=colour)
         return
     
-    axis.plot(self.vbias,I,color=colour)
+    axis.plot(self.bias_factor*self.vbias,I,color=colour)
     return
 
 def setup_plot_iv(self,TES,xwin=True):
@@ -841,8 +841,8 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     # draw vertical lines to show the range used for the fit
     if 'fit range' in fit.keys():
         fit_istart,fit_iend=fit['fit range']
-        fit_vstart=self.vbias[fit_istart]
-        fit_vend=self.vbias[fit_iend-1]
+        fit_vstart=self.bias_factor*self.vbias[fit_istart]
+        fit_vend=self.bias_factor*self.vbias[fit_iend-1]
         plt.plot([fit_vstart,fit_vstart],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
         plt.plot([fit_vend,fit_vend],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
     
@@ -911,7 +911,7 @@ def plot_pv(self,TES,xwin=True):
 
     istart,iend=self.selected_iv_curve(TES)
     Ptes=self.Ptes(TES)[istart:iend]
-    bias=self.vbias[istart:iend]
+    bias=self.bias_factor*self.vbias[istart:iend]
     plt.plot(bias,Ptes)
     
     pngname=str('TES%03i_PV_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
