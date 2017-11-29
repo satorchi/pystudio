@@ -200,7 +200,7 @@ def plot_iv_physical_layout(self,xwin=True):
     fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
     subttl=str('Array %s, ASIC #%i' % (self.detector_name,self.asic))
     if not self.temperature==None:
-        subttl+=', T_{bath}=%.2f mK' % (1000*self.temperature)
+        subttl+=', T$_\mathrm{bath}$=%.2f mK' % (1000*self.temperature)
     if not ngood==None:
         subttl+=str(': %i flagged as bad pixels' % (self.NPIXELS-ngood))
     pngname=str('TES_IV_array-%s_ASIC%i_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
@@ -745,7 +745,7 @@ def draw_iv(self,I,colour='blue',axis=plt,label=None):
         axis.plot(self.bias_factor*self.vbias[0:npts],I,color=colour)
         axis.plot(self.bias_factor*self.vbias[npts-1],I[npts-1],color='red',marker='D',linestyle='none')
 
-        tempstr='T$_{bath}$=%0.2f mK' % (1000*self.temperature)
+        tempstr='T$_\mathrm{bath}$=%0.2f mK' % (1000*self.temperature)
         axis.text(0.05,0.95,tempstr,va='top',ha='left',fontsize=14,transform=axis.transAxes)
         
         plt.pause(0.01)
