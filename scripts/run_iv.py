@@ -23,6 +23,9 @@ go=qp()
 # set debuglevel to 1 if you want lots of messages on the screen
 go.debuglevel=1
 
+detname=go.get_from_keyboard('Which array is it? ','P82')
+go.assign_detector_name(detname)
+
 asic=go.get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
