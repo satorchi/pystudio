@@ -230,9 +230,8 @@ def read_fits(self,filename):
 
     if 'DET_NAME' in h[0].header.keys():
         self.detector_name=h[0].header['DET_NAME']
-    else:
-        self.guess_detector_name()
-        print('WARNING! Guessing the detector array is: %s' % self.detector_name)
+    # in case detector name is undefined...
+    self.guess_detector_name()        
 
     timelines=[]
     obsdates=[]
