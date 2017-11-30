@@ -275,11 +275,13 @@ def guess_detector_name(self):
     P73_lastdate=dt.datetime.strptime('2017-11-05','%Y-%m-%d')
     if self.obsdate<P73_lastdate:
         self.detector_name='P73'
+        print('WARNING! Guessing the detector array is: %s' % self.detector_name)
         return self.detector_name
 
     P82_lastdate=dt.datetime.strptime('2017-11-30','%Y-%m-%d')
     if self.obsdate<P82_lastdate:
         self.detector_name='P82'
+        print('WARNING! Guessing the detector array is: %s' % self.detector_name)
         return self.detector_name
 
     return self.detector_name
