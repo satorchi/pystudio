@@ -284,13 +284,13 @@ def draw_tangent(self,TES):
     # tangent is determined by the fit
     slope=1/R1
     
-    V=self.max_bias
+    V=self.bias_factor*self.max_bias
     Imax=V
 
     # The line is described by: y=slope*x + I0 + offset
     I0=Imax - slope*V - offset
 
-    V2=self.min_bias
+    V2=self.bias_factor*self.min_bias
     I2=slope*V2 + I0 + offset
 
     xpts=[V2,V]
@@ -311,7 +311,7 @@ def fitted_iv_curve(self,TES):
     fit=filterinfo['fit']
 
     istart,iend=self.selected_iv_curve(TES)
-    bias=self.vbias[istart:iend]
+    bias=self.bias_factor*self.vbias[istart:iend]
 
     # polynomial fit
     if 'fitfunction' not in fit.keys() or fit['fitfunction']=='POLYNOMIAL':
@@ -386,7 +386,7 @@ def filter_jumps(self,I,jumplimit=2.0):
 def single_polynomial_fit_parameters(self,fit):
     '''
     determine the TES characteristics from the fit of single polynomial fit
-    (see also the split function fit... to be written)
+    (see also the combined function fit)
     this is called from fit_iv()
     '''
     TES=fit['TES']
@@ -457,7 +457,7 @@ def single_polynomial_fit_parameters(self,fit):
         # find the corresponding points to fit
         istart=fit['curve index']*fit['npts_curve']
         iend=istart+fit['npts_curve']
-        xpts=self.vbias[istart:iend]
+        xpts=self.bias_factor*self.vbias[istart:iend]
         gotit=False
         dv=xpts[1]-xpts[0]
         idx=0
@@ -475,7 +475,7 @@ def single_polynomial_fit_parameters(self,fit):
             ibeg=istart
             istop=istart+idx+1
 
-        xpts=self.vbias[ibeg:istop]
+        xpts=self.bias_factor*self.vbias[ibeg:istop]
         ypts=I[ibeg:istop]
         fit['linefit xpts']=xpts
         fit['linefit ypts']=ypts
@@ -779,8 +779,7 @@ def setup_plot_iv(self,TES,xwin=True):
     ax=plt.gca()
     ax.set_xlabel('Bias Voltage  /  V')
     ax.set_ylabel('Current  /  $\mu$A')
-    ax.set_xlim([self.min_bias,self.max_bias])
-    # ax.set_ylim([self.min_bias,self.max_bias])
+    ax.set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
     return fig,ax
 
 def adjusted_iv(self,TES):
@@ -883,7 +882,7 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     if not is_good:txt+=str('\nFlagged as BAD:  %s' % comment)
 
     # write out the comments
-    text_x=self.min_bias + 0.95*(self.max_bias-self.min_bias)
+    text_x=self.bias_factor*(self.min_bias + 0.95*(self.max_bias-self.min_bias))
     text_y=min(Iadjusted) + 0.98*(max(Iadjusted)-min(Iadjusted))
     plt.text(text_x,text_y,txt,va='top',ha='right',fontsize=12)
     pngname=str('TES%03i_IV_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
