@@ -558,7 +558,8 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
         
     asic=go300.asic
     observer=go300.observer.replace('<','$<$').replace('>','$>$')
-
+    detector_name=go300.detector_name
+    
     # generate the plots if not already done
     if NEPresults==None:NEPresults=make_TES_NEP_resultslist(qplist)
 
@@ -608,6 +609,7 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     h.write('\\noindent Summary:\n')
     h.write('NEP are estimated according to the method described by C.~Perbost, Ph.D, Section~6.3\n\n')
     h.write('\\noindent\\begin{itemize}\n')
+    h.write('\\item Array %s\n' % detector_name)
     h.write('\\item ASIC %i\n' % asic)
     h.write('\\item NEP estimated for %i TES out of %i' % (nNEP,len(NEPresults)))
     h.write('\\item average NEP=%.2f $\\times10^{-17}$ W / $\\sqrt{\\rm Hz}$' % (NEPmean*1e17))
