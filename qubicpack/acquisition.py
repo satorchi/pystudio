@@ -284,7 +284,6 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
             print('There appears to be I-V data, but no Vbias info.')
             print('Please run make_Vbias() with the correct max and min values')
             return None
-        vbias=self.vbias
         adu=self.adu
     else:
         client = self.connect_QubicStudio()
@@ -294,7 +293,8 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
             vbias=make_Vbias()
         nbias=len(self.vbias)
         adu = np.empty((self.NPIXELS,nbias))
-
+        self.oxford_read_bath_temperature()
+        
     vbias=self.vbias
     nbias=len(self.vbias)
 
