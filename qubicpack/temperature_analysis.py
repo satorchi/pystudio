@@ -89,8 +89,12 @@ def verify_temperature_arguments(qplist,TES):
     if not isinstance(qplist, list):
         print('ERROR!  Please provide a list of qubicpack objects')
         return False
+    if not isinstance(qplist[0], qp):
+        print('ERROR!  Please provide a list of qubicpack objects')
+        return False
 
     asic=qplist[0].asic
+    detector_name=qplist[0].detector_name
     for go in qplist:
         if not isinstance(go,qp):
             print('ERROR! The list should contain qubicpack objects')
@@ -98,9 +102,13 @@ def verify_temperature_arguments(qplist,TES):
         if TES<1 or TES>go.NPIXELS:
             print('ERROR! Please enter a valid TES number between 1 and %i.' % go.NPIXELS)
             return False
+        if go.detector_name != detector_name:
+            print('ERROR! These data are not for the same detector array.')
+            return False
         if go.asic != asic:
             print('ERROR! These data are not for the same ASIC.')
             return False
+        
 
     return True
 
@@ -110,6 +118,7 @@ def plot_TES_turnover_temperature(qplist,TES,xwin=True):
     '''
     if not verify_temperature_arguments(qplist,TES):return None
     asic=qplist[0].asic
+    detector_name=qplist[0].detector_name
 
     temps_list=[]
     turnover_list=[]
@@ -130,12 +139,12 @@ def plot_TES_turnover_temperature(qplist,TES,xwin=True):
     sorted_temps=temps_list[sorted_index]
     sorted_turnover=turnover_list[sorted_index]
     
-    pngname='QUBIC_TES%03i_ASIC%i_Turnover_Temperature.png' % (TES,asic)
+    pngname='QUBIC_Array-%s_TES%03i_ASIC%i_Turnover_Temperature.png' % (detector_name,TES,asic)
     xlabel='T$_{bath}$ / mK'
     ylabel='V$_{turnover}$ / V'
 
     figsize=qplist[0].figsize
-    ttl='QUBIC ASIC %i TES #%i Turnover at Different Temperatures' % (asic,TES)
+    ttl='QUBIC Array %s, ASIC %i, TES #%i: Turnover at Different Temperatures' % (detector_name,asic,TES)
     subttl=qplist[0].obsdate.strftime('Measurements of %Y-%m-%d')
     
     if xwin:plt.ion()
@@ -291,18 +300,24 @@ def fit_Pbath(T_pts, P_pts):
     npts=len(T_pts)
     T=np.array(T_pts).reshape(npts)
     P=np.array(P_pts).reshape(npts)
-    ret=curve_fit(P_bath_function,T,P)
+    try:
+        ret=curve_fit(P_bath_function,T,P)
+    except:
+        self.debugmsg('insufficient data for TES %i' % TES)
+        ret=None
     return ret
 
-def calculate_TES_NEP(qplist,TES,quiet=False):
+def calculate_TES_NEP(qplist,TES):
     '''
     make the list of temperatures and associated P0
     and calculate the NEP
     '''
     if not verify_temperature_arguments(qplist,TES):return None
     asic=qplist[0].asic
+    detector_name=qplist[0].detector_name
     
     ret={}
+    ret['DET_NAME']=detector_name
     ret['TES']=TES
     ret['ASIC']=asic
 
@@ -329,11 +344,7 @@ def calculate_TES_NEP(qplist,TES,quiet=False):
         P.append(Iturnover*Vtes_turnover)
         T.append(Tbath)
 
-    try:
-        temperature_fit=fit_Pbath(T,P)
-    except:
-        if not quiet:print('insufficient data for TES %i' % TES)
-        temperature_fit=None
+    temperature_fit=fit_Pbath(T,P)
         
     ret['P']=P
     ret['T']=T
@@ -380,7 +391,7 @@ def make_TES_NEP_resultslist(qplist):
     NPIXELS=qplist[0].NPIXELS
     results=[]
     for TES in 1+np.arange(128):
-        res=calculate_TES_NEP(qplist,TES,quiet=True)
+        res=calculate_TES_NEP(qplist,TES)
         results.append(res)
             
     return results
@@ -395,6 +406,7 @@ def plot_TES_NEP(qplist,TES,xwin=True):
 
     TES=result['TES']
     asic=result['ASIC']
+    detector_name=['DET_NAME']
 
     all_T=result['all temperatures']
     P=result['P']
@@ -444,9 +456,9 @@ def plot_TES_NEP(qplist,TES,xwin=True):
             
     
 
-    pngname='QUBIC_TES%03i_ASIC%i_NEP.png' % (TES,asic)
+    pngname='QUBIC_Array-%s_TES%03i_ASIC%i_NEP.png' % (detector_name,TES,asic)
     figsize=qplist[0].figsize
-    ttl='QUBIC ASIC %i, TES #%i NEP' % (asic,TES)
+    ttl='QUBIC Array %s, ASIC %i, TES #%i: NEP' % (detector_name,asic,TES)
     if xwin:plt.ion()
     else:
         plt.close('all')
@@ -458,7 +470,7 @@ def plot_TES_NEP(qplist,TES,xwin=True):
     ax.set_xlim(plot_T_min,plot_T_max)
     ax.set_ylim(plot_P_min,plot_P_max)
     plt.title(ttl)
-    plt.xlabel('T$_{bath}$ / K')
+    plt.xlabel('T$_\mathrm{bath}$ / K')
     plt.ylabel('Power / Watt')
     P_span=plot_P_max-plot_P_min
     text_y=plot_P_min+0.5*P_span
