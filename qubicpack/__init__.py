@@ -76,7 +76,7 @@ class qubicpack:
         combined_fit_parameters,\
         do_polyfit,\
         do_combinedfit,\
-        iv_function,\
+        iv_combined_function,\
         fit_iv,\
         draw_tangent,\
         fitted_iv_curve,\
