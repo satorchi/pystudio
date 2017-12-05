@@ -217,7 +217,7 @@ def plot_iv_physical_layout(self,xwin=True):
             TES=0
             ax[row,col].get_xaxis().set_visible(False)
             ax[row,col].get_yaxis().set_visible(False)
-            ax[row,col].set_xlim([self.min_bias,self.max_bias])
+            ax[row,col].set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
             # ax[row,col].set_ylim([self.min_bias,self.max_bias])
             # ax[row,col].set(aspect=1)
 
@@ -321,7 +321,7 @@ def fitted_iv_curve(self,TES):
 
     # combined polynomial fit
     Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1=fit['fitinfo'][0]
-    f=self.iv_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
+    f=self.iv_combined_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
     return bias,f
 
 def filter_jumps(self,I,jumplimit=2.0):
@@ -559,7 +559,7 @@ def do_polyfit(self,bias,curve):
 def do_combinedfit(self,bias,curve):
     '''
     fit I-V curve to a combined polynomial 
-    (see iv_function() below)
+    (see iv_combined_function() below)
     '''
     self.debugmsg('I-V combined fit.  Multiple polynomials.')
 
@@ -579,13 +579,13 @@ def do_combinedfit(self,bias,curve):
     c1=5.0
     p0=[Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1]
 
-    popt,pcov=curve_fit(self.iv_function,bias,curve,p0=p0)
+    popt,pcov=curve_fit(self.iv_combined_function,bias,curve,p0=p0)
     fitinfo=[popt,pcov]
 
     # calculate a performance measure
     npts=len(bias)
     Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1=popt
-    Vfit=self.iv_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)
+    Vfit=self.iv_combined_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)
     sigma2=(curve-Vfit)**2
     residual = np.sqrt( np.sum(sigma2) )/npts
     ret={}
@@ -601,11 +601,11 @@ def do_combinedfit(self,bias,curve):
     offset=max_bias-Imax
     ret['offset']=offset
     
-    ret['Iturnover']=self.iv_function([Vturnover],Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
+    ret['Iturnover']=self.iv_combined_function([Vturnover],Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
 
     return ret
 
-def iv_function(self,Vpts,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1):
+def iv_combined_function(self,Vpts,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1):
     '''
     function to fit I-V curve in three parts
       1. polynomial 2nd order below turnover bias
@@ -626,7 +626,7 @@ def iv_function(self,Vpts,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1):
 
 
 
-def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL'):
+def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',istart=None,iend=None):
     '''
     fit the I-V curve to a polynomial
 
@@ -640,12 +640,15 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL'):
        jumplimit:    this is the smallest step considered to be a jump in the data
        curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
        fitfunction:  use a 3rd degree polynomial, or a combination of polynomials
+       istart, iend: window for fitting (start and end indices)
     '''
     if not isinstance(self.adu,np.ndarray):
         print('ERROR! No data!')
         return None
     
     TES_index=self.TES_index(TES)
+    override_istart=istart
+    override_iend=iend
     
     # return is a dictionary with various info
     fit={}
@@ -680,6 +683,14 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL'):
         # filter out the big jumps
         # the return is the range of indexes of the acceptable points
         good_start,good_end=self.filter_jumps(ypts,jumplimit)
+        # check if we are overriding the jump algorithm with start and end indices
+        if isinstance(override_istart,int):
+            good_start=override_istart
+            self.debugmsg('override of fit window.  good_start=%i' % good_start)
+        if isinstance(override_iend,int):
+            good_end=override_iend
+            self.debugmsg('override of fit window.  good_end=%i' % good_end)
+        self.debugmsg('fit_iv:  good_start,good_end=%i,%i' % (good_start,good_end))
         npts_span=good_end-good_start
         if npts_span<11:
             self.debugmsg('couldn\'t find a large span without jumps! Fitting the whole curve...')
@@ -1034,7 +1045,9 @@ def filter_iv(self,TES,
               bias_margin=0.2,
               jumplimit=None,
               curve_index=None,
-              fitfunction='POLYNOMIAL'):
+              fitfunction='POLYNOMIAL',
+              istart=None,
+              iend=None):
     '''
     determine if this is a good TES from the I-V curve
     '''
@@ -1047,7 +1060,7 @@ def filter_iv(self,TES,
     ret['comment']='no comment'
 
     # fit to a polynomial. The fit will be for the best measured curve if it's cycled bias
-    fit=self.fit_iv(TES,jumplimit,curve_index,fitfunction)
+    fit=self.fit_iv(TES,jumplimit,curve_index,fitfunction,istart,iend)
     ret['fit']=fit
     residual=fit['residual']
     ret['residual']=residual
@@ -1096,7 +1109,7 @@ def filter_iv(self,TES,
         return self.assign_filterinfo(TES,ret)
 
     # fifth filter: is the operational point (the turnover) within the acceptable range?
-    if ret['turnover']<self.min_bias+bias_margin or ret['turnover']>self.max_bias-bias_margin:
+    if ret['turnover']<self.bias_factor*self.min_bias+bias_margin or ret['turnover']>self.bias_factor*self.max_bias-bias_margin:
         ret['is_good']=False
         ret['comment']='operation point outside acceptable range'
         return self.assign_filterinfo(TES,ret)
