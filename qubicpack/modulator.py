@@ -51,8 +51,13 @@ def modulator_frequency(self,frequency=100.0,form='SIN',amplitude=0.1):
     set the modulation frequency on the HP33120A waveform generator
     '''
 
+    if self.modulator==None:
+        s=self.init_hp22130a()
+        if s==None:return False
+        
+    
     cmd='APPL:%s %.5E, %.2f\n' % (form,frequency,amplitude)
-    s.write(cmd)
-    return
+    self.modulator.write(cmd)
+    return True
 
 

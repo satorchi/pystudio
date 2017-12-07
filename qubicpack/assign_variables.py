@@ -61,6 +61,7 @@ def assign_defaults(self):
     self.oxford_assign_heater_ranges()
     self.calsource_LF=None
     self.calsource_HF=None
+    self.modulator=None
     return
 
 def assign_observer(self,observer='APC LaboMM'):
