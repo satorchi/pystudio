@@ -148,6 +148,10 @@ class qubicpack:
         calsource_outputFrequency,\
         calsource_setFrequency
 
+    from .modulator import\
+        init_hp33120a,\
+        modulator_frequency
+
     
     if with_pystudio:
         '''
