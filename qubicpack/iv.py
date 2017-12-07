@@ -77,10 +77,7 @@ def plot_Vavg(self,Vavg,Vbias,offset=None,axes=None):
 def plot_iv_all(self,selection=None,xwin=True):
     if not isinstance(self.vbias,np.ndarray):
         self.vbias=make_Vbias()
-    if isinstance(self.obsdate,dt.datetime):
-        ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    else:
-        ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
+    ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     if isinstance(selection,list):
         nselection=0
         for val in selection:
@@ -122,10 +119,7 @@ def plot_iv_all(self,selection=None,xwin=True):
 
 def setup_plot_iv_multi(self,nrows=16,ncols=8,xwin=True):
     if not isinstance(self.vbias,np.ndarray): self.vbias=make_Vbias()
-    if isinstance(self.obsdate,dt.datetime):
-        ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    else:
-        ttl=str('QUBIC I-V curve per TES with Vbias ranging from %.2fV to %.2fV' % (self.min_bias,self.max_bias))
+    ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
 
     nbad=0
     for val in self.is_good_iv():
@@ -164,11 +158,10 @@ def plot_iv_multi(self, xwin=True):
             Iadjusted=self.adjusted_iv(TES)
             self.draw_iv(Iadjusted,colour='blue',axis=axes[row,col])
             text_y=min(Iadjusted)
-            axes[row,col].text(self.max_bias,text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
+            axes[row,col].text(self.bias_factor*self.max_bias,text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
 
             if (not self.is_good_iv()==None)\
                and (not self.is_good_iv()[TES_index]):
-                # axes[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color='red')
                 axes[row,col].set_facecolor('red')
 
             TES_index+=1
@@ -218,8 +211,6 @@ def plot_iv_physical_layout(self,xwin=True):
             ax[row,col].get_xaxis().set_visible(False)
             ax[row,col].get_yaxis().set_visible(False)
             ax[row,col].set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
-            # ax[row,col].set_ylim([self.min_bias,self.max_bias])
-            # ax[row,col].set(aspect=1)
 
             # the pixel identity associated with its physical location in the array
             physpix=self.pix_grid[row,col]
@@ -250,7 +241,7 @@ def plot_iv_physical_layout(self,xwin=True):
                 face_colour='blue'
                 
             ax[row,col].set_facecolor(face_colour)
-            ax[row,col].text(self.max_bias,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
+            ax[row,col].text(self.bias_factor*self.max_bias,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
             
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
@@ -440,7 +431,7 @@ def single_polynomial_fit_parameters(self,fit):
 
     n_turnings_within_range=0
     for V0 in fit['turning']:
-        if (not V0==None) and V0>self.min_bias and V0<self.max_bias:
+        if (not V0==None) and V0>self.bias_factor*self.min_bias and V0<self.bias_factor*self.max_bias:
             n_turnings_within_range+=1     
     fit['turnings within range']=n_turnings_within_range
 
@@ -453,7 +444,7 @@ def single_polynomial_fit_parameters(self,fit):
     # instead of using the fit all the way through
     if (not fit['turnover']==None) \
        and (inflection_V>fit['turnover']) \
-       and (inflection_V<self.max_bias):
+       and (inflection_V<self.bias_factor*self.max_bias):
         # find the corresponding points to fit
         istart=fit['curve index']*fit['npts_curve']
         iend=istart+fit['npts_curve']
@@ -488,8 +479,8 @@ def single_polynomial_fit_parameters(self,fit):
         else:
             R1=1/self.zero
         # offset forces the line to have I(max_bias)=max_bias (i.e. R=1 Ohm)
-        Imax=slope*self.max_bias + b
-        offset=self.max_bias-Imax
+        Imax=slope*self.bias_factor*self.max_bias + b
+        offset=self.bias_factor*self.max_bias-Imax
         fit['R1']=R1
         fit['offset']=offset
         if found_turnover:
@@ -503,7 +494,7 @@ def single_polynomial_fit_parameters(self,fit):
     # if the above didn't work, we use the original curve fit 
     # we shift the fit curve up/down to have I(max_bias)=max_bias
     # which puts the max bias position at a point on the R=1 Ohm line
-    V=self.max_bias
+    V=self.bias_factor*self.max_bias
     Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
     offset=V-Imax
     fit['offset']=offset
@@ -749,7 +740,7 @@ def draw_iv(self,I,colour='blue',axis=plt,label=None):
     if npts<len(self.vbias) and npts>0:
         # this is a partial curve
         plt.cla()
-        axis.set_xlim([self.min_bias,self.max_bias])
+        axis.set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
         # axis.set_ylim([min(self.vbias),max(self.vbias)])
 
         # we mark the last point
@@ -773,10 +764,7 @@ def draw_iv(self,I,colour='blue',axis=plt,label=None):
     return
 
 def setup_plot_iv(self,TES,xwin=True):
-    if isinstance(self.obsdate,dt.datetime):
-        ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    else:
-        ttl=str('QUBIC I-V curve for TES#%3i with Vbias ranging from %.2fV to %.2fV' % (TES,self.min_bias,self.max_bias))
+    ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     if self.temperature==None:
         tempstr='unknown'
     else:
@@ -917,7 +905,7 @@ def plot_pv(self,TES,xwin=True):
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
     ax.set_xlabel('Bias Voltage  /  V')
     ax.set_ylabel('P$_\mathrm{TES}$  /  $p$A')
-    ax.set_xlim([self.min_bias,self.max_bias])
+    ax.set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
 
     istart,iend=self.selected_iv_curve(TES)
     Ptes=self.Ptes(TES)[istart:iend]
