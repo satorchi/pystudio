@@ -30,7 +30,7 @@ def init_hp33120a(self,port='/dev/ttyS0'):
                     xonxoff=True,
                     rtscts=False)
 
-    print('Establishing communication with the HP22130A wave generator.')
+    print('Establishing communication with the HP33120A wave generator.')
     s.write('*IDN?\n')
     id=s.readline()
     if id=='':
@@ -59,7 +59,7 @@ def modulator_frequency(self,frequency=100.0,form='SIN',amplitude=0.1):
         if s==None:return False
         
     
-    cmd='APPL:%s %.5E, %.2f\n' % (form,frequency,amplitude)
+    cmd='APPL:%s %.5E, %.2f\n' % (form.upper(),frequency,amplitude)
     self.modulator.write(cmd)
     return True
 
