@@ -46,7 +46,7 @@ def init_hp33120a(self,port='/dev/ttyS0'):
     self.modulator=s
     return s
 
-def modulator_frequency(self,frequency=100.0,form='SIN',amplitude=0.1):
+def modulator_frequency(self,frequency=100.0,shape='SIN',amplitude=0.1):
     '''
     set the modulation frequency on the HP33120A waveform generator
 
@@ -59,8 +59,38 @@ def modulator_frequency(self,frequency=100.0,form='SIN',amplitude=0.1):
         if s==None:return False
         
     
-    cmd='APPL:%s %.5E, %.2f\n' % (form.upper(),frequency,amplitude)
+    cmd='APPL:%s %.5E, %.2f\n' % (shape.upper(),frequency,amplitude)
     self.modulator.write(cmd)
     return True
 
+def modulator_read_frequency(self):
+    '''
+    read the current frequency setting of the HP33120A waveform generator
+    '''
+
+    if self.modulator==None:
+        s=self.init_hp33120a()
+        if s==None:return False
+        
+    
+    self.modulator.write('FREQ?\n')
+    freq_str=self.modulator.readline()
+    freq=eval(freq_str)
+    print('HP33120A is set to %.2f Hz' % freq)
+    return freq
+
+def modulator_read_shape(self):
+    '''
+    read the current modulation shape setting of the HP33120A waveform generator
+    '''
+
+    if self.modulator==None:
+        s=self.init_hp33120a()
+        if s==None:return False
+        
+    
+    self.modulator.write('FUNC:SHAPE?\n')
+    shape=self.modulator.readline()
+    print('HP33120A is running a %s modulation' % shape)
+    return shape
 
