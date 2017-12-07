@@ -15,7 +15,7 @@ from __future__ import division, print_function
 import serial,time
 
 
-def init_hp22130a(self,port='/dev/ttyS0'):
+def init_hp33120a(self,port='/dev/ttyS0'):
     '''
     establish connection to the HP22130A waveform generator
     It should be connected by RS232 cable (serial port, usually /dev/ttyS0)
@@ -49,6 +49,9 @@ def init_hp22130a(self,port='/dev/ttyS0'):
 def modulator_frequency(self,frequency=100.0,form='SIN',amplitude=0.1):
     '''
     set the modulation frequency on the HP33120A waveform generator
+
+    Frequency is given in Hz
+    The wave form can be: SIN, SQU, TRI,     
     '''
 
     if self.modulator==None:
