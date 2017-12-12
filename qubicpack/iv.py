@@ -23,6 +23,19 @@ import math
 import pickle
 from scipy.optimize import curve_fit
 
+def exist_iv_data(self):
+    '''
+    check if we have I-V data
+    '''
+    if not isinstance(self.adu,np.ndarray):
+        print('ERROR! No data!')
+        return False
+
+    if not isinstance(self.vbias,np.ndarray):
+        print('ERROR! No Vbias array!')
+        return False
+    return True
+
 def wait_a_bit(self,pausetime=None):
     if pausetime==None:
         pausetime=self.pausetime
@@ -33,7 +46,7 @@ def wait_a_bit(self,pausetime=None):
     time.sleep(pausetime)
     return
 
-def ADU2I(self,ADU, offset=None, fudge=1.0):
+def ADU2I(self,ADU, offset=None):
     ''' 
     This is the magic formula to convert the measured output of the TES to current
     the voltage (ADU) returned by the TES is converted to a current in uA        
@@ -41,7 +54,7 @@ def ADU2I(self,ADU, offset=None, fudge=1.0):
     Rfb   = 10000. # Ohm
     q_ADC = 20./(2**16-1)
     G_FLL = (10.4 / 0.2) * Rfb
-    I = 1e6 * (ADU / 2**7) * (q_ADC/G_FLL) * (self.nsamples - 8) * fudge
+    I = 1e6 * (ADU / 2**7) * (q_ADC/G_FLL) * (self.nsamples - 8)
 
     if offset!=None: return I+offset
     return I
@@ -178,9 +191,7 @@ def plot_iv_physical_layout(self,xwin=True):
     '''
     plot the I-V curves in thumbnails mapped to the physical location of each detector
     '''
-    if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No data!')
-        return None
+    if not self.exist_iv_data():return None
     
     ttl=str('QUBIC I-V curves (%s)' % (self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
 
@@ -286,9 +297,9 @@ def draw_tangent(self,TES):
 
     xpts=[V2,V]
     ypts=[I2,Imax]
-    plt.plot(xpts,ypts,linestyle='dashed',color='green')
+    plt.plot(xpts,ypts,linestyle='dashed',color='green',label='model normal region')
     
-    return R1,I0
+    return I0
 
 def fitted_iv_curve(self,TES):
     '''
@@ -300,6 +311,7 @@ def fitted_iv_curve(self,TES):
     offset=self.offset(TES)
 
     fit=filterinfo['fit']
+    self.TES=TES # this is required for the "mixed" and "combined" models
 
     istart,iend=self.selected_iv_curve(TES)
     bias=self.bias_factor*self.vbias[istart:iend]
@@ -311,8 +323,8 @@ def fitted_iv_curve(self,TES):
         return bias,f
 
     # combined polynomial fit
-    Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1=fit['fitinfo'][0]
-    f=self.iv_combined_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
+    Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1=fit['fitinfo'][0]
+    f=self.model_iv_combined(bias,Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1) + offset
     return bias,f
 
 def filter_jumps(self,I,jumplimit=2.0):
@@ -374,23 +386,30 @@ def filter_jumps(self,I,jumplimit=2.0):
     self.debugmsg('best span of points in the curve is %i:%i' % (maxspan_idx1,maxspan_idx2))
     return maxspan_idx1,maxspan_idx2
 
-def single_polynomial_fit_parameters(self,fit):
+def polynomial_fit_parameters(self,fit):
     '''
-    determine the TES characteristics from the fit of single polynomial fit
-    (see also the combined function fit)
+    determine the TES characteristics from the polynomial fit
     this is called from fit_iv()
     '''
     TES=fit['TES']
     TES_index=self.TES_index(TES)
     I=self.ADU2I(self.adu[TES_index,:])
     npts=len(I)
-
+    
     
     # the coefficients of the polynomial fit
-    a3=fit['fitinfo'][0][0]
-    a2=fit['fitinfo'][0][1]
-    a1=fit['fitinfo'][0][2]
-    a0=fit['fitinfo'][0][3]
+    if fit['fitfunction']=='POLYNOMIAL':
+        # one polynomial was used for the entire I-V curve
+        a3=fit['fitinfo'][0][0]
+        a2=fit['fitinfo'][0][1]
+        a1=fit['fitinfo'][0][2]
+        a0=fit['fitinfo'][0][3]
+    else:
+        # the polynomial fit is only for the "mixed" region
+        a0=fit['fitinfo'][0][4]
+        a1=fit['fitinfo'][0][5]
+        a2=fit['fitinfo'][0][6]
+        a3=fit['fitinfo'][0][7]
 
     # find turning where polynomial tangent is zero (i.e. first derivative is zero)
     t1=-a2/(3*a3)
@@ -404,9 +423,10 @@ def single_polynomial_fit_parameters(self,fit):
         # the following two can be set to something more appropriate
         fit['offset']=0.0
         fit['R1']=None
+        self.debugmsg('polynomial_fit_parameters (1): setting R1 to None')
         return fit
 
-    t2=math.sqrt(discriminant)/(3*a3)
+    t2=np.sqrt(discriminant)/(3*a3)
     x0_0=t1+t2
     x0_1=t1-t2
     fit['turning']=[x0_0,x0_1]
@@ -439,6 +459,10 @@ def single_polynomial_fit_parameters(self,fit):
     inflection_V=-a2/(3*a3)
     fit['inflection']=inflection_V
 
+
+    # if we're using the combined fit, then we can exit now
+    if fit['fitfunction']=='COMBINED':return fit
+    
     # if the inflection is between the turnover and the max bias,
     # then we fit a straight line to the final points
     # instead of using the fit all the way through
@@ -470,7 +494,7 @@ def single_polynomial_fit_parameters(self,fit):
         ypts=I[ibeg:istop]
         fit['linefit xpts']=xpts
         fit['linefit ypts']=ypts
-        self.debugmsg('single_polynomial_fit_parameters(%i): ibeg=%i, istop=%i' % (TES,ibeg,istop))
+        self.debugmsg('polynomial_fit_parameters(%i): ibeg=%i, istop=%i' % (TES,ibeg,istop))
         linefit=np.polyfit(xpts,ypts,1,full=True)
         slope=linefit[0][0]
         b=linefit[0][1]
@@ -482,11 +506,12 @@ def single_polynomial_fit_parameters(self,fit):
         Imax=slope*self.bias_factor*self.max_bias + b
         offset=self.bias_factor*self.max_bias-Imax
         fit['R1']=R1
+        self.debugmsg('polynomial_fit_parameters (2): setting R1 to %.3f' % R1)
         fit['offset']=offset
+
         if found_turnover:
             V0=fit['turnover']
             fit['Iturnover']=a0 + a1*V0 + a2*V0**2 + a3*V0**3 + offset
-
         return fit
         
 
@@ -513,6 +538,7 @@ def single_polynomial_fit_parameters(self,fit):
     else:
         R1=1/self.zero
     fit['R1']=R1
+    self.debugmsg('polynomial_fit_parameters (3): setting R1 to %.3f' % R1)
     return fit
 
 def combined_fit_parameters(self,fit):
@@ -520,16 +546,58 @@ def combined_fit_parameters(self,fit):
     determine the TES characteristics from the fit of multiple polynomials
     this is called from fit_iv()
     '''
-    TES=fit['TES']
-    TES_index=self.TES_index(TES)
-    I=self.ADU2I(self.adu[TES_index,:])
-    npts=len(I)
+    self.debugmsg('calling combined_fit_parameters')
+    # first of all, get the parameters from the mixed region
+    fit=self.polynomial_fit_parameters(fit)
+    Vturnover=fit['turnover']
+    
+    # superconducting region and normal region
+    Vsuper=fit['fitinfo'][0][0]
+    Vnormal=fit['fitinfo'][0][1]
+    fit['Vsuper']=Vsuper
+    fit['Vnormal']=Vnormal
+    
+    # the normal resistance comes from the fit to the normal region
+    c0=fit['fitinfo'][0][8]
+    c1=fit['fitinfo'][0][9]
+    R1=1/c1
+    fit['R1']=R1
+    self.debugmsg('combined_fit_parameters (1): setting R1 to %.3f' % R1)
+    
+    # find offset that puts current equal to max bias voltage (R=1 at Vbias=maximum)
+    max_bias=self.bias_factor*self.max_bias
+    Imax=self.model_iv_normal(max_bias,c0,c1)
+    offset=max_bias-Imax
+    fit['offset']=offset
 
-    # these are for compatibility with 3rd degree polynomial fit
-    fit['turning']=[None,None]
-    fit['concavity']=[None,None]
-    fit['inflection']=None
-
+    # For comparison, we calculate the intersection of the two models: super/normal
+    # We expect intuitively that this is the Vturnover, but it doesn't work out that way
+    a0=fit['fitinfo'][0][2]
+    a1=fit['fitinfo'][0][3]
+    b=a0-c0
+    discr=b**2 + 4*c1*a1
+    if discr<0.0:
+        # if no intersection between the models,
+        Vsupernormal=None
+    else:
+        v01= 0.5*(b+np.sqrt(discr))/c1
+        v02= 0.5*(b-np.sqrt(discr))/c1
+        fit['model intersection']=(v01,v02)
+        if v01>=Vsuper and v01<=Vnormal:
+            Vsupernormal=v01
+        else:
+            Vsupernormal=v02
+    fit['supernormal']=Vsupernormal
+            
+    b0=fit['fitinfo'][0][4]
+    b1=fit['fitinfo'][0][5]
+    b2=fit['fitinfo'][0][6]
+    b3=fit['fitinfo'][0][7]
+    if isinstance(Vturnover,float):
+        fit['Iturnover']=self.model_iv_mixed(Vturnover,b0,b1,b2,b3) + offset
+    else:
+        fit['Iturnover']=None
+        self.debugmsg('combined_fit_parameters: setting Iturnover to None')
     return fit
 
 
@@ -547,77 +615,122 @@ def do_polyfit(self,bias,curve):
     ret['residual']=residual
     return ret
 
-def do_combinedfit(self,bias,curve):
+def do_combinedfit(self,TES,bias,curve,Vsuper=None,Vnormal=None):
     '''
     fit I-V curve to a combined polynomial 
-    (see iv_combined_function() below)
+    (see model_iv_combined() below)
     '''
-    self.debugmsg('I-V combined fit.  Multiple polynomials.')
+    self.debugmsg('calling do_combinedfit')
+    # dictionary for return
+    fit={}
 
-    # initial guess
-    turnover_idx=np.argmin(curve)
-    Vturnover=bias[turnover_idx]
+    '''
+    self.TES=TES # required for model_iv_combined()
+    Vturnover=self.turnover(TES)
+    '''
+    
     Vmax=max(bias)
     Vmin=min(bias)
-    Vnormal=Vturnover + 0.5*(Vmax-Vturnover)
+    Vturnover_idx=np.argmin(curve)
+    Vturnover=bias[Vturnover_idx]
+    if Vnormal==None:
+        Vnormal=Vturnover + 0.5*(Vmax-Vturnover)
+    if Vsuper==None:
+        Vsuper=Vturnover - 0.5*(Vturnover-Vmin)
+    self.debugmsg('I-V do_combined_fit, using Vsuper=%.2f and Vnormal=%.2f' % (Vsuper,Vnormal))
+
     a0=1.0
     a1=1.0
-    a2=1.0
     b0=1.0
     b1=1.0
     b2=1.0
+    b3=1.0
     c0=1.0
-    c1=5.0
-    p0=[Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1]
+    c1=1.0
+    p0=[Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1]
 
-    popt,pcov=curve_fit(self.iv_combined_function,bias,curve,p0=p0)
+    popt,pcov=curve_fit(self.model_iv_combined,bias,curve,p0=p0)
+    Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1=popt
     fitinfo=[popt,pcov]
+    fit['fitinfo']=fitinfo
+    fit['Vsuper']=Vsuper
+    fit['Vnormal']=Vnormal
+    fit['R1']=1.0/c1
+    self.debugmsg('do_combinedfit: setting R1 to %.3f' % (1.0/c1))
 
     # calculate a performance measure
     npts=len(bias)
-    Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1=popt
-    Vfit=self.iv_combined_function(bias,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1)
+    Vfit=self.model_iv_combined(bias,Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1)
     sigma2=(curve-Vfit)**2
     residual = np.sqrt( np.sum(sigma2) )/npts
-    ret={}
-    ret['fitinfo']=fitinfo
-    ret['residual']=residual
-    ret['turnover']=Vturnover
-    ret['R1']=1.0/c1
+    fit['residual']=residual
 
-    # find offset that puts current equal to max bias voltage (R=1 at Vbias=maximum)
-    max_bias_idx=np.argmax(bias)
-    max_bias=bias[max_bias_idx]
-    Imax=curve[max_bias_idx]
-    offset=max_bias-Imax
-    ret['offset']=offset
-    
-    ret['Iturnover']=self.iv_combined_function([Vturnover],Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1) + offset
+    return fit
 
-    return ret
 
-def iv_combined_function(self,Vpts,Vturnover,Vnormal,a0,a1,a2,b0,b1,b2,c0,c1):
+def model_iv_super(self,V,coeff0,coeff1):
     '''
-    function to fit I-V curve in three parts
-      1. polynomial 2nd order below turnover bias
-      2. polynomial 2nd order above turnover bias
-      3. straight line in normal region
+    the model of the superconducting portion of the I-V curve
+    '''
+    I=coeff0 + coeff1/V
+    return I
 
-    there are 10 parameters to fit!
-    '''    
-    I=np.empty( (len(Vpts)) )
-    for idx,V in enumerate(Vpts):
-        if V<Vturnover:
-            I[idx]=a0 + a1*V + a2*V*V
-        elif V<Vnormal:
-            I[idx]=b0 + b1*V + b2*V*V
-        else:
-            I[idx]=c0 + c1*V
+def model_iv_normal(self,V,coeff0,coeff1):
+    '''
+    the model of the normal portion of the I-V curve
+    '''
+    I=coeff0 + coeff1*V
     return I
 
 
+def model_iv_mixed(self,V,coeff0,coeff1,coeff2,coeff3):
+    '''
+    mixed region modeled with polynomial
 
-def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',istart=None,iend=None):
+    We impose the condition that the turnover occurs at the intersection of the super and normal models
+    Turnover occurs when the tangent to the curve is zero (first derivative=0)
+    0 = coeff1*Vturnover + 2*coeff2*Vturnover + 3*coeff3*Vturnover**2
+    with the above we impose a relation between coeff3 and coeff2 and coeff1, knowing Vturnover
+    '''
+
+    # Vturnover sneaks in via a class variable.  self.TES should be assigned in fit_iv()
+    #Vturnover=self.turnover(self.TES)
+    
+    #coeff3 = - (coeff1 + 2*coeff2*Vturnover)/(3*Vturnover**2)
+    I=coeff0 + coeff1*V + coeff2*V**2 + coeff3*V**3
+    return I
+
+def model_iv_combined(self,V,Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1):
+    '''function to fit I-V curve in three parts.  Damien Prele suggests some physics...
+      1. 1/V : TES in super conducting state
+      2. polynomial 2nd order to join the super to the normal state
+      3. straight line in normal region
+
+    there are 10 parameters to fit!
+
+    BUG: The Vsuper and Vnormal remain fixed at the first guess. (or not?)
+
+    '''
+    if isinstance(V,np.ndarray):
+        I=np.empty(len(V))
+        for idx,v in enumerate(V):
+            if v<Vsuper:
+                I[idx]=self.model_iv_super(v,a0,a1)
+            elif v<Vnormal:
+                I[idx]=self.model_iv_mixed(v,b0,b1,b2,b3)
+            else:
+                I[idx]=self.model_iv_normal(v,c0,c1)
+        return I
+
+    
+    if V<Vsuper:
+        return self.model_iv_super(V,a0,a1)
+    if V<Vnormal:
+        return self.model_iv_mixed(v,b0,b1,b2,b3)
+    
+    return self.model_iv_normal(V,c0,c1)
+
+def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',Vsuper=None,Vnormal=None,istart=None,iend=None):
     '''
     fit the I-V curve to a polynomial
 
@@ -632,11 +745,13 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',ist
        curve_index:  force the fit to use a particular curve in the cycle, and not simply the "best" one
        fitfunction:  use a 3rd degree polynomial, or a combination of polynomials
        istart, iend: window for fitting (start and end indices)
+       Vsuper:       Bias voltage below which the TES is superconducting
+       Vnormal:      Bias voltage above which the TES is normal
     '''
-    if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No data!')
-        return None
-    
+    if not self.exist_iv_data():return None
+
+    self.debugmsg('calling fit_iv with Vsuper,Vnormal = %s, %s' % (str(Vsuper),str(Vnormal)))
+    self.TES=TES # we need this global variable for the "mixed model".  see above in model_iv_mixed().
     TES_index=self.TES_index(TES)
     override_istart=istart
     override_iend=iend
@@ -664,6 +779,7 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',ist
     best_curve_index=0
     allfits=[]
     fitranges=[]
+    residuals=[]
     istart=0
     for idx in range(ncurves):
         iend=istart+npts_curve
@@ -694,10 +810,11 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',ist
         if fitfunction=='POLYNOMIAL':
             ivfit=self.do_polyfit(bias,curve)
         else:
-            ivfit=self.do_combinedfit(bias,curve)
+            ivfit=self.do_combinedfit(TES,bias,curve,Vsuper,Vnormal)
 
-        for key in ivfit.keys(): fit[key]=ivfit[key] # it's a hack.    
+        #for key in ivfit.keys(): fit[key]=ivfit[key] # it's a hack.    
         residual=ivfit['residual']
+        residuals.append(residual)
         allfits.append(ivfit['fitinfo'])
         fitranges.append((good_start,good_end))
         if abs(residual)<best_residual:
@@ -719,9 +836,10 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',ist
     fitinfo=allfits[curve_index]
     fit['fitinfo']=fitinfo
     fit['fit range']=fitranges[curve_index]
+    fit['residual']=residuals[curve_index]
 
     if fitfunction=='POLYNOMIAL':
-        fit=self.single_polynomial_fit_parameters(fit)
+        fit=self.polynomial_fit_parameters(fit)
     else:
         fit=self.combined_fit_parameters(fit)
 
@@ -796,7 +914,7 @@ def oplot_iv(self,TES,label=None):
     
     return
 
-def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
+def plot_iv(self,TES=None,multi=False,xwin=True):
     filterinfo=self.filterinfo(TES)
     if filterinfo==None:return None
     
@@ -804,12 +922,9 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     if TES==None:return self.plot_iv_physical_layout()
     if not isinstance(TES,int): return self.plot_iv_physical_layout()
 
+    self.TES=TES
     TES_index=self.TES_index(TES)
     fit=filterinfo['fit']
-    
-    if not isinstance(self.vbias,np.ndarray):
-        print('ERROR: No Vbias.')
-        return None
     
     fig,ax=self.setup_plot_iv(TES,xwin)
 
@@ -822,11 +937,14 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     offset=self.offset(TES)
     txt+=str('\noffset=%.4e' % offset)
     Iadjusted=self.adjusted_iv(TES)
+    Itop=max(Iadjusted)
+    Ibot=min(Iadjusted)
+    Vturnover=self.turnover(TES)
     self.oplot_iv(TES)
         
     # draw a line tangent to the fit at the highest Vbias
     # I0 here is the current extrapolated to Vbias=0
-    R1,I0=self.draw_tangent(TES)
+    I0=self.draw_tangent(TES)
     
     R1=self.R1(TES)
     if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
@@ -834,31 +952,48 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
     # draw a fit to the I-V curve
     txt+=str('\nfit residual: %.4e' % filterinfo['residual'])
     bias,f=self.fitted_iv_curve(TES)
-    plt.plot(bias,f,linestyle='dashed',color='red')
+    plt.plot(bias,f,linestyle='dashed',color='red',label='model')
+
+    # draw the curve fitting the super conducting region
+    if fit['fitfunction']=='COMBINED':
+        a0=fit['fitinfo'][0][2]
+        a1=fit['fitinfo'][0][3]
+        Isuper=self.model_iv_super(bias,a0,a1)+self.offset(TES)
+        plt.plot(bias,Isuper,linestyle='dashed',color='magenta',label='model superconducting region')
+
+        # redefine Ibot as the intersection of the super/normal models.
+        Vsupernormal=fit['supernormal']
+        if isinstance(Vsupernormal,float):
+            Ibot=self.model_iv_super(Vsupernormal,a0,a1)+self.offset(TES)
+
+        Vsuper=fit['Vsuper']
+        Vnormal=fit['Vnormal']
+        plt.plot([Vsuper,Vsuper],[Ibot,Itop],linestyle='dashed',color='cyan')
+        plt.text(Vsuper,Itop,'Superconducting  \nregion  ',ha='right',va='top',fontsize=12)
+        plt.plot([Vnormal,Vnormal],[Ibot,Itop],linestyle='dashed',color='cyan')
+        plt.text(Vnormal,Itop,'  Normal\n  region',ha='left',va='top',fontsize=12)
+        plt.plot([Vsupernormal,Vsupernormal],[Ibot,Itop],linestyle='dashed',color='cyan')
 
     # draw vertical lines to show the range used for the fit
     if 'fit range' in fit.keys():
         fit_istart,fit_iend=fit['fit range']
         fit_vstart=self.bias_factor*self.vbias[fit_istart]
         fit_vend=self.bias_factor*self.vbias[fit_iend-1]
-        plt.plot([fit_vstart,fit_vstart],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
-        plt.plot([fit_vend,fit_vend],[min(Iadjusted),max(Iadjusted)],color='red',linestyle='dashed')
+        plt.plot([fit_vstart,fit_vstart],[Ibot,Itop],color='red',linestyle='dashed')
+        plt.plot([fit_vend,fit_vend],[Ibot,Itop],color='red',linestyle='dashed')
     
 
     # note the turnover point
-    if fit['turnover']==None:
+    if Vturnover==None:
         txt+='\nNo turnover!'
     else:
-        v0=fit['turnover']
-        xpts=[v0,v0]
-        ypts=[min(Iadjusted),max(Iadjusted)]
-        plt.plot(xpts,ypts,linestyle='dashed',color='green')
-        txt+=str('\nturnover Vbias=%.2fV' % v0)
+        plt.plot([Vturnover,Vturnover],[Ibot,Itop],linestyle='dashed',color='green')
+        txt+=str('\nturnover Vbias=%.2fV' % Vturnover)
         # Iturnover is the current at Vturnover
         if 'Iturnover' in fit.keys():
             Iturnover=fit['Iturnover']
         else:
-            Iturnover=min(Iadjusted)
+            Iturnover=Ibot
         txt+=str('\nI$_\mathrm{turnover}$=%.2f $\mu$A' % Iturnover)
         
 
@@ -882,8 +1017,9 @@ def plot_iv(self,TES=None,fudge=1.0,multi=False,xwin=True):
 
     # write out the comments
     text_x=self.bias_factor*(self.min_bias + 0.95*(self.max_bias-self.min_bias))
-    text_y=min(Iadjusted) + 0.98*(max(Iadjusted)-min(Iadjusted))
-    plt.text(text_x,text_y,txt,va='top',ha='right',fontsize=12)
+    text_y=Ibot
+    plt.text(text_x,text_y,txt,va='bottom',ha='right',fontsize=12)
+    plt.legend()
     pngname=str('TES%03i_IV_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
@@ -1034,12 +1170,18 @@ def filter_iv(self,TES,
               jumplimit=None,
               curve_index=None,
               fitfunction='POLYNOMIAL',
+              Vsuper=None,
+              Vnormal=None,
               istart=None,
               iend=None):
     '''
     determine if this is a good TES from the I-V curve
     '''
+    self.TES=TES # in case we use the model which requires known Vturnover (see fit_iv)
     TES_index=self.TES_index(TES)
+
+    # reset the filterinfo to avoid confusion regarding offset used in Ites and Vtes
+    self.assign_filterinfo(TES,None)
     
     # dictionary to return stuff
     ret={}
@@ -1047,15 +1189,15 @@ def filter_iv(self,TES,
     ret['is_good']=True
     ret['comment']='no comment'
 
-    # fit to a polynomial. The fit will be for the best measured curve if it's cycled bias
-    fit=self.fit_iv(TES,jumplimit,curve_index,fitfunction,istart,iend)
+    # fit to the chosen model. The fit will be for the best measured curve if it's cycled bias
+    fit=self.fit_iv(TES,jumplimit,curve_index,fitfunction,Vsuper,Vnormal,istart,iend)
     ret['fit']=fit
     residual=fit['residual']
     ret['residual']=residual
     offset=fit['offset']
     ret['offset']=offset
     ADU=self.adu[TES_index,:]
-    Iadjusted=self.ADU2I(ADU,offset=offset,fudge=1.0)
+    Iadjusted=self.ADU2I(ADU,offset=offset)
     ret['turnover']=fit['turnover']
 
     # first filter:  is it a good fit?
@@ -1119,11 +1261,15 @@ def filter_iv_all(self,
                   rel_amplitude_limit=0.1,
                   bias_margin=0.2,
                   jumplimit=None,
-                  fitfunction='POLYNOMIAL'):
+                  fitfunction='POLYNOMIAL',
+                  Vsuper=None,
+                  Vnormal=None,
+                  istart=None,
+                  iend=None):
     '''
     find which TES are good
     '''
-    if not isinstance(self.adu,np.ndarray):
+    if not self.exist_iv_data():
         print('No data!  Please read a file, or run a measurement.')
         return None
 
@@ -1141,7 +1287,11 @@ def filter_iv_all(self,
                                   bias_margin,
                                   jumplimit,
                                   curve_index=None,
-                                  fitfunction=fitfunction)
+                                  fitfunction=fitfunction,
+                                  Vsuper=Vsuper,
+                                  Vnormal=Vnormal,
+                                  istart=istart,
+                                  iend=iend)
         filtersummary.append(filterinfo)
         
     self.filtersummary=filtersummary
@@ -1258,9 +1408,7 @@ def make_iv_tex_report(self,tableonly=False):
     make a report in LaTeX.  
     This relies on the data in self.filtersummary.  See self.filter_iv_all() above
     '''
-    if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No data!')
-        return None
+    if not self.exist_iv_data():return None
     
     thumbnailplot=str('TES_IV_array-%s_ASIC%i_%s.png'     % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     allplot      =str('TES_IV_array-%s_ASIC%i_all_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
@@ -1448,9 +1596,7 @@ def make_iv_report(self):
     '''
     do all the business to generate the I-V report document
     '''
-    if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No data!')
-        return None
+    if not self.exist_iv_data():return None
 
     # plot all the I-V in the focal-plane map
     self.figsize=(14,14)
@@ -1487,11 +1633,9 @@ def iv2txt(self,TES):
     '''
     extract the I-V data from a given TES to a text file with two columns
     '''
-    if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No Data.')
-        return None
+    if not self.exist_iv_data():return None
     
-    fname='QUBIC_TES%03i_array-%s_ASIC%i_IV_%s.txt' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%S'))
+    fname='QUBIC_TES%03i_array-%s_ASIC%i_%.0fmK_IV_%s.txt' % (TES,self.detector_name,self.asic,1000*self.temperature,self.obsdate.strftime('%Y%m%dT%H%M%S'))
     h=open(fname,'w')
     Ites=self.Ites(TES)
     if not isinstance(Ites,np.ndarray):return None
@@ -1511,9 +1655,7 @@ def filterinfo(self,TES=None):
     '''
     return the filterinfo for a given TES
     '''
-    if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No data!')
-        return None
+    if not self.exist_iv_data():return None
 
     # if no TES is specified, return the whole list
     if TES==None:
