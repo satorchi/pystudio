@@ -106,6 +106,7 @@ def write_fits(self):
     prihdr['BIAS_MOD']=(self.bias_frequency,'bias modulation frequency')
     prihdr['BIAS_MIN']=(self.min_bias,'minimum bias in V')
     prihdr['BIAS_MAX']=(self.max_bias,'maximum bias in V')
+    prihdr['BIAS_FAC']=(self.bias_factor,'multiplicative factor for bias')
     prihdr['DET_NAME']=(self.detector_name,'ID of the detector array')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
@@ -133,6 +134,7 @@ def write_fits(self):
         
         thdulist = pyfits.HDUList([prihdu, tbhdu1, tbhdu2])
         thdulist.writeto(fitsfile_fullpath)
+        print('FITS file written: %s' % fitsfile_fullpath)
 
     if self.exist_timeline_data():
         fitsfile=str('QUBIC_timeline_%s.fits' % datestr)
@@ -168,6 +170,7 @@ def write_fits(self):
             
         thdulist = pyfits.HDUList(hdulist)
         thdulist.writeto(fitsfile_fullpath)
+        print('FITS file written: %s' % fitsfile_fullpath)
 
     return
 
@@ -227,6 +230,8 @@ def read_fits(self,filename):
         self.min_bias=h[0].header['BIAS_MIN']
     if 'BIAS_MAX' in h[0].header.keys():
         self.max_bias=h[0].header['BIAS_MAX']
+    if 'BIAS_FAC' in h[0].header.keys():
+        self.bias_factor=h[0].header['BIAS_FAC']
 
     if 'DET_NAME' in h[0].header.keys():
         self.detector_name=h[0].header['DET_NAME']
