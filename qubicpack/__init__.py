@@ -62,6 +62,7 @@ class qubicpack:
         writelog
 
     from .iv import\
+        exist_iv_data,\
         wait_a_bit,\
         ADU2I,\
         setup_plot_Vavg,\
@@ -72,11 +73,14 @@ class qubicpack:
         plot_iv_physical_layout,\
         make_line,\
         filter_jumps,\
-        single_polynomial_fit_parameters,\
+        polynomial_fit_parameters,\
         combined_fit_parameters,\
         do_polyfit,\
         do_combinedfit,\
-        iv_combined_function,\
+        model_iv_super,\
+        model_iv_mixed,\
+        model_iv_normal,\
+        model_iv_combined,\
         fit_iv,\
         draw_tangent,\
         fitted_iv_curve,\
@@ -150,7 +154,9 @@ class qubicpack:
 
     from .modulator import\
         init_hp33120a,\
-        modulator_frequency
+        modulator_frequency,\
+        modulator_read_frequency,\
+        modulator_read_shape
 
     
     if with_pystudio:
@@ -181,6 +187,6 @@ class qubicpack:
         return
 
     def debugmsg(self,msg):
-        if self.debuglevel>0: print('DEBUG: %s' % msg)
+        if self.debuglevel>0: print('DEBUG: %s\r\f' % msg)
         return
     
