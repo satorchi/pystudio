@@ -303,7 +303,7 @@ def fit_Pbath(T_pts, P_pts):
     try:
         ret=curve_fit(P_bath_function,T,P)
     except:
-        self.debugmsg('insufficient data for TES %i' % TES)
+        print('insufficient data for TES %i' % TES)
         ret=None
     return ret
 
@@ -406,7 +406,7 @@ def plot_TES_NEP(qplist,TES,xwin=True):
 
     TES=result['TES']
     asic=result['ASIC']
-    detector_name=['DET_NAME']
+    detector_name=result['DET_NAME']
 
     all_T=result['all temperatures']
     P=result['P']
@@ -498,6 +498,7 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
         
     asic=go300.asic
     datadate=go.obsdate
+    detector_name=go300.detector_name
 
     # generate the results if not already done
     if NEPresults==None:NEPresults=make_TES_NEP_resultslist(qplist)
@@ -685,7 +686,7 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
         if not os.path.exists(pngPV):
             res=plot_TES_temperature_curves(qplist,TES,plot='P',xwin=False)
 
-        pngNEP='QUBIC_TES%03i_ASIC%i_NEP.png' % (TES,asic)
+        pngNEP='QUBIC_Array-%s_TES%03i_ASIC%i_NEP.png' % (detector_name,TES,asic)
         if not os.path.exists(pngNEP):
             res=plot_TES_NEP(qplist,TES,xwin=False)
 
