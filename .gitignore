@@ -3,7 +3,7 @@
 /pystudio.egg-info
 /test
 /lib
-/qubicpack/deprecated
+/qubicpack/deprecated*
 *.pyc
 pystudio.cpp
 *~
