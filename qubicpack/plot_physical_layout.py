@@ -15,7 +15,7 @@ import numpy as np
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 
-def plot_physical_layout(xwin=True,figsize=(16,16),a1=None,a2=None):
+def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True):
     '''
     plot an image of the TES array labeling each pixel
     plot the I-V curves in the appropriate boxes if a1 and/or a2 given
@@ -69,8 +69,8 @@ def plot_physical_layout(xwin=True,figsize=(16,16),a1=None,a2=None):
     pngname='TES_ARRAY.png'
     if xwin: fig.canvas.set_window_title('plt:  QUBIC TES array')
 
-    asic1_subttl='ASIC1 blue background'
-    asic2_subttl='ASIC2 green background'
+    asic1_subttl='Array %s ASIC1 blue background' % asic1_obj.detector_name
+    asic2_subttl='Array %s ASIC2 green background' % asic2_obj.detector_name
     ngood=0
     if asic1_data:
         asic1_subttl+=asic1_obj.obsdate.strftime(', data from %Y-%m-%d %H:%M')
