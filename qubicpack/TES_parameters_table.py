@@ -230,6 +230,7 @@ def TEStable_header(go1,go2):
     header+='# the IV and NEP evaluation were measured on %s (ASIC %i) and %s (ASIC %i)\n'\
              % (go1.obsdate.strftime('%Y %B %-d'),go1.asic,go2.obsdate.strftime('%Y %B %-d'),go2.asic)
     header+='#\n'
+    header+='FILEID=QUBIC table of TES parameters\n'
     return header
 
 
@@ -282,7 +283,7 @@ def TEStable_writefile(nep1,go1,nep2,go2,version=0.0):
     txt='KEYWORDS='
     for key in go1.transdic[0].keys():
         txt+='%s;' % key
-    txt+='IV;NEP'
+    txt+='IV;NEP;Tc;G;K;n'
     h.write(txt)
 
     idx=0
@@ -309,9 +310,6 @@ def TEStable_readfile(filename):
     contents=h.read()
     h.close()
     lines=contents.split('\n')
-    if not lines[0]=='# QUBIC table of parameters for the TES array':
-        print('ERROR! This is not a valid QUBIC TES parameters table')
-        return None
 
     # ignore all lines starting with '#'
     valid_lines=[]
@@ -319,8 +317,19 @@ def TEStable_readfile(filename):
         if not line.find('#')==0 and not line=='':
             valid_lines.append(line)
 
-    # first line should tell us the keywords
+    # the first line should identify this as a valid file
     line=valid_lines[0]
+    keyword,val=line.split('=')
+    if not keyword=='FILEID':
+        print('ERROR! This does not appear to be a valid QUBIC TES parameters table')
+        return None
+    if not val=='QUBIC table of TES parameters':
+        print('ERROR! This does not appear to be a valid QUBIC TES parameters table')
+        return None
+    
+
+    # second line should tell us the keywords
+    line=valid_lines[1]
     keyword,val=line.split('=')
     if not keyword=='KEYWORDS':
         print('ERROR! Missing the keyword list!')
@@ -333,11 +342,12 @@ def TEStable_readfile(filename):
     print(msg+'\n')
 
 
-    val_keywords=['INDEX','R300', 'ASIC', 'PIX', 'TES', 'NEP']
+    val_keywords=['INDEX','R300', 'ASIC', 'PIX', 'TES', 'NEP','G','Tc','G','K','n']
     str_keywords=['OpenLoop', 'CarbonFibre', 'IV']
     
     # process the rest of the file
     del(valid_lines[0])
+    del(valid_lines[1])
     idx_counter=-1
     entry={}
     for line in valid_lines:
