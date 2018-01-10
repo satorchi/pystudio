@@ -17,7 +17,7 @@ import datetime as dt
 import matplotlib.pyplot as plt
 from glob import glob
 import pickle
-import pyfits
+from astropy.io import fits as pyfits
 
 
 def read_date_from_filename(self,filename):
