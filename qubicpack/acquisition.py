@@ -57,7 +57,6 @@ import pystudio
 import sys,os,time
 import datetime as dt
 import matplotlib.pyplot as plt
-import pyfits
 
 def connect_QubicStudio(self,client=None, ip=None):
     if ip==None:
