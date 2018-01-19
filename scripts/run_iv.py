@@ -23,7 +23,7 @@ go=qp()
 # set debuglevel to 1 if you want lots of messages on the screen
 go.debuglevel=1
 
-detname=go.get_from_keyboard('Which array is it? ','P82')
+detname=go.get_from_keyboard('Which array is it? ','P87')
 go.assign_detector_name(detname)
 
 asic=go.get_from_keyboard('Which ASIC?  ',2)
@@ -34,11 +34,17 @@ ret=go.assign_asic(asic)
 ret=go.verify_QS_connection()
 if not ret:quit()
 
-min_bias=go.get_from_keyboard('minimum bias voltage ',0.5)
+# Fri 19 Jan 2018 13:45:44 CET: we have removed the 5x bias factor
+#min_bias=go.get_from_keyboard('minimum bias voltage ',0.5)
+go.max_permitted_bias=10.0
+min_bias=go.get_from_keyboard('minimum bias voltage ',3.0)
 if min_bias==None:quit()
-max_bias=go.get_from_keyboard('maximum bias voltage ',3.0)
+#max_bias=go.get_from_keyboard('maximum bias voltage ',3.0)
+max_bias=go.get_from_keyboard('maximum bias voltage ',9.0)
 if max_bias==None:quit()
-dv=go.get_from_keyboard('bias step size ',0.004)
+
+default_dv=(max_bias-min_bias)/300.0
+dv=go.get_from_keyboard('bias step size ',default_dv)
 cycle=go.get_from_keyboard('cycle bias up/down? ','y')
 if cycle==None:quit()
 if cycle.upper()=='N':
