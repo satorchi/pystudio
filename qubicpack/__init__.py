@@ -171,8 +171,6 @@ class qubicpack:
             get_mean,\
             integrate_scientific_data,\
             set_VoffsetTES,\
-            set_diffDAC,\
-            set_slowDAC,\
             get_iv_data,\
             get_iv_timeline
 
