@@ -172,8 +172,16 @@ cdef class DispatcherAccess:
         """ Stop code is parameterCRC() """
         return self._da.stopDispatcher(stopCode)
 
+    '''
+    vvvvvvvvvvv
+    removed in v3
+
     def setDebug(self):
         self._da.setDebug()
+
+    removed in v3
+    ^^^^^^^^^^^^^
+    '''
 
     def waitMs(self, int milliseconds):
         self._da.waitMs(milliseconds)
@@ -217,12 +225,20 @@ cdef class DispatcherAccess:
         def __get__(self):
             return self._da.nbOverlap()
 
+    '''
+    vvvvvvvvvvvvv
+    removed in V3
+
     def _emit_request_arrived(self, int num):
         """
         For testing purposes: emit signal that a request has arrived.
 
         """
         self._da.requestArrived(num)
+    
+    removed in V3
+    ^^^^^^^^^^^^^
+    '''
 
     def abort_requests(self):
         """ Abort all pending persistent requests. """
@@ -365,6 +381,17 @@ cdef class DispatcherAccess:
         if not out:
             raise RuntimeError(self.lastError)
 
+    def sendSetTESDAC(self, int asicNum, int shape, int frequency, int amplitude, int offset):
+       """
+
+        Specifie le signal de calib a injecter sur les TES mode:0 pas de signal, 1 envoi du signal, shape: 0 sinus, 1 triangle, 2 continu  (si asicNum = 0xFF, la commande est envoyée a tous les ASIC, si asic num < 16, la commande est envoyée a l'ASIC asicNum, pour envoyer à une liste d'ASICs utiliser les bits 8 à 23 pour specifier la liste, ex asicNum = 0x00FF00 configurera les asic 0 à 7)
+
+        """
+       cdef bool out = self._da.sendSetTESDAC(asicNum, shape, frequency, amplitude, offset)
+       if not out:
+           raise RuntimeError(self.lastError)
+
+        
     def sendSetAsicApol(self, int asicNum, int value):
         """
         sendSetAsicApol(int asicNum, int value)
@@ -464,16 +491,6 @@ cdef class DispatcherAccess:
         if not out:
             raise RuntimeError(self.lastError)
 
-    def sendSetDiffDAC(self, int asicNum, int diffDACValue):
-        """
-        sendSetDiffDAC(int asicNum, int diffDACValue)
-
-        configure le DAC différenciel avec la valeur diffDACValue pour l'asic asicNum (si asicNum = 0xFF, la commande est envoyée a tous les ASIC, si asic num < 16, la commande est envoyée a l'ASIC asicNum, pour envoyer à une liste d'ASICs utiliser les bits 8 à 23 pour specifier la liste, ex asicNum = 0x00FF00 configurera les asic 0 à 7)
-
-        """
-        cdef bool out = self._da.sendSetDiffDAC(asicNum, diffDACValue)
-        if not out:
-            raise RuntimeError(self.lastError)
 
     def sendSetFeedbackTable(self, int asicNum, feedbackTable not None):
         """
@@ -517,17 +534,6 @@ cdef class DispatcherAccess:
             raise ValueError("Expected array size of argument 'mask' is '125'.")
         cdef quint8[::1] mask__ = mask_
         cdef bool out = self._da.sendSetMask(asicNum, &mask__[0])
-        if not out:
-            raise RuntimeError(self.lastError)
-
-    def sendSetSlowDAC(self, int asicNum, int slowDACValue):
-        """
-        sendSetSlowDAC(int asicNum, int slowDACValue)
-
-        configure le DAC lent avec la valeur DACValue pour l'asic asicNum (si asicNum = 0xFF, la commande est envoyée a tous les ASIC, si asic num < 16, la commande est envoyée a l'ASIC asicNum, pour envoyer à une liste d'ASICs utiliser les bits 8 à 23 pour specifier la liste, ex asicNum = 0x00FF00 configurera les asic 0 à 7)
-
-        """
-        cdef bool out = self._da.sendSetSlowDAC(asicNum, slowDACValue)
         if not out:
             raise RuntimeError(self.lastError)
 
@@ -608,50 +614,16 @@ cdef class DispatcherAccess:
         if not out:
             raise RuntimeError(self.lastError)
 
-    def sendSetFreqAcqPixel(self, int asicNum, int pixelAcqFreq):
-        """
-        sendSetFreqAcqPixel(int asicNum, int pixelAcqFreq)
 
-        change la frequence de lecture des pixels 0-200=> 0=>2kHz (si asicNum = 0xFF, la commande est envoyée a tous les ASIC, si asic num < 16, la commande est envoyée a l'ASIC asicNum, pour envoyer à une liste d'ASICs utiliser les bits 8 à 23 pour specifier la liste, ex asicNum = 0x00FF00 configurera les asic 0 à 7)
-
+    def sendSetASICSerialLinkFrequency(self, int serialFreq):
         """
-        cdef bool out = self._da.sendSetFreqAcqPixel(asicNum, pixelAcqFreq)
-        if not out:
-            raise RuntimeError(self.lastError)
-
-    def sendSetFreqSerialLink(self, int asicNum, int serialFreq):
-        """
-        sendSetFreqSerialLink(int asicNum, int serialFreq)
 
         change la frequence du lien serie pour les commandes ASIC 0-200=> 0=>2kHz (si asicNum = 0xFF, la commande est envoyée a tous les ASIC, si asic num < 16, la commande est envoyée a l'ASIC asicNum, pour envoyer à une liste d'ASICs utiliser les bits 8 à 23 pour specifier la liste, ex asicNum = 0x00FF00 configurera les asic 0 à 7)
 
         """
-        cdef bool out = self._da.sendSetFreqSerialLink(asicNum, serialFreq)
+        cdef bool out = self._da.sendSetASICSerialLinkFrequency(serialFreq)
         if not out:
             raise RuntimeError(self.lastError)
-
-    def sendSetFrequency(self, int asicNum, int frequencyId, int frequency):
-        """
-        sendSetFrequency(int asicNum, int frequencyId, int frequency)
-
-        change la frequence en fonction de frequencyId (si asicNum = 0xFF, la commande est envoyée a tous les ASIC, si asic num < 16, la commande est envoyée a l'ASIC asicNum, pour envoyer à une liste d'ASICs utiliser les bits 8 à 23 pour specifier la liste, ex asicNum = 0x00FF00 configurera les asic 0 à 7)
-
-        """
-        cdef bool out = self._da.sendSetFrequency(asicNum, frequencyId, frequency)
-        if not out:
-            raise RuntimeError(self.lastError)
-
-    def sendSetCalibPolar(self, int asicNum, int mode, int shape, int frequency, int amplitude, int offset):
-        """
-        sendSetCalibPolar(int asicNum, int mode, int shape, int frequency, int amplitude, int offset)
-
-        Specifie le signal de calib a injecter sur les TES/SQUID mode:0 pas de signal, 1 envoi du signal, shape: 0 sinus, 1 triangle, 2 continu  (si asicNum = 0xFF, la commande est envoyée a tous les ASIC, si asic num < 16, la commande est envoyée a l'ASIC asicNum, pour envoyer à une liste d'ASICs utiliser les bits 8 à 23 pour specifier la liste, ex asicNum = 0x00FF00 configurera les asic 0 à 7)
-
-        """
-        cdef bool out = self._da.sendSetCalibPolar(asicNum, mode, shape, frequency, amplitude, offset)
-        if not out:
-            raise RuntimeError(self.lastError)
-
 
     def sendConfigurePID(self, int asicNum, int P, int I, int D):
         """
@@ -764,6 +736,10 @@ cdef class DispatcherAccess:
         if not out:
             raise RuntimeError(self.lastError)
 
+    '''
+    vvvvvvvvvvvvv
+    REMOVED IN V3    
+
     def sendStartBackup(self, str sessionName, str comment):
         """
         sendStartBackup(str sessionName, str comment)
@@ -778,6 +754,7 @@ cdef class DispatcherAccess:
         cdef bool out = self._da.sendStartBackup(sessionName__, comment__)
         if not out:
             raise RuntimeError(self.lastError)
+
 
     def sendStopBackup(self):
         """
@@ -814,6 +791,7 @@ cdef class DispatcherAccess:
         if not out:
             raise RuntimeError(self.lastError)
 
+    
     def sendStartHKBackup(self, str sessionName, str comment):
         """
         sendStartHKBackup(str sessionName, str comment)
@@ -839,6 +817,11 @@ cdef class DispatcherAccess:
         cdef bool out = self._da.sendStopHKBackup()
         if not out:
             raise RuntimeError(self.lastError)
+
+
+    REMOVED IN V3
+    ^^^^^^^^^^^^^
+    '''
 
     def sendSetBackupDir(self, str directory):
         """
