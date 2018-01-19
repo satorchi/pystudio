@@ -9,8 +9,8 @@ class QDispatcherByteArray
 public:
     QDispatcherByteArray(quint32 capacity = 0);
     ~QDispatcherByteArray();
-    void reserve(quint32 size);
-    void resize(quint32 size);
+    void reserve(quint32 size,bool resizeToLessSize = false);
+    void resize(quint32 size,bool resizeToLessSize = false);
     int capacity();
     int size();
     void clear();

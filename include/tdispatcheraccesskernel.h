@@ -3,11 +3,13 @@
 
 #include "tabstractparameterstable.h"
 #include "qdispatchertcbytearray.h"
-
+#include "waitingcommandexecutionform.h"
 #include <QMutex>
 #include <QThread>
 #include <QSemaphore>
 #include <QTime>
+#include <QCoreApplication>
+
 #include <QTcpSocket>
 
 #define USING_DISPATCHER_ACCESS_LIB 1
@@ -21,7 +23,16 @@ typedef enum _freqtype {
     TimeOutMode   /*!<  requete de type timeout*/
     , SynchronisedMode /*!<  requete de type synchronisation avec la réception d'un parametre*/
 } freqtype;
-
+/**
+ * @brief Special locker
+ *
+ */
+class MutexTryLocker {
+  QMutex *m_;
+public:
+  MutexTryLocker(QMutex *m) : m_(m) {while (m_->tryLock(10) == false)QCoreApplication::processEvents();}
+  ~MutexTryLocker() { m_->unlock(); }
+};
 
 /**
  * @brief Manage the dispatcher TCP connection
@@ -42,7 +53,6 @@ public:
 
 private :
     bool m_connected;
-    QMutex m_connectMutex;
 
 private slots:
     void disconnected();
@@ -55,6 +65,12 @@ class TDispatcherAccessKernel :  public QThread
 {
     Q_OBJECT
 public :
+
+    enum waitingForAckModes{
+        NotWaitingForAck
+        ,WaitingForAck
+        ,WaitingForAckWithPopup
+    };
 
     /** @brief Constructor.
  *
@@ -110,10 +126,11 @@ public :
     /** @brief Define the command mode (waiting for ACK or not).
  * @param [in] waitingForACK activate/desactivate the command blocking.
  */
-    void setWaitingForAckMode(bool waitingForACK);
+    void setWaitingForAckMode(waitingForAckModes waitingForACK, bool showPopupOnlyOnError = true);
+    void setWaitingForAckMode(bool waitingForACK){if (waitingForACK) setWaitingForAckMode(WaitingForAck); else setWaitingForAckMode(NotWaitingForAck);}
     void setWaitingForAckTimeOut(int ackTimeOut = 5000);
 
-    bool waitingForAckMode() { return m_waitingForACK;}
+    waitingForAckModes waitingForAckMode() { return m_waitingForACK;}
     int waitingForAckTimeOut(){return m_ackTimeOut;}
 
     bool subSystemsCommandsLocked();
@@ -131,8 +148,10 @@ public :
     bool stopSubsystemAccess();
     bool stopDispatcher(quint32 stopCode); // stop code is parameterCRC()
 
-    void setDebug();
+    void setDebugEnable(bool enabled);
     void waitMs(qint64 milliseconds);
+
+    virtual bool isValidSubsystemAck(quint8 subsysId, quint16 ackReportSize, const quint8* ackReport, QString& errorStr) = 0;
 
 
 
@@ -211,12 +230,25 @@ public :
         return m_nbOverlap;
     }
 
+    /**
+     * @brief beginReadParameters
+     * To be used to access to parameters asynchroniously
+     */
+
+    inline void beginReadParameters(){
+        while (m_parametersMutex.tryLock(10) == false)QCoreApplication::processEvents();
+    }
 
     /** @brief Get the pointer to tparameters.
  */
     inline TAbstractParametersTable* parameters(){
         return m_parameters;
     }
+
+    inline void endReadParameters(){
+        m_parametersMutex.unlock();
+    }
+
 
 signals:
     void requestArrived(int requestNum);
@@ -226,14 +258,15 @@ signals:
     void errorOccurs(QString errorStr);
 
 protected :
-    bool sendSubsystemTC(quint8 subsysID,quint16 tcID);
-    bool sendCustomTC();
-    bool sendInternTC();
+    bool sendSubsystemTC(QString tcName,quint8 subsysID,quint16 tcID);
+    bool sendCustomTC(QString tcName);
+    bool sendInternTC(QString tcName);
     QDispatcherTCByteArray* startNewCustomTC(quint16 customTcNum);
     QDispatcherTCByteArray* startNewInternTC(quint16 internTcNum);
     QDispatcherTCByteArray* startNewSubsystemTC(quint8 subsysID, quint16 tcID);
     TAbstractParametersTable* m_parameters;
     bool m_subsystemControledAccessMode;
+    quint8 m_lastSubsystemTCSent;
 
 private :
 
@@ -281,6 +314,11 @@ private :
     void deleteRequestsFromBuffer(quint16 reqNum);
     void optimizeBufferRequests();
     void sendRequestsAfterConnection();
+    void setAckStatus(quint8 ACKStatus);
+    quint8 ackStatus();
+    void setErrorMsg(QString msg);
+    QString errorMsg();
+
     bool m_debug;
     int m_dispatcherTFVersionLoaded;
     bool m_incompatibleLibrary;
@@ -308,11 +346,13 @@ private :
     bool m_running;
 
     QMutex m_socketMutex;
-    QMutex m_comMutex;
+    QMutex m_internVarMutex;
+    QMutex m_parametersMutex;
 
     QSemaphore m_ackSem;
 
-    bool m_waitingForACK;
+    waitingForAckModes m_waitingForACK;
+    bool m_showWaitingForACKPopupOnlyOnError;
     quint16 m_waitingForACKCN;
     bool m_autoUpdate;
 
@@ -327,6 +367,7 @@ private :
     quint32 m_currentState;
     quint32 m_nbOverlap;
     quint32 m_currentDecodingNB;
+    WaitingCommandExecutionForm* m_waitingForCommandExecutionForm;
 
 };
 

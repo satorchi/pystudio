@@ -3,11 +3,6 @@
 #include <QtGlobal>
 
 
-/** \def DISPATCHER_KERNEL_V
-  *  @brief Dispatcher Kernel version. */
-#define DISPATCHER_KERNEL_V   0x0205
-
-
 typedef union
 {
     quint8  b[8]; // b[0] poids faible --> b[1] ... b[7] poids forts
@@ -115,6 +110,9 @@ typedef union
   *  @brief Error status : bad Id */
 #define DECOMM_ID_ERROR             16
 
+/** \def DECOMM_CAN_NOT_DECODE_ERROR
+  *  @brief Error status : candecode function return false*/
+#define DECOMM_CAN_NOT_DECODE_ERROR    32
 
 /******************************************************************************/
 /** Dispatcher ACK Errors codes.
@@ -142,6 +140,10 @@ typedef union
 /** \def ACK_TIMEOUT
   *  @brief Error status :Ack timeout. */
 #define ACK_TIMEOUT         5
+
+/** \def ACK_COMMAND_EXECUTION_FAILED
+  *  @brief Error status :command execution failed. */
+#define ACK_COMMAND_EXECUTION_FAILED         6
 
 
 /** \def ACK_FROM_SUBSYS

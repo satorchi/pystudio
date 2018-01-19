@@ -79,6 +79,8 @@ public :
     virtual quint32 tfLibVersion() = 0;
     virtual quint32 indexedArraySize(quint32 parameterId) = 0;
     virtual void resetDecommutationParameters(quint8 subsytemId) = 0;
+    virtual void resetToDefaultValues() = 0;
+    virtual void setSessionName(QString sessionName) = 0;
     void reloadTF();
     QString stringValue(quint32 parameterId);
     int setStringValue(quint32 parameterId, const char* string);
