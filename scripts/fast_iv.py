@@ -30,12 +30,13 @@ asic=go.get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
 
-monitor_TES=get_from_keyboard('which TES would you like to monitor during the measurement? ',88)
+monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',64)
 if monitor_TES==None:quit()
 
 go.assign_integration_time(240)
-go.configure_PID()
-go.get_iv_timeline(vmin=0.5,vmax=3.0)
+#go.configure_PID()
+# Fri 19 Jan 2018 14:19:58 CET: we removed the 5x bias factor
+go.get_iv_timeline(vmin=3.0,vmax=9.0)
 
 go.timeline2adu(monitor_TES)
 
