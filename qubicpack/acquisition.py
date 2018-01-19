@@ -12,14 +12,16 @@ acquisition methods.  These require a connection to QubicStudio
 
      the following methods are originally by Michel Piat:
       set_VoffsetTES()
-      set_slowDAC()
-      set_diffDAC()
+      set_slowDAC() [removed from QubicStudio v3]
+      set_diffDAC() [removed from QubicStudio v3]
       get_amplitude()
       get_mean()
       integrate_scientific_data()
 
 
 Note on the use of sendSetCalibPolar()
+name change in QubicStudio v3: sendSetCalibPolar -> sendSetTESDAC
+
 see comments by Pierre Chanial in dispatcheraccess.pyx
 translated here...
 
@@ -37,7 +39,7 @@ arguments:
                            example: 0x00FF00 corresponds to ASIC 0 to 7
                            example: 0x0AD200 corresponds to ASIC 0,3,6,9
 
-  mode:
+  mode: (this was deleted in QubicStudio v3)
        mode=0 : no signal
        mode=1 : apply Bias voltage
 
@@ -218,45 +220,13 @@ def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
 
     
     # arguments (see comments at top of file):
-    #                                      asic, on/off, shape, frequency, amplitude,   offset
+    #                                  asic, shape, frequency, amplitude,   offset
     self.bias_frequency=frequency
-    client.sendSetCalibPolar(self.QS_asic_index, 1,      shape, frequency, DACamplitude, DACoffset)
+    client.sendSetTESDAC(self.QS_asic_index, shape, frequency, DACamplitude, DACoffset)
     # wait and send the command again to make sure
     self.wait_a_bit()
-    client.sendSetCalibPolar(self.QS_asic_index, 1, shape, frequency, DACamplitude, DACoffset)
+    client.sendSetTESDAC(self.QS_asic_index, shape, frequency, DACamplitude, DACoffset)
     return
-
-
-def set_diffDAC(self,tension):
-    client = self.connect_QubicStudio()
-    if client==None:return None
-    
-    if tension > 0 and tension <= 3.5:
-        diffDAC = tension / 2 / 7 * 65536 - 1
-    else:
-        diffDAC = 65536 * (1 + tension / 2 / 7)
-    diffDAC = int(np.round(diffDAC))
-    print('Setting diff DAC: ', diffDAC)
-    client.sendSetDiffDAC(self.QS_asic_index, diffDAC)
-    return
-
-
-
-def set_slowDAC(self,tension):
-    client = self.connect_QubicStudio()
-    if client==None:return None
-    
-    if tension > 0 and tension <=3.5:
-	slowDAC = tension / 1.4272e-4 - 1
-    else:
-	slowDAC = 65536 + tension / 1.4272e-4
-        
-    slowDAC = int(np.round(slowDAC))
-    print('Setting slow DAC: ', slowDAC)
-    client.sendSetSlowDAC(self.QS_asic_index, slowDAC)
-    return
-
-
 
 def get_iv_data(self,replay=False,TES=None,monitor=False):
     '''
