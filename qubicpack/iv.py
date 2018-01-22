@@ -730,7 +730,7 @@ def model_iv_combined(self,V,Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1):
     
     return self.model_iv_normal(V,c0,c1)
 
-def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='POLYNOMIAL',Vsuper=None,Vnormal=None,istart=None,iend=None):
+def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='COMBINED',Vsuper=None,Vnormal=None,istart=None,iend=None):
     '''
     fit the I-V curve to a polynomial
 
@@ -1169,7 +1169,7 @@ def filter_iv(self,TES,
               bias_margin=0.2,
               jumplimit=None,
               curve_index=None,
-              fitfunction='POLYNOMIAL',
+              fitfunction='COMBINED',
               Vsuper=None,
               Vnormal=None,
               istart=None,
@@ -1261,7 +1261,7 @@ def filter_iv_all(self,
                   rel_amplitude_limit=0.1,
                   bias_margin=0.2,
                   jumplimit=None,
-                  fitfunction='POLYNOMIAL',
+                  fitfunction='COMBINED',
                   Vsuper=None,
                   Vnormal=None,
                   istart=None,
