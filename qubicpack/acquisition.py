@@ -136,28 +136,34 @@ def configure_PID(self,P=0,I=20,D=0):
     return True
 
 
-def compute_offsets(self,k=0.2,count=10,consigne=0.0):
+def compute_offsets(self,count=10,consigne=0.0):
     '''
     measure the offsets and upload them to the table for future use
     '''
-    
-    client=self.connect_QubicStudio()
-    if client==None:quit()
+    client = self.connect_QubicStudio()
+    if client==None:return False
 
+    # to begin, assign zero offset
     offsets = np.zeros(self.NPIXELS)
+    client.sendSetOffsetTable(self.QS_asic_index, offsets)
+    self.wait_a_bit()
 
+    # to begin, get the current offsets
+    #parameter='QUBIC_OffsetDACValues_%i' % self.QS_asic_index
+    #offsets=client.fetch(parameter)
+
+    k=1.0 # the first step is big
     for counter in range(count):
 
-        print('count: %i/%i',(counter+1,imax))
+        print('count: %i/%i' % (counter+1,count))
         timeline = self.integrate_scientific_data()
-        data_avg=timeline.mean(axis=-1)
-        for pix_index in range(self.NPIXELS):
-            pix=pix_index+1
-	    offsets[pix_index]+=k*(data_avg[pix_index]-consigne)
-        
+        this_data_avg=timeline.mean(axis=-1)
+        prev_offsets=offsets
+        offsets=-k*(this_data_avg-consigne)+prev_offsets
         client.sendSetOffsetTable(self.QS_asic_index, offsets)
         self.wait_a_bit()
 
+        k=0.5 # and subsequent steps are smaller
     return offsets
 
 
