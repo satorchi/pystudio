@@ -178,7 +178,9 @@ for T in Tbath_target:
     # reset FLL and re-compute the offsets before measurement
     if not TESTMODE:
         go.configure_PID()
+        go.assign_integration_time(1.0) # int time 1sec for offset calculation
         go.compute_offsets()
+        go.assign_integration_time(240.0) # int time 4 minutes for I-V from timeline
         go.get_iv_timeline(vmin=min_bias,vmax=max_bias)
         go.timeline2adu(monitor_TES)
         go.write_fits()
