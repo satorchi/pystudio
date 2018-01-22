@@ -158,7 +158,7 @@ def compute_offsets(self,k=0.2,count=10,consigne=0.0):
         client.sendSetOffsetTable(self.QS_asic_index, offsets)
         self.wait_a_bit()
 
-    return timeline
+    return offsets
 
 
 
