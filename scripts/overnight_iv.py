@@ -100,6 +100,9 @@ if monitor_TES==None:quit()
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
 
+tinteg=go.get_from_keyboard('integration time ',1.0)
+go.assign_integration_time(tinteg)
+
 # setup temperature range
 start_temp=go.get_from_keyboard('start bath temperature ',0.6)
 if start_temp==None:quit()
