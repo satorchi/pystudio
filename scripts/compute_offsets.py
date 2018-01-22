@@ -28,7 +28,7 @@ k=0.2
 imax=10   
 consigne=0 # what's this?
 
-offsets = np.zeros(go.NPIXELS);
+offsets = np.zeros(go.NPIXELS)
 
 for counter in range(imax):
 
@@ -37,7 +37,7 @@ for counter in range(imax):
     data_avg=timeline.mean(axis=-1)
     for pix_index in range(go.NPIXELS):
         pix=pix_index+1
-	offsets[pix_index]+=k*(data_avg[pix]-consigne)
+	offsets[pix_index]+=k*(data_avg[pix_index]-consigne)
         
     client.sendSetOffsetTable(go.QS_asic_index, offsets)
     go.wait_a_bit()
