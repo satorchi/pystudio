@@ -78,11 +78,15 @@ if not TESTMODE:
 
 
 # setup bias voltage range
-min_bias=go.get_from_keyboard('minimum bias voltage ',0.5)
+# Mon 22 Jan 2018 08:46:16 CET: we have removed the 5x bias factor
+go.max_permitted_bias=10.0
+
+min_bias=go.get_from_keyboard('minimum bias voltage ',3.5)
 if min_bias==None:quit()
-max_bias=go.get_from_keyboard('maximum bias voltage ',3.0)
+max_bias=go.get_from_keyboard('maximum bias voltage ',9.0)
 if max_bias==None:quit()
-dv=go.get_from_keyboard('bias step size ',0.004)
+default_dv=(max_bias-min_bias)/300.0
+dv=go.get_from_keyboard('bias step size ',default_dv)
 cycle=go.get_from_keyboard('cycle bias up/down? ','y')
 if cycle==None:quit()
 if cycle.upper()=='N':
@@ -186,6 +190,11 @@ for T in Tbath_target:
 
     # reset FLL before measurement
     if not TESTMODE: go.configure_PID()
+
+    # recalculate the offsets
+    if not TESTMODE: go.compute_offsets()
+
+    # get the I-V curve
     go.get_iv_data(TES=monitor_TES,replay=TESTMODE)
     go.writelog(logfile_fullpath,'end I-V measurement')
     plt.close('all')

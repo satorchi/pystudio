@@ -78,9 +78,11 @@ ret=go.verify_QS_connection()
 if not ret:quit()
 
 # setup bias voltage range
-min_bias=go.get_from_keyboard('minimum bias voltage ',0.5)
+# Mon 22 Jan 2018 08:46:16 CET: we have removed the 5x bias factor
+go.max_permitted_bias=10.0
+min_bias=go.get_from_keyboard('minimum bias voltage ',3.5)
 if min_bias==None:quit()
-max_bias=go.get_from_keyboard('maximum bias voltage ',3.0)
+max_bias=go.get_from_keyboard('maximum bias voltage ',9.0)
 if max_bias==None:quit()
 
 # setup temperature range
@@ -173,9 +175,10 @@ for T in Tbath_target:
         go.writelog(logfile_fullpath,'WARNING! Did not reach target temperature!')
         go.writelog(logfile_fullpath,'Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
 
-    # reset FLL before measurement
+    # reset FLL and re-compute the offsets before measurement
     if not TESTMODE:
         go.configure_PID()
+        go.compute_offsets()
         go.get_iv_timeline(vmin=min_bias,vmax=max_bias)
         go.timeline2adu(monitor_TES)
         go.write_fits()
