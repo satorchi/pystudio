@@ -21,26 +21,62 @@ import numpy as np
 
 client=go.connect_QubicStudio()
 if client==None:quit()
-go.assign_integration_time(1.0)
+#go.assign_integration_time(1.0)
 
 
-k=0.2
-imax=10   
+k=0.5
+count=10
 consigne=0 # what's this?
 
+
+
+# to begin, assign zero offset
 offsets = np.zeros(go.NPIXELS)
+client.sendSetOffsetTable(go.QS_asic_index, offsets)
+go.wait_a_bit()
 
-for counter in range(imax):
+# to begin, get the current offsets
+#parameter='QUBIC_OffsetDACValues_%i' % go.QS_asic_index
+#offsets=client.fetch(parameter)
 
-    print('count: %i/%i',(counter+1,imax))
+# set the running average to zero
+data_avg=np.zeros(go.NPIXELS)
+
+k=1.0
+for counter in range(count):
+
+    print('count: %i/%i' % (counter+1,count))
     timeline = go.integrate_scientific_data()
-    data_avg=timeline.mean(axis=-1)
-    for pix_index in range(go.NPIXELS):
-        pix=pix_index+1
-	offsets[pix_index]+=k*(data_avg[pix_index]-consigne)
-        
+    this_data_avg=timeline.mean(axis=-1)
+    prev_offsets=offsets
+    offsets=-k*(this_data_avg-consigne)+prev_offsets
     client.sendSetOffsetTable(go.QS_asic_index, offsets)
     go.wait_a_bit()
+
+    data_avg+=this_data_avg
+    k=0.5
+data_avg=data_avg/count
+
+
+
+# Damien algo
+'''
+timeline = go.integrate_scientific_data()
+data_avg_0=timeline.mean(axis=-1)
+offsets=-(data_avg_0-consigne)
+
+client.sendSetOffsetTable(go.QS_asic_index, offsets)
+go.wait_a_bit()
+
+timeline = go.integrate_scientific_data()
+data_avg_1=timeline.mean(axis=-1)
+
+offsets=offsets - (data_avg_0-data_avg_1)
+client.sendSetOffsetTable(go.QS_asic_index, offsets)
+go.wait_a_bit()
+'''
+
+#data_avg_0=data_avg_1
 
 
 
