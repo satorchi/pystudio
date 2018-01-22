@@ -167,6 +167,7 @@ class qubicpack:
             connect_QubicStudio,\
             verify_QS_connection,\
             configure_PID,\
+            compute_offsets,\
             get_amplitude,\
             get_mean,\
             integrate_scientific_data,\
