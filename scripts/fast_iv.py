@@ -24,6 +24,8 @@ from satorchipy.datefunctions import *
 go=qp()
 go.debuglevel=1
 
+detname=go.get_from_keyboard('Which array is it? ','P87')
+go.assign_detector_name(detname)
 
 # can I get ASIC from QubicStudio?
 asic=go.get_from_keyboard('Which ASIC?  ',2)
@@ -37,6 +39,7 @@ go.assign_integration_time(240)
 #go.configure_PID()
 # Fri 19 Jan 2018 14:19:58 CET: we removed the 5x bias factor
 go.get_iv_timeline(vmin=3.0,vmax=9.0)
+#go.plot_timeline(monitor_TES)
 
 go.timeline2adu(monitor_TES)
 
