@@ -228,7 +228,8 @@ def integrate_scientific_data(self):
 
     # bath temperature
     self.oxford_read_bath_temperature()
-    
+
+    self.debugmsg('requesting scientific data timeline')
     parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
     req = client.request(parameter)
     istart = 0
@@ -306,8 +307,6 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         ncols=8
         figmulti,axmulti=self.setup_plot_iv_multi()
 
-    # before starting, reset the FLL
-    #if not replay: self.configure_PID() ### this is causing problems
     for j in range(nbias) :
         self.debugmsg("Vbias=%gV " % vbias[j])
         if not replay:
@@ -378,6 +377,7 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     offset=vmin+amplitude
     
     if frequency==None:frequency=99
+    #amplitude=2*amplitude # BUG CHECK: is this peak-to-peak or amplitude?
     self.debugmsg('amplitude=%.2f, offset=%.2f, frequency=%.2f' % (amplitude,offset,frequency))
     ret=self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0)
 
