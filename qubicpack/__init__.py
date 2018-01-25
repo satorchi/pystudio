@@ -125,7 +125,8 @@ class qubicpack:
         timeline_npts,\
         determine_bias_modulation,\
         timeline2adu,\
-        plot_timeline
+        plot_timeline,\
+        plot_timeline_physical_layout
 
 
     from .oxford import\
@@ -186,6 +187,6 @@ class qubicpack:
         return
 
     def debugmsg(self,msg):
-        if self.debuglevel>0: print('DEBUG: %s\r\f' % msg)
+        if self.debuglevel>0: print('DEBUG %s : %s\r\f' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
         return
     
