@@ -169,6 +169,7 @@ class qubicpack:
             verify_QS_connection,\
             configure_PID,\
             compute_offsets,\
+            feedback_offsets,\
             get_amplitude,\
             get_mean,\
             integrate_scientific_data,\
