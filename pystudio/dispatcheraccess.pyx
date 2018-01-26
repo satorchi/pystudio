@@ -647,6 +647,18 @@ cdef class DispatcherAccess:
         if not out:
             raise RuntimeError(self.lastError)
 
+    def sendSetRelay(self, int asicNum , int bitmask):
+        """
+        sendSetRelay(int asicNum , int bitmask)
+
+        choose the relay resistance: 100kOhm, 10kOhm
+        """
+        cdef bool out = self._da.sendSetRelay(asicNum, bitmask)
+        if not out:
+            raise RuntimeError(self.lastError)
+        
+
+        
     def sendResetVOffset(self, int asicNum):
         """
         sendResetVOffset(int asicNum)
