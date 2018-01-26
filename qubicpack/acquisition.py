@@ -143,6 +143,22 @@ def compute_offsets(self,count=10,consigne=0.0):
     client = self.connect_QubicStudio()
     if client==None:return False
 
+    # first switch off the loop
+    client.sendActivatePID(self.QS_asic_index,0)
+
+    # make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
+    client.sendSetRelay(self.QS_asic_index,1)
+
+    # set sampling frequency 400Hz
+    freq=400.
+    # set sampling amplitude 0.1V
+    amplitude=1.0
+    # set sampling offset 6V
+    bias=6.0
+    # set shape to sinus
+    shape=0
+    self.set_VoffsetTES(bias, amplitude, freq, shape)
+
     # to begin, assign zero offset
     offsets = np.zeros(self.NPIXELS)
     client.sendSetOffsetTable(self.QS_asic_index, offsets)
@@ -162,11 +178,68 @@ def compute_offsets(self,count=10,consigne=0.0):
         offsets=-k*(this_data_avg-consigne)+prev_offsets
         client.sendSetOffsetTable(self.QS_asic_index, offsets)
         self.wait_a_bit()
-
         k=0.5 # and subsequent steps are smaller
     return offsets
 
+def feedback_offsets(self,count=10,consigne=0.0):
+    '''
+    measure the feedback offsets and upload them to the table for future use
+    '''
+    client = self.connect_QubicStudio()
+    if client==None:return False
 
+    ## switch off the feedback loop
+    client.sendActivatePID(self.QS_asic_index,0)
+
+    # make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
+    client.sendSetRelay(self.QS_asic_index,1)
+
+
+    # set sampling frequency 10Hz
+    freq=10.
+    # set sampling amplitude 0.0V
+    amplitude=0.0
+    # set sampling offset 6V
+    bias=6.0
+    # set shape to sinus
+    shape=0
+    self.set_VoffsetTES(bias, amplitude, freq, shape)
+
+    # to begin, assign zero offset
+    offsets = np.zeros(self.NPIXELS)
+    client.sendSetFeedbackTable(self.QS_asic_index, offsets)
+    self.wait_a_bit(1.0)
+
+    ## switch on the feedback loop
+    self.configure_PID(P=0,I=10,D=0)
+    self.wait_a_bit(5.0)
+    self.assign_pausetime(0.5)
+
+    # correction direction changes with ASIC
+    if self.QS_asic_index==0:
+        correction_direction = 1
+    else:
+        correction_direction = -1
+    
+
+    k=1.0 # the first step is big
+    for counter in range(count):
+
+        self.debugmsg('count %i/%i: integrating...' % (counter+1,count))
+        timeline = self.integrate_scientific_data()
+        self.debugmsg('count %i/%i: finished integrating' % (counter+1,count))
+        this_data_avg=timeline.mean(axis=-1)
+        prev_offsets=offsets
+        offsets = correction_direction*k*(this_data_avg-consigne)+prev_offsets
+        self.debugmsg('count %i/%i: applying feedback offsets...' % (counter+1,count))
+        client.sendSetFeedbackTable(self.QS_asic_index, offsets)
+        self.debugmsg('count %i/%i: feedback offsets applied.' % (counter+1,count))
+        self.wait_a_bit()
+
+        self.debugmsg('count %i/%i: data for TES 37: %.5e' % (counter+1,count,this_data_avg[36]))
+        k=0.2 # and subsequent steps are smaller
+    
+    return offsets
 
 def get_amplitude(self):
     """
