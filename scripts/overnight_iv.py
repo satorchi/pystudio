@@ -65,6 +65,8 @@ figsize=go.figsize
 '''
 get parameters
 '''
+detname=go.get_from_keyboard('Which array is it? ','P87')
+go.assign_detector_name(detname)
 
 # can I get ASIC from QubicStudio?
 asic=go.get_from_keyboard('Which ASIC?  ',2)
@@ -191,11 +193,16 @@ for T in Tbath_target:
         go.writelog(logfile_fullpath,'WARNING! Did not reach target temperature!')
         go.writelog(logfile_fullpath,'Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
 
-    # reset FLL before measurement
-    if not TESTMODE: go.configure_PID()
+    if not TESTMODE:
+        # reset FLL before measurement
+        go.configure_PID()
 
-    # recalculate the offsets
-    if not TESTMODE: go.compute_offsets()
+        # recalculate the offsets
+        go.compute_offsets()
+
+        # and the feedback offsets
+        go.feedback_offsets()
+        
 
     # get the I-V curve
     go.get_iv_data(TES=monitor_TES,replay=TESTMODE)

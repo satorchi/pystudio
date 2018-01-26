@@ -68,6 +68,9 @@ go.debuglevel=1
 get parameters
 '''
 
+detname=go.get_from_keyboard('Which array is it? ','P87')
+go.assign_detector_name(detname)
+
 # can I get ASIC from QubicStudio?
 asic=go.get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
@@ -180,6 +183,7 @@ for T in Tbath_target:
         go.configure_PID()
         go.assign_integration_time(1.0) # int time 1sec for offset calculation
         go.compute_offsets()
+        go.feedback_offsets()
         go.assign_integration_time(240.0) # int time 4 minutes for I-V from timeline
         go.get_iv_timeline(vmin=min_bias,vmax=max_bias)
         go.timeline2adu(monitor_TES)
@@ -187,10 +191,11 @@ for T in Tbath_target:
     go.writelog(logfile_fullpath,'end I-V measurement')
     plt.close('all')
 
-    # generate the test document
-    go.writelog(logfile_fullpath,'generating test document')
-    if not TESTMODE: pdfname=go.make_iv_report()
-    go.writelog(logfile_fullpath,'test document generated')
+    if not TESTMODE:        
+        # generate the test document
+        go.writelog(logfile_fullpath,'generating test document')
+        pdfname=go.make_iv_report()
+        go.writelog(logfile_fullpath,'test document generated')
 
     # reset the plotting figure size
     go.figsize=figsize
