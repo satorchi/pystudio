@@ -301,9 +301,9 @@ def oxford_determine_best_heater_level(self):
     Tsetpt=self.oxford_read_set_point()
     if Tsetpt==None:return None
 
-    if Tsetpt>=0.5:
+    if Tsetpt>=0.3:
         heater=1.0
-    elif Tsetpt>=0.3:
+    elif Tsetpt>=0.2:
         heater=0.316
     else:
         heater=0.1
