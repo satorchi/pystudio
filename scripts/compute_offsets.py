@@ -16,19 +16,32 @@ from qubicpack import qubicpack as qp
 import numpy as np
 
 
-#go=qp()
-#go.assign_asic(1)
+go=qp()
+go.assign_asic(1)
+go.assign_integration_time(0.5)
 
 client=go.connect_QubicStudio()
 if client==None:quit()
-#go.assign_integration_time(1.0)
 
 
-k=0.5
 count=10
-consigne=0 # what's this?
+consigne=0
 
+# first switch off the loop
+client.sendActivatePID(go.QS_asic_index,0)
 
+# make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
+client.sendSetRelay(go.QS_asic_index,1)
+
+# set sampling frequency 400Hz
+freq=400.
+# set sampling amplitude 0.1V
+amplitude=1.0
+# set sampling offset 6V
+bias=6.0
+# set shape to sinus
+shape=0
+go.set_VoffsetTES(bias, amplitude, freq, shape)
 
 # to begin, assign zero offset
 offsets = np.zeros(go.NPIXELS)
@@ -42,7 +55,7 @@ go.wait_a_bit()
 # set the running average to zero
 data_avg=np.zeros(go.NPIXELS)
 
-k=1.0
+k=1.0 # the first step is big
 for counter in range(count):
 
     print('count: %i/%i' % (counter+1,count))
@@ -54,9 +67,12 @@ for counter in range(count):
     go.wait_a_bit()
 
     data_avg+=this_data_avg
-    k=0.5
+    k=0.5 # and subsequent steps are smaller
 data_avg=data_avg/count
 
+# finally, switch back on the FLL
+#client.sendActivatePID(go.QS_asic_index,1)
+#go.wait_a_bit()
 
 
 # Damien algo
