@@ -184,26 +184,38 @@ def plot_TES_temperature_curves(qplist,TES,plot='I',xwin=True):
     '''
     if not verify_temperature_arguments(qplist,TES):return None
     asic=qplist[0].asic
+    detector_name=qplist[0].detector_name
+
+    temps_list=[]
+    for go in qplist:
+        if not go.turnover(TES)==None:
+            temps_list.append(go.temperature)
+
+    
+    temps_list=np.array(temps_list)
+
+    sorted_index=sorted(range(len(temps_list)), key=lambda i: temps_list[i])
+    sorted_temps=temps_list[sorted_index]
 
     plot_type='I'
     if plot.upper()[0]=='R':
         plot_type='R'
-        pngname='QUBIC_TES%03i_ASIC%i_R-V_Temperatures.png' % (TES,asic)
+        pngname='QUBIC_Array-%s_TES%03i_ASIC%i_R-V_Temperatures.png' % (detector_name,TES,asic)
         xlabel='P$_{TES}$ / $p$W'
         ylabel='$\\frac{R_\mathrm{TES}}{R_\mathrm{normal}}$ / %'
     elif plot.upper()[0]=='P':
         plot_type='P'
-        pngname='QUBIC_TES%03i_ASIC%i_P-V_Temperatures.png' % (TES,asic)
+        pngname='QUBIC_Array-%s_TES%03i_ASIC%i_P-V_Temperatures.png' % (detector_name,TES,asic)
         xlabel='V$_{bias}$ / V'
         ylabel='P$_{TES}$ / $p$W'
     else:
         plot_type='I'
-        pngname='QUBIC_TES%03i_ASIC%i_I-V_Temperatures.png' % (TES,asic)
+        pngname='QUBIC_Array-%s_TES%03i_ASIC%i_I-V_Temperatures.png' % (detector_name,TES,asic)
         xlabel='V$_{bias}$ / V'
         ylabel='I$_{TES}$ / $\mu$A'
         
     figsize=qplist[0].figsize
-    ttl='QUBIC ASIC %i TES%03i at Different Temperatures' % (asic,TES)
+    ttl='QUBIC Array %s ASIC %i TES%03i at Different Temperatures' % (detector_name,asic,TES)
     if xwin:plt.ion()
     else:
         plt.close('all')
@@ -223,7 +235,8 @@ def plot_TES_temperature_curves(qplist,TES,plot='I',xwin=True):
     max_Rn_ratio=-1000.
     min_P=1000.
     max_P=-1000.
-    for go in qplist:
+    for idx in sorted_index:
+        go=qplist[idx]
         lbl='%.0f mK' % (1000*go.temperature)
 
         istart,iend=go.selected_iv_curve(TES)
@@ -303,7 +316,6 @@ def fit_Pbath(T_pts, P_pts):
     try:
         ret=curve_fit(P_bath_function,T,P)
     except:
-        print('insufficient data for TES %i' % TES)
         ret=None
     return ret
 
@@ -380,6 +392,7 @@ def calculate_TES_NEP(qplist,TES):
         ret['NEP']=None
         ret['G']=None
         ret['gamma']=None
+        print ('insufficient data for curve fit:  TES=%i' % TES)
 
     return ret
 
@@ -587,7 +600,7 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     NEP_estimate=np.array(NEP_estimate)
     NEPmean=NEP_estimate.mean()
     
-    texfilename=str('QUBIC_TES_ASIC%i_NEP.tex' % asic)
+    texfilename=str('QUBIC_Array-%s_ASIC%i_NEP.tex' % (detector_name,asic))
     h=open(texfilename,'w')
     h.write('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n')
     h.write('%%%%% WARNING!  Automatically generated file.  Do not edit! %%%%%\n')
@@ -678,11 +691,11 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
 
     for TES in np.arange(1,129):
         h.write('\n\\clearpage')
-        pngIV ='QUBIC_TES%03i_ASIC%i_I-V_Temperatures.png' % (TES,asic)
+        pngIV ='QUBIC_Array-%s_TES%03i_ASIC%i_I-V_Temperatures.png' % (detector_name,TES,asic)
         if not os.path.exists(pngIV):
             res=plot_TES_temperature_curves(qplist,TES,plot='I',xwin=False)
 
-        pngPV ='QUBIC_TES%03i_ASIC%i_P-V_Temperatures.png' % (TES,asic)
+        pngPV ='QUBIC_Array-%s_TES%03i_ASIC%i_P-V_Temperatures.png' % (detector_name,TES,asic)
         if not os.path.exists(pngPV):
             res=plot_TES_temperature_curves(qplist,TES,plot='P',xwin=False)
 
