@@ -153,7 +153,6 @@ def plot_timeline(self,TES,timeline_index=None,xwin=True):
 
     fig=plt.figure(figsize=self.figsize)
     fig.canvas.set_window_title('plt: '+ttl) 
-    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
     ax=plt.gca()
     ax.set_xlabel('time  /  seconds')
     ax.set_ylabel('Current  /  $\mu$A')
@@ -166,27 +165,36 @@ def plot_timeline(self,TES,timeline_index=None,xwin=True):
     sample_period=self.sample_period()
     time_axis=sample_period*np.arange(timeline_npts)
 
-    ipeak0,ipeak1=self.determine_bias_modulation(TES,timeline_index)
-    
+    if self.timeline_conversion==None:
+        self.timeline2adu(TES=TES,timeline_index=timeline_index)
+
+    ipeak0=self.timeline_conversion['ipeak0']
+    ipeak1=self.timeline_conversion['ipeak1']
     peak0=time_axis[ipeak0]
     peak1=time_axis[ipeak1]
-
     bias_period=peak1-peak0
-
-    amplitude=0.5*(current[ipeak0]-min(current))
-    offset=min(current)+amplitude
-    ysine=offset+amplitude*np.sin((time_axis-peak0)*2*np.pi/bias_period + 0.5*np.pi)
     sinelabel='sine curve period=%.2f seconds' % bias_period
-    plt.plot(time_axis,ysine,label=sinelabel,color='green')
-    plt.plot(time_axis,current,label='I-V timeline',color='blue')
+    subttl+='\npeaks determined from TES %i' % self.timeline_conversion['TES']
+    amplitude=0.5*(self.max_bias-self.min_bias)
+    offset=self.min_bias+amplitude
+    ysine=offset+amplitude*np.sin((time_axis-peak0)*2*np.pi/self.bias_frequency + 0.5*np.pi)
+
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    
+    ax.plot(time_axis,current,label='I-V timeline',color='blue')
 
     ymax=max([current[ipeak0],current[ipeak1]])
     ymin=min(current)
     yrange=ymax-ymin
     yminmax=(ymin-0.02*yrange,ymax+0.02*yrange)
-    plt.plot([peak0,peak0],yminmax,color='red')
-    plt.plot([peak1,peak1],yminmax,color='red')
+    ax.plot([peak0,peak0],yminmax,color='red')
+    ax.plot([peak1,peak1],yminmax,color='red')
     ax.set_ylim(yminmax)
+
+    ax_bias = ax.twinx()
+    ax_bias.set_ylabel('Bias / V',rotation=270)
+    ax_bias.plot(time_axis,ysine,label=sinelabel,color='green')
+
     plt.legend()
 
     pngname=str('TES%03i_array-%s_ASIC%i_timeline_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
@@ -298,13 +306,20 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0):
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
 
-    if not isinstance(TES,int):TES=70
+    if not isinstance(TES,int):
+        print('Please enter a TES which is the reference for extracting the bias timeline')
+        return None
     
     ip0,ip1=self.determine_bias_modulation(TES,timeline_index)
     if not isinstance(ipeak0,int):ipeak0=ip0
     if not isinstance(ipeak1,int):ipeak1=ip1
     self.debugmsg('timeline2adu: ipeak0=%i' % ipeak0)
     self.debugmsg('timeline2adu: ipeak1=%i' % ipeak1)
+    self.timeline_conversion={}
+    self.timeline_conversion['ipeak0']=ipeak0
+    self.timeline_conversion['ipeak1']=ipeak1
+    self.timeline_conversion['TES']=TES
+    self.timeline_conversion['timeline_index']=timeline_index
         
     timeline_npts=self.timeline_npts()
     sample_period=self.sample_period()
