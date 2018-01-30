@@ -49,6 +49,7 @@ def assign_defaults(self):
     self.observer='APC LaboMM'
     self.nsamples=None
     self.timelines=None
+    self.timeline_conversion=None
     self.assign_pix_grid()
     self.assign_pix2tes()
     self.filtersummary=[]
