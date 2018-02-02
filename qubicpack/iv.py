@@ -46,7 +46,16 @@ def wait_a_bit(self,pausetime=None):
     time.sleep(pausetime)
     return
 
-def ADU2I(self,ADU, offset=None):
+def lut(self,v,vmin=3.0,vmax=9.0):
+    '''
+    a colour look up table for showing Vturnover in the I-V plots
+    '''
+    vfractional=v/(vmax-vmin)
+    colourmap = plt.cm.get_cmap('Spectral')
+    rgb=colourmap(vfractional)
+    return rgb
+
+def ADU2I(self,ADU, offset=None, R1adjust=1.0):
     ''' 
     This is the magic formula to convert the measured output of the TES to current
     the voltage (ADU) returned by the TES is converted to a current in uA        
@@ -54,7 +63,7 @@ def ADU2I(self,ADU, offset=None):
     Rfb   = 10000. # Ohm
     q_ADC = 20./(2**16-1)
     G_FLL = (10.4 / 0.2) * Rfb
-    I = 1e6 * (ADU / 2**7) * (q_ADC/G_FLL) * (self.nsamples - 8)
+    I = 1e6 * (ADU / 2**7) * (q_ADC/G_FLL) * (self.nsamples - 8) * R1adjust
 
     if offset!=None: return I+offset
     return I
@@ -201,13 +210,15 @@ def plot_iv_physical_layout(self,xwin=True):
 
     if xwin: plt.ion()
     else: plt.ioff()
-    fig,ax=plt.subplots(nrows,ncols,figsize=self.figsize)
-    subttl=str('Array %s, ASIC #%i' % (self.detector_name,self.asic))
+    # need a square figure for this plot to look right
+    figlen=max(self.figsize)
+    fig,ax=plt.subplots(nrows,ncols,figsize=[figlen,figlen])
+    subttl='Array %s, ASIC #%i' % (self.detector_name,self.asic)
     if not self.temperature==None:
         subttl+=', T$_\mathrm{bath}$=%.2f mK' % (1000*self.temperature)
     if not ngood==None:
-        subttl+=str(': %i flagged as bad pixels' % (self.NPIXELS-ngood))
-    pngname=str('TES_IV_array-%s_ASIC%i_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+        subttl+=': %i flagged as bad pixels : yield = %.1f%%' % (self.NPIXELS-ngood,100.0*ngood/self.NPIXELS)
+    pngname='TES_IV_array-%s_ASIC%i_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC'))
     pngname_fullpath=self.output_filename(pngname)
     if xwin: fig.canvas.set_window_title('plt:  '+ttl)
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
@@ -234,16 +245,22 @@ def plot_iv_physical_layout(self,xwin=True):
                 face_colour='black'
             elif physpix in TES_translation_table:
                 TES=self.pix2tes(physpix)
-                pix_label=str('%i' % TES)
-                label_colour='black'
-                face_colour='white'
                 TES_index=self.TES_index(TES)
                 Iadjusted=self.adjusted_iv(TES)
-                text_y=min(Iadjusted)
-                self.draw_iv(Iadjusted,colour='blue',axis=ax[row,col])
-
-                if (not self.is_good_iv(TES)==None) and (not self.is_good_iv(TES)):
+                turnover=self.turnover(TES)
+                pix_label=str('%i' % TES)
+                label_colour='black'
+                if turnover==None:
                     face_colour='red'
+                else:
+                    face_colour=self.lut(turnover)
+                text_y=min(Iadjusted)
+                
+                self.draw_iv(Iadjusted,colour='blue',axis=ax[row,col])
+                
+                
+                if (not self.is_good_iv(TES)==None) and (not self.is_good_iv(TES)):
+                    face_colour='black'
                     label_colour='white'
                     # ax[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color=label_colour)
             else:
@@ -286,17 +303,17 @@ def draw_tangent(self,TES):
     # tangent is determined by the fit
     slope=1/R1
     
-    V=self.bias_factor*self.max_bias
-    Imax=V
+    Iinfinity=self.Vinfinity
 
     # The line is described by: y=slope*x + I0 + offset
-    I0=Imax - slope*V - offset
+    I0=Iinfinity - slope*self.Vinfinity - offset
 
     V2=self.bias_factor*self.min_bias
+    V2=0.0
     I2=slope*V2 + I0 + offset
 
-    xpts=[V2,V]
-    ypts=[I2,Imax]
+    xpts=[V2,self.Vinfinity]
+    ypts=[I2,Iinfinity]
     plt.plot(xpts,ypts,linestyle='dashed',color='green',label='model normal region')
     
     return I0
@@ -393,9 +410,11 @@ def polynomial_fit_parameters(self,fit):
     '''
     TES=fit['TES']
     TES_index=self.TES_index(TES)
-    I=self.ADU2I(self.adu[TES_index,:])
+    R1adjust=self.R1adjust(TES)
+    I=self.ADU2I(self.adu[TES_index,:],R1adjust=R1adjust)
     npts=len(I)
-    
+
+    # Vinfinity is the virtual point where we calculate the offset
     
     # the coefficients of the polynomial fit
     if fit['fitfunction']=='POLYNOMIAL':
@@ -503,8 +522,8 @@ def polynomial_fit_parameters(self,fit):
         else:
             R1=1/self.zero
         # offset forces the line to have I(max_bias)=max_bias (i.e. R=1 Ohm)
-        Imax=slope*self.bias_factor*self.max_bias + b
-        offset=self.bias_factor*self.max_bias-Imax
+        Imax=slope*self.Vinfinity + b
+        offset=self.Vinfinity-Imax
         fit['R1']=R1
         self.debugmsg('polynomial_fit_parameters (2): setting R1 to %.3f' % R1)
         fit['offset']=offset
@@ -519,9 +538,8 @@ def polynomial_fit_parameters(self,fit):
     # if the above didn't work, we use the original curve fit 
     # we shift the fit curve up/down to have I(max_bias)=max_bias
     # which puts the max bias position at a point on the R=1 Ohm line
-    V=self.bias_factor*self.max_bias
-    Imax=a0 + a1*V + a2*(V**2) + a3*(V**3)
-    offset=V-Imax
+    Imax=a0 + a1*self.Vinfinity + a2*(self.Vinfinity**2) + a3*(self.Vinfinity**3)
+    offset=self.Vinfinity-Imax
     fit['offset']=offset
     if found_turnover:
         V0=fit['turnover']
@@ -530,7 +548,7 @@ def polynomial_fit_parameters(self,fit):
     # find the tangent line of the fit to the I-V curve at the maximum bias
     # this should be equivalent to a circuit with resistance 1 Ohm
     # tangent is the first derivative of the polyfit
-    slope=a1 + 2*a2*V + 3*a3*(V**2)
+    slope=a1 + 2*a2*self.Vinfinity + 3*a3*(self.Vinfinity**2)
         
     # The line should have a slope equal to a circuit with resistance 1 Ohm
     if abs(slope)>self.zero:
@@ -550,6 +568,8 @@ def combined_fit_parameters(self,fit):
     # first of all, get the parameters from the mixed region
     fit=self.polynomial_fit_parameters(fit)
     Vturnover=fit['turnover']
+
+    # Vinfinity is the virtual point where we calculate the offset
     
     # superconducting region and normal region
     Vsuper=fit['fitinfo'][0][0]
@@ -564,10 +584,9 @@ def combined_fit_parameters(self,fit):
     fit['R1']=R1
     self.debugmsg('combined_fit_parameters (1): setting R1 to %.3f' % R1)
     
-    # find offset that puts current equal to max bias voltage (R=1 at Vbias=maximum)
-    max_bias=self.bias_factor*self.max_bias
-    Imax=self.model_iv_normal(max_bias,c0,c1)
-    offset=max_bias-Imax
+    # find offset that puts current equal to max bias voltage (R=1 at Vbias=Vinfinity)
+    Imax=self.model_iv_normal(self.Vinfinity,c0,c1)
+    offset=self.Vinfinity-Imax
     fit['offset']=offset
 
     # For comparison, we calculate the intersection of the two models: super/normal
@@ -682,7 +701,6 @@ def model_iv_normal(self,V,coeff0,coeff1):
     I=coeff0 + coeff1*V
     return I
 
-
 def model_iv_mixed(self,V,coeff0,coeff1,coeff2,coeff3):
     '''
     mixed region modeled with polynomial
@@ -730,7 +748,15 @@ def model_iv_combined(self,V,Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1):
     
     return self.model_iv_normal(V,c0,c1)
 
-def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='COMBINED',Vsuper=None,Vnormal=None,istart=None,iend=None):
+def fit_iv(self,TES,
+           jumplimit=None,
+           curve_index=None,
+           fitfunction='COMBINED',
+           Vsuper=None,
+           Vnormal=None,
+           istart=None,
+           iend=None,
+           R1adjust=1.0):
     '''
     fit the I-V curve to a polynomial
 
@@ -753,6 +779,7 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='COMBINED',Vsupe
     self.debugmsg('calling fit_iv with Vsuper,Vnormal = %s, %s' % (str(Vsuper),str(Vnormal)))
     self.TES=TES # we need this global variable for the "mixed model".  see above in model_iv_mixed().
     TES_index=self.TES_index(TES)
+    self.debugmsg('fit_iv() : R1adjust=%f' % R1adjust)
     override_istart=istart
     override_iend=iend
     
@@ -761,7 +788,7 @@ def fit_iv(self,TES,jumplimit=None,curve_index=None,fitfunction='COMBINED',Vsupe
     fit['TES']=TES
     fit['fitfunction']=fitfunction.upper()
 
-    I=self.ADU2I(self.adu[TES_index,:])
+    I=self.ADU2I(self.adu[TES_index,:],R1adjust=R1adjust)
     npts=len(I)
 
     if self.cycle_vbias:
@@ -896,7 +923,10 @@ def setup_plot_iv(self,TES,xwin=True):
     ax=plt.gca()
     ax.set_xlabel('Bias Voltage  /  V')
     ax.set_ylabel('Current  /  $\mu$A')
-    ax.set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
+    bias_range=self.bias_factor*(self.max_bias-self.min_bias)
+    bias_plot_window=[self.bias_factor*self.min_bias - 0.1*bias_range,self.bias_factor*self.max_bias + 0.1*bias_range]
+    ax.set_xlim(bias_plot_window)
+    # Y plot limits calculated in plot_iv()
     return fig,ax
 
 def adjusted_iv(self,TES):
@@ -904,7 +934,8 @@ def adjusted_iv(self,TES):
     return the adjusted I-V curve
     '''
     offset=self.offset(TES)
-    Iadjusted=self.ADU2I(self.adu[self.TES_index(TES),:],offset=offset)
+    R1adjust=self.R1adjust(TES)
+    Iadjusted=self.ADU2I(self.adu[self.TES_index(TES),:],offset=offset,R1adjust=R1adjust)
     return Iadjusted
 
 def oplot_iv(self,TES,label=None):
@@ -939,6 +970,9 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     Iadjusted=self.adjusted_iv(TES)
     Itop=max(Iadjusted)
     Ibot=min(Iadjusted)
+    Irange=Itop-Ibot
+    I_plot_window=[Ibot-0.5*Irange,Itop+0.1*Irange]
+    ax.set_ylim(I_plot_window)
     Vturnover=self.turnover(TES)
     self.oplot_iv(TES)
         
@@ -952,14 +986,14 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     # draw a fit to the I-V curve
     txt+=str('\nfit residual: %.4e' % filterinfo['residual'])
     bias,f=self.fitted_iv_curve(TES)
-    plt.plot(bias,f,linestyle='dashed',color='red',label='model')
+    ax.plot(bias,f,linestyle='dashed',color='red',label='model')
 
     # draw the curve fitting the super conducting region
     if fit['fitfunction']=='COMBINED':
         a0=fit['fitinfo'][0][2]
         a1=fit['fitinfo'][0][3]
         Isuper=self.model_iv_super(bias,a0,a1)+self.offset(TES)
-        plt.plot(bias,Isuper,linestyle='dashed',color='magenta',label='model superconducting region')
+        ax.plot(bias,Isuper,linestyle='dashed',color='magenta',label='model superconducting region')
 
         # redefine Ibot as the intersection of the super/normal models.
         Vsupernormal=fit['supernormal']
@@ -968,26 +1002,26 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
 
         Vsuper=fit['Vsuper']
         Vnormal=fit['Vnormal']
-        plt.plot([Vsuper,Vsuper],[Ibot,Itop],linestyle='dashed',color='cyan')
+        ax.plot([Vsuper,Vsuper],[Ibot,Itop],linestyle='dashed',color='cyan')
         plt.text(Vsuper,Itop,'Superconducting  \nregion  ',ha='right',va='top',fontsize=12)
-        plt.plot([Vnormal,Vnormal],[Ibot,Itop],linestyle='dashed',color='cyan')
+        ax.plot([Vnormal,Vnormal],[Ibot,Itop],linestyle='dashed',color='cyan')
         plt.text(Vnormal,Itop,'  Normal\n  region',ha='left',va='top',fontsize=12)
-        plt.plot([Vsupernormal,Vsupernormal],[Ibot,Itop],linestyle='dashed',color='cyan')
+        ax.plot([Vsupernormal,Vsupernormal],[Ibot,Itop],linestyle='dashed',color='cyan')
 
     # draw vertical lines to show the range used for the fit
     if 'fit range' in fit.keys():
         fit_istart,fit_iend=fit['fit range']
         fit_vstart=self.bias_factor*self.vbias[fit_istart]
         fit_vend=self.bias_factor*self.vbias[fit_iend-1]
-        plt.plot([fit_vstart,fit_vstart],[Ibot,Itop],color='red',linestyle='dashed')
-        plt.plot([fit_vend,fit_vend],[Ibot,Itop],color='red',linestyle='dashed')
+        ax.plot([fit_vstart,fit_vstart],[Ibot,Itop],color='red',linestyle='dashed')
+        ax.plot([fit_vend,fit_vend],[Ibot,Itop],color='red',linestyle='dashed')
     
 
     # note the turnover point
     if Vturnover==None:
         txt+='\nNo turnover!'
     else:
-        plt.plot([Vturnover,Vturnover],[Ibot,Itop],linestyle='dashed',color='green')
+        ax.plot([Vturnover,Vturnover],[Ibot,Itop],linestyle='dashed',color='green')
         txt+=str('\nturnover Vbias=%.2fV' % Vturnover)
         # Iturnover is the current at Vturnover
         if 'Iturnover' in fit.keys():
@@ -1016,10 +1050,13 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     if not is_good:txt+=str('\nFlagged as BAD:  %s' % comment)
 
     # write out the comments
-    text_x=self.bias_factor*(self.min_bias + 0.95*(self.max_bias-self.min_bias))
-    text_y=Ibot
-    plt.text(text_x,text_y,txt,va='bottom',ha='right',fontsize=12)
-    plt.legend()
+    #text_x=self.bias_factor*(self.min_bias + 0.95*(self.max_bias-self.min_bias))
+    #text_y=Ibot
+    text_x=0.98
+    text_y=0.02
+    boxprops = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(text_x,text_y,txt,va='bottom',ha='right',fontsize=10,transform = ax.transAxes,bbox=boxprops)
+    ax.legend(loc='lower left',bbox_to_anchor=(0.02, 0.02),fontsize=10)
     pngname=str('TES%03i_IV_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
@@ -1046,7 +1083,7 @@ def plot_pv(self,TES,xwin=True):
     istart,iend=self.selected_iv_curve(TES)
     Ptes=self.Ptes(TES)[istart:iend]
     bias=self.bias_factor*self.vbias[istart:iend]
-    plt.plot(bias,Ptes)
+    ax.plot(bias,Ptes)
     
     pngname=str('TES%03i_PV_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
@@ -1093,15 +1130,15 @@ def plot_rp(self,TES,xwin=True):
     ax.set_xlabel('P$_\mathrm{TES}$  /  pW')
     ax.set_ylabel('$\\frac{R_\mathrm{TES}}{R_\mathrm{normal}}$ / %')
 
-    plt.plot(Ptes,Rn_ratio)
-    plt.plot([Pbias,Pbias],[0,90],linestyle='dashed',color='green')
-    plt.plot([plot_Pmin,Pbias],[90,90],linestyle='dashed',color='green')
+    ax.plot(Ptes,Rn_ratio)
+    ax.plot([Pbias,Pbias],[0,90],linestyle='dashed',color='green')
+    ax.plot([plot_Pmin,Pbias],[90,90],linestyle='dashed',color='green')
     ax.set_xlim([plot_Pmin,plot_Pmax])
     ax.set_ylim([plot_Rmin,plot_Rmax])
 
     text_x=plot_Pmax-0.3*Pspan
     text_y=plot_Rmin+0.5*Rspan
-    plt.text(text_x,text_y,lbl)
+    ax.text(text_x,text_y,lbl)
     
     pngname=str('TES%03i_RP_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
@@ -1163,6 +1200,7 @@ def make_Vbias(self,cycle=True,ncycles=2,vmin=0.5,vmax=3.0,dv=0.002,lowhigh=True
 
 
 def filter_iv(self,TES,
+              R1adjust=1.0,
               residual_limit=3.0,
               abs_amplitude_limit=0.01,
               rel_amplitude_limit=0.1,
@@ -1185,19 +1223,21 @@ def filter_iv(self,TES,
     
     # dictionary to return stuff
     ret={}
+    ret['R1adjust']=R1adjust
+    self.debugmsg('filter_iv() : R1adjust=%f' % R1adjust)
     ret['TES']=TES
     ret['is_good']=True
     ret['comment']='no comment'
 
     # fit to the chosen model. The fit will be for the best measured curve if it's cycled bias
-    fit=self.fit_iv(TES,jumplimit,curve_index,fitfunction,Vsuper,Vnormal,istart,iend)
+    fit=self.fit_iv(TES,jumplimit,curve_index,fitfunction,Vsuper,Vnormal,istart,iend,R1adjust)
     ret['fit']=fit
     residual=fit['residual']
     ret['residual']=residual
     offset=fit['offset']
     ret['offset']=offset
     ADU=self.adu[TES_index,:]
-    Iadjusted=self.ADU2I(ADU,offset=offset)
+    Iadjusted=self.ADU2I(ADU,offset=offset,R1adjust=R1adjust)
     ret['turnover']=fit['turnover']
 
     # first filter:  is it a good fit?
@@ -1256,6 +1296,7 @@ def filter_iv(self,TES,
     return self.assign_filterinfo(TES,ret)
 
 def filter_iv_all(self,
+                  R1adjust=1.0,
                   residual_limit=3.0,
                   abs_amplitude_limit=0.01,
                   rel_amplitude_limit=0.1,
@@ -1276,11 +1317,19 @@ def filter_iv_all(self,
     # return a list with the filter info for each TES
     filtersummary=[]
 
+    # assign the R1 adjustment for each TES
+    R1adjust_vector=np.ones(self.NPIXELS)
+    if type(R1adjust)==type(None):R1adjust=1.0
+    if isinstance(R1adjust,float) or isinstance(R1adjust,int):
+        for idx in range(self.NPIXELS):R1adjust_vector[idx]=R1adjust
+    elif len(R1adjust)==self.NPIXELS:R1adjust_vector=R1adjust
+        
     # go through each filter.  Jump out and examine the next I-V curve as soon as a bad I-V is found
     for TES_index in range(self.NPIXELS):
         TES=TES_index+1
         self.debugmsg('running filter on TES %03i' % TES)
         filterinfo=self.filter_iv(TES,
+                                  R1adjust_vector[TES_index],
                                   residual_limit,
                                   abs_amplitude_limit,
                                   rel_amplitude_limit,
@@ -1750,6 +1799,36 @@ def offset(self,TES=None):
             turnover.append(finfo['fit']['offset'])
         return turnover
     return filterinfo['fit']['offset']
+
+def R1adjust(self,TES=None):
+    '''
+    return the R1 adjustment if any
+    '''
+    if not self.exist_iv_data():return None
+
+    # if no TES is specified, return the whole list
+    if TES==None:
+        R1adjust_vector=np.ones(self.NPIXELS)
+        # if no R1adjust defined, return 1.0 for each
+        for TES_index in range(self.NPIXELS):
+            f=self.filtersummary[TES_index]
+            if (not f==None) and ('R1adjust' in f.keys()):
+                R1adjust_vector[TES_index]=f['R1adjust']
+        return R1adjust_vector
+
+    # if not a valid TES, return None
+    if not isinstance(TES,int) or TES<1 or TES>self.NPIXELS:
+        print('please enter a valid TES number between 1 and %i.' % self.NPIXELS)
+        return None
+
+    # if filter has not been run, return 1.0
+    f=self.filtersummary[self.TES_index(TES)]
+    if f==None: return 1.0
+
+    if 'R1adjust' in f.keys():
+        return self.filtersummary[self.TES_index(TES)]['R1adjust']
+    return 1.0
+
 
 def R1(self,TES=None):
     '''
