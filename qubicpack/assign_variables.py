@@ -34,6 +34,7 @@ def assign_defaults(self):
     self.assign_integration_time()
     self.adu=None
     self.vbias=None
+    self.Vinfinity=100.0
     self.cycle_vbias=True
     self.nbiascycles=None
     self.bias_frequency=None
