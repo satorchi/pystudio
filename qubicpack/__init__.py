@@ -64,6 +64,7 @@ class qubicpack:
     from .iv import\
         exist_iv_data,\
         wait_a_bit,\
+        lut,\
         ADU2I,\
         setup_plot_Vavg,\
         plot_Vavg,\
@@ -103,6 +104,7 @@ class qubicpack:
         ngood,\
         turnover,\
         offset,\
+        R1adjust,\
         R1,\
         Rn,\
         selected_iv_curve,\
