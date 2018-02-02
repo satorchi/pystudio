@@ -15,7 +15,13 @@ import numpy as np
 from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 
-def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True):
+def mylut(v,vmin=3.0,vmax=9.0):
+    vfractional=v/(vmax-vmin)
+    colourmap = plt.cm.get_cmap('Spectral')
+    rgb=colourmap(vfractional)
+    return rgb
+
+def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lutmax=9.0):
     '''
     plot an image of the TES array labeling each pixel
     plot the I-V curves in the appropriate boxes if a1 and/or a2 given
@@ -24,8 +30,11 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True):
     obj_list=[a1,a2]
     asic1_obj=None
     asic2_obj=None
+    temperature=None
     for obj in obj_list:
         if isinstance(obj,qp):
+            temperature=obj.temperature
+            detector_name=obj.detector_name
             if obj.asic==1:
                 asic1_obj=obj
             elif obj.asic==2:
@@ -66,21 +75,27 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True):
     else: plt.ioff()
     fig,ax=plt.subplots(nrows,ncols,figsize=asic1_obj.figsize)
     fig.text(0.5,0.985,'QUBIC TES array',ha='center',fontsize=ttlfontsize)
-    pngname='TES_ARRAY.png'
+    pngname='TES_Array-%s_%.0fmK.png' % (detector_name,1000*temperature)
     if xwin: fig.canvas.set_window_title('plt:  QUBIC TES array')
 
-    asic1_subttl='Array %s ASIC1 blue background' % asic1_obj.detector_name
-    asic2_subttl='Array %s ASIC2 green background' % asic2_obj.detector_name
+    asic1_subttl='Array %s ASIC1 black curves' % asic1_obj.detector_name
+    asic2_subttl='Array %s ASIC2 blue curves' % asic2_obj.detector_name
     ngood=0
+    npix=0
     if asic1_data:
-        asic1_subttl+=asic1_obj.obsdate.strftime(', data from %Y-%m-%d %H:%M')
+        asic1_subttl+=', data from %s, T$_\mathrm{bath}$=%.3fmK'\
+                       % (asic1_obj.obsdate.strftime('%Y-%m-%d %H:%M'),asic1_obj.temperature*1000)
         ngood+=asic1_obj.ngood()
+        npix+=asic1_obj.NPIXELS
     if asic2_data:
-        asic2_subttl+=asic2_obj.obsdate.strftime(', data from %Y-%m-%d %H:%M')
+        asic2_subttl+=', data from %s, T$_\mathrm{bath}$=%.3fmK'\
+                       % (asic2_obj.obsdate.strftime('%Y-%m-%d %H:%M'),asic2_obj.temperature*1000)
         ngood+=asic2_obj.ngood()
+        npix+=asic2_obj.NPIXELS
     subttl=asic1_subttl+'\n'+asic2_subttl
     if asic1_data or asic2_data:
-        subttl+='\nbad pixels in red background. %i good pixels.' % ngood
+        subttl+='\nbad pixels in black background. %i good pixels out of %i = %.1f%%' % (ngood,npix,100.0*ngood/npix)
+        subttl+='\nV$_\mathrm{turnover}$ from red to blue (%.1fV to %.1fV)' % (lutmin,lutmax)
     fig.suptitle(subttl,fontsize=fontsize)
 
 
@@ -95,7 +110,9 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True):
             # the pixel identity associated with its physical location in the array
             physpix=asic1_obj.pix_grid[row,col]
             pix_index=physpix-1
-            
+            face_colour='black'
+            label_colour='white'
+
             text_y=0.5
             text_x=0.5
             if physpix==0:
@@ -106,32 +123,42 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True):
             elif physpix in asic1_obj.TES2PIX[0]:
                 TES=asic1_obj.pix2tes(physpix)
                 pix_label=str('%i' % TES)
-                label_colour='white'
-                face_colour='blue'
+                label_colour='black'
+                #face_colour='blue'
                 if asic1_data:
                     fontsize=asic1_fontsize
                     Iadjusted=asic1_obj.adjusted_iv(TES)
+                    turnover=asic1_obj.turnover(TES)
                     text_x=max(asic1_obj.vbias)
                     text_y=min(Iadjusted)
-                    asic1_obj.draw_iv(Iadjusted,colour='yellow',axis=ax[row,col])
+                    curve_colour='black'
                     if (not asic1_obj.is_good_iv(TES)==None) and (not asic1_obj.is_good_iv(TES)):
-                        face_colour='red'
+                        face_colour='black'
                         label_colour='white'
+                        curve_colour='white'
+                    else:
+                        face_colour=mylut(turnover)
+                    asic1_obj.draw_iv(Iadjusted,colour=curve_colour,axis=ax[row,col])
 
             elif physpix in asic2_obj.TES2PIX[1]:
                 TES=asic2_obj.pix2tes(physpix)
                 pix_label=str('%i' % TES)
-                label_colour='white'
-                face_colour='green'
+                label_colour='black'
+                #face_colour='green'
                 if asic2_data:
                     fontsize=asic2_fontsize
                     Iadjusted=asic2_obj.adjusted_iv(TES)
-                    text_x=max(asic1_obj.vbias)
+                    turnover=asic2_obj.turnover(TES)
+                    text_x=max(asic2_obj.vbias)
                     text_y=min(Iadjusted)
-                    asic2_obj.draw_iv(Iadjusted,colour='blue',axis=ax[row,col])
+                    curve_colour='blue'
                     if (not asic2_obj.is_good_iv(TES)==None) and (not asic2_obj.is_good_iv(TES)):
-                        face_colour='red'
+                        face_colour='black'
                         label_colour='white'
+                        curve_colour='white'
+                    else:
+                        face_colour=mylut(turnover)
+                    asic2_obj.draw_iv(Iadjusted,colour=curve_colour,axis=ax[row,col])
 
             else:
                 pix_label='???'
