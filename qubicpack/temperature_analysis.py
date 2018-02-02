@@ -566,7 +566,7 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     else:plt.close('all')
     return
             
-def make_TES_NEP_tex_report(qplist,NEPresults=None):
+def make_TES_NEP_tex_report(qplist,NEPresults=None,refresh=True):
     '''
     make a LaTeX source file for a test report of NEP estimates
     the input arguments are a list of qubicpack objects with the I-V data at different temperatures
@@ -576,7 +576,9 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
 
     # find the data at 300mK
     go300=None
+    datelist=''
     for go in qplist:
+        datelist+='\n\\item %.3fmK on %s' % (1000*go.temperature,go.obsdate.strftime('%Y-%m-%d %H:%M:%S'))
         if go.temperature>=0.3-temperature_precision and go.temperature<=0.3+temperature_precision:
             go300=go
     if go300==None:
@@ -637,8 +639,11 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     h.write('\\noindent\\begin{itemize}\n')
     h.write('\\item Array %s\n' % detector_name)
     h.write('\\item ASIC %i\n' % asic)
-    h.write('\\item NEP estimated for %i TES out of %i' % (nNEP,len(NEPresults)))
-    h.write('\\item average NEP=%.2f $\\times10^{-17}$ W / $\\sqrt{\\rm Hz}$' % (NEPmean*1e17))
+    h.write('\\item NEP estimated for %i TES out of %i\n' % (nNEP,len(NEPresults)))
+    h.write('\\item average NEP=%.2f $\\times10^{-17}$ W / $\\sqrt{\\rm Hz}$\n' % (NEPmean*1e17))
+    h.write('\\item data from:\n\\begin{itemize}\n')
+    h.write(datelist)
+    h.write('\n\\end{itemize}\n')
     h.write('\\end{itemize}\n')
     
     h.write('\n\\vspace*{3ex}\n\\noindent This document includes the following:\n')
@@ -651,7 +656,7 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     h.write('\\end{itemize}\n\\clearpage\n')
 
     png='QUBIC_TES_ASIC%i_NEP_histogram.png' % asic
-    if not os.path.exists(png):
+    if refresh or not os.path.exists(png):
         plot_NEP_histogram(qplist,NEPresults,xwin=False)                           
 
     if os.path.exists(png):
@@ -692,15 +697,15 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None):
     for TES in np.arange(1,129):
         h.write('\n\\clearpage')
         pngIV ='QUBIC_Array-%s_TES%03i_ASIC%i_I-V_Temperatures.png' % (detector_name,TES,asic)
-        if not os.path.exists(pngIV):
+        if refresh or not os.path.exists(pngIV):
             res=plot_TES_temperature_curves(qplist,TES,plot='I',xwin=False)
 
         pngPV ='QUBIC_Array-%s_TES%03i_ASIC%i_P-V_Temperatures.png' % (detector_name,TES,asic)
-        if not os.path.exists(pngPV):
+        if refresh or not os.path.exists(pngPV):
             res=plot_TES_temperature_curves(qplist,TES,plot='P',xwin=False)
 
         pngNEP='QUBIC_Array-%s_TES%03i_ASIC%i_NEP.png' % (detector_name,TES,asic)
-        if not os.path.exists(pngNEP):
+        if refresh or not os.path.exists(pngNEP):
             res=plot_TES_NEP(qplist,TES,xwin=False)
 
         
