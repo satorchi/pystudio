@@ -188,12 +188,8 @@ def plot_TES_temperature_curves(qplist,TES,plot='I',xwin=True):
 
     temps_list=[]
     for go in qplist:
-        if not go.turnover(TES)==None:
-            temps_list.append(go.temperature)
-
-    
+        temps_list.append(go.temperature)
     temps_list=np.array(temps_list)
-
     sorted_index=sorted(range(len(temps_list)), key=lambda i: temps_list[i])
     sorted_temps=temps_list[sorted_index]
 
@@ -327,6 +323,15 @@ def calculate_TES_NEP(qplist,TES):
     if not verify_temperature_arguments(qplist,TES):return None
     asic=qplist[0].asic
     detector_name=qplist[0].detector_name
+    asic=qplist[0].asic
+    detector_name=qplist[0].detector_name
+
+    temps_list=[]
+    for go in qplist:
+        temps_list.append(go.temperature)    
+    temps_list=np.array(temps_list)
+    sorted_index=sorted(range(len(temps_list)), key=lambda i: temps_list[i])
+    sorted_temps=temps_list[sorted_index]
     
     ret={}
     ret['DET_NAME']=detector_name
@@ -337,9 +342,10 @@ def calculate_TES_NEP(qplist,TES):
     P=[]
     T=[]
     all_T=[]
-    for go in qplist:
+    for idx in sorted_index:
+        go=qplist[idx]
         all_T.append(go.temperature)
-        if go.turnover(TES)==None:continue
+        if go.turnover(TES)==None or go.turnover(TES)<0.0:continue
         filterinfo=go.filterinfo(TES)
         
         istart,iend=go.selected_iv_curve(TES)
