@@ -12,7 +12,7 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 Make a table which is a list of dictionary values giving the various parameters for each TES detector
 
 Probably the most useful for your scripts is
-   TEStable_readfile(filename) : read a text version of the TES parameters table
+   TESparameters_dictionary=TEStable_readfile(filename) : read a text version of the TES parameters table
 
 '''
 from __future__ import division, print_function
@@ -220,11 +220,16 @@ def TEStable_header(go1,go2):
     header+='# The first line gives the keywords to be found for each TES\n'
     header+='# Each block of parameters begins with the keyword "INDEX"\n'
     header+='#\n'
-    header+='# R300 is the resistance at 300K\n'
+    header+='# R300 is the resistance at 300K in units of Ohms\n'
     header+='# CarbonFibre is the evaluation given by the Carbon Fibre tests (good or bad)\n'
     header+='# OpenLoop is the open loop test\n'
     header+='# IV is the evaluation based on the I-V curve (good or bad)\n'
-    header+='# NEP is the Noise Equivalent Power\n'
+    header+='# K is the coefficient of T in the P_bath vs T_bath plot\n'
+    header+='# T0 is the critical temperature in units of K\n'
+    header+='# n is the power law index for the P_bath vs T_bath plot\n'
+    header+='# NEP is the phonon Noise Equivalent Power in units of W/sqrt(Hz)\n'
+    header+='# G is the conductance in units of W/K\n'
+    header+='# gamma is the correction coefficient for calculating NEP (see Perbost thesis Eq. 2.72)\n'
     header+='#\n'
     header+='# The following data is for TES array %s\n' % go1.detector_name
     header+='# the IV and NEP evaluation were measured on %s (ASIC %i) and %s (ASIC %i)\n'\
@@ -248,11 +253,11 @@ def TEStable_entry(idx,nepresults,go):
         TES=TES_index+1
         txt+='\nINDEX=%i' % idx
         entry_both=go.lookup_TEStable(key='TES',value=TES)
-        entry=[entry for entry in entry_both if entry['ASIC']==go.asic][0]
-        for key in entry.keys():
-            txt+='\n%s=%s' % (key,str(entry[key]))
-
-        TES=entry['TES']
+        if not entry_both==None:
+            entry=[entry for entry in entry_both if entry['ASIC']==go.asic][0]
+            for key in entry.keys():
+                txt+='\n%s=%s' % (key,str(entry[key]))
+            TES=entry['TES']
 
         if TES<=0:
             txt+='\nIV=unknown'
@@ -262,12 +267,16 @@ def TEStable_entry(idx,nepresults,go):
             else:
                 txt+='\nIV=bad'
 
+        nepkeys=['K', 'T0', 'n', 'NEP', 'G', 'gamma']
         for nepidx,nepentry in enumerate(nepresults):
             if nepentry['TES']==TES:
-                if not nepentry['NEP']==None:
-                    txt+='\nNEP=%.8g' % nepentry['NEP']
-                else:
-                    txt+='\nNEP=NaN'
+                for key in nepkeys:
+                    if not nepentry[key]==None:
+                        txt+='\n%s=%.8g' % (key,nepentry[key])
+                    else:
+                        txt+='\n%s=NaN' % key
+                key='DET_NAME'
+                txt+='\n%s=%s' % (key,nepentry[key])
                 break
         idx+=1
     return idx,txt
@@ -281,9 +290,12 @@ def TEStable_writefile(nep1,go1,nep2,go2,version=0.0):
     h.write(TEStable_header(go1,go2))
     
     txt='KEYWORDS='
-    for key in go1.transdic[0].keys():
-        txt+='%s;' % key
-    txt+='IV;NEP;Tc;G;K;n'
+    if not go1.transdic==None:
+        for key in go1.transdic[0].keys():
+            txt+='%s;' % key
+    else:
+        print('WARNING! missing results for Room Temperature Resistance, Carbon Fibre, etc')    
+    txt+='IV;K;T0;n;NEP;G;gamma;DET_NAME'
     h.write(txt)
 
     idx=0
@@ -341,13 +353,12 @@ def TEStable_readfile(filename):
         msg+=keyword+' '
     print(msg+'\n')
 
-
-    val_keywords=['INDEX','R300', 'ASIC', 'PIX', 'TES', 'NEP','G','Tc','G','K','n']
-    str_keywords=['OpenLoop', 'CarbonFibre', 'IV']
+    val_keywords=['INDEX','R300', 'ASIC', 'PIX', 'TES', 'NEP','G','T0','G','K','n']
+    str_keywords=['OpenLoop', 'CarbonFibre', 'IV', 'DET_NAME']
     
     # process the rest of the file
     del(valid_lines[0])
-    del(valid_lines[1])
+    del(valid_lines[0])
     idx_counter=-1
     entry={}
     for line in valid_lines:
