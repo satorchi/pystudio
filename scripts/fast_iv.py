@@ -32,14 +32,24 @@ asic=go.get_from_keyboard('Which ASIC?  ',2)
 if asic==None:quit()
 ret=go.assign_asic(asic)
 
+# setup bias voltage range
+# Mon 22 Jan 2018 08:46:16 CET: we have removed the 5x bias factor
+go.max_permitted_bias=10.0
+min_bias=go.get_from_keyboard('minimum bias voltage ',3.5)
+if min_bias==None:quit()
+max_bias=go.get_from_keyboard('maximum bias voltage ',9.0)
+if max_bias==None:quit()
+
 monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',64)
 if monitor_TES==None:quit()
 
-go.assign_integration_time(240)
-#go.configure_PID()
-# Fri 19 Jan 2018 14:19:58 CET: we removed the 5x bias factor
-go.get_iv_timeline(vmin=3.0,vmax=9.0)
-#go.plot_timeline(monitor_TES)
+
+go.configure_PID()
+go.assign_integration_time(1.0) # int time 1sec for offset calculation
+go.compute_offsets()
+go.feedback_offsets()
+go.assign_integration_time(240.0) # int time 4 minutes for I-V from timeline
+go.get_iv_timeline(vmin=min_bias,vmax=max_bias)
 
 go.timeline2adu(monitor_TES)
 
