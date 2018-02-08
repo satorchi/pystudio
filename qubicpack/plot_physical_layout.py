@@ -31,6 +31,8 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     asic1_obj=None
     asic2_obj=None
     temperature=None
+    temperature_str=''
+    detector_name='undefined'
     for obj in obj_list:
         if isinstance(obj,qp):
             temperature=obj.temperature
@@ -57,10 +59,10 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     asic1_fontsize=8
     asic2_data=True
     asic2_fontsize=8
-    if not isinstance(asic1_obj.adu,np.ndarray):
+    if not asic1_obj.exist_iv_data():
         asic1_data=False
         asic1_fontsize=figsize[0]
-    if not isinstance(asic2_obj.adu,np.ndarray):
+    if not asic2_obj.exist_iv_data():
         asic2_data=False
         asic2_fontsize=figsize[0]
             
@@ -71,11 +73,13 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     nrows=asic1_obj.pix_grid.shape[0]
     ncols=asic1_obj.pix_grid.shape[1]
 
+    if temperature is not None: temperature_str='.0fmK' % 1000*temperature
+
     if xwin: plt.ion()
     else: plt.ioff()
     fig,ax=plt.subplots(nrows,ncols,figsize=asic1_obj.figsize)
     fig.text(0.5,0.985,'QUBIC TES array',ha='center',fontsize=ttlfontsize)
-    pngname='TES_Array-%s_%.0fmK.png' % (detector_name,1000*temperature)
+    pngname='TES_Array-%s_%s.png' % (detector_name,temperature_str)
     if xwin: fig.canvas.set_window_title('plt:  QUBIC TES array')
 
     asic1_subttl='Array %s ASIC1 black curves' % asic1_obj.detector_name
@@ -123,8 +127,8 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
             elif physpix in asic1_obj.TES2PIX[0]:
                 TES=asic1_obj.pix2tes(physpix)
                 pix_label=str('%i' % TES)
-                label_colour='black'
-                #face_colour='blue'
+                label_colour='yellow'
+                face_colour='blue'
                 if asic1_data:
                     fontsize=asic1_fontsize
                     Iadjusted=asic1_obj.adjusted_iv(TES)
@@ -144,7 +148,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                 TES=asic2_obj.pix2tes(physpix)
                 pix_label=str('%i' % TES)
                 label_colour='black'
-                #face_colour='green'
+                face_colour='green'
                 if asic2_data:
                     fontsize=asic2_fontsize
                     Iadjusted=asic2_obj.adjusted_iv(TES)
