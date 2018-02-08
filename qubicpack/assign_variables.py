@@ -19,6 +19,12 @@ import matplotlib.pyplot as plt
 from glob import glob
 
 def assign_defaults(self):
+    # on 6 Feb 2018, we reversed the wires for the ASICs
+    # so now QubicStudio and the dilution fridge use the same ASIC designation
+    self.asic_reversal_date=dt.datetime.strptime('2018-02-06 18:00','%Y-%m-%d %H:%M')
+    self.assign_obsdate()
+    self.obsdates=None
+    self.endobs=None
     self.debuglevel=0
     self.zero=1e-9
     self.QubicStudio_ip='134.158.186.233'
@@ -44,9 +50,6 @@ def assign_defaults(self):
     self.max_bias_position=None
     self.bias_factor=1.0
     self.pausetime=0.3
-    self.assign_obsdate()
-    self.obsdates=None
-    self.endobs=None
     self.observer='APC LaboMM'
     self.nsamples=None
     self.timelines=None
@@ -87,11 +90,12 @@ def assign_asic(self,asic=1):
     # so define here a specific QubicStudio ASIC index which should be used in the acquisition methods
     # see, for example, integrate_scientific_data() in tools.py
     asic_index=self.asic_index()
-    #self.QS_asic_index=asic_index
-    if asic_index==0:
-        self.QS_asic_index=1
-    else:
-        self.QS_asic_index=0
+    self.QS_asic_index=asic_index
+    if self.obsdate < self.asic_reversal_date:
+        if asic_index==0:
+            self.QS_asic_index=1
+        else:
+            self.QS_asic_index=0
 
     # Wed 02 Aug 2017 15:48:15 CEST
     # during lab tests, QubicStudio is always using asic_index=0
