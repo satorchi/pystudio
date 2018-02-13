@@ -33,11 +33,17 @@ def amplitude2DAC(self,amplitude):
     '''
     convert bias voltage amplitude in Volts to DAC to send to QubicStudio
     '''
+
+    '''
+    # QubicStudio V2
     if amplitude > 0 and amplitude <= 9:
         DACamplitude = amplitude / 0.001125 - 1 # "-1" is back Mon 30 Oct 2017 19:51:42 CET
         #DACamplitude = amplitude / 0.001125  # "-1" removed Tue 17 Oct 2017 14:09:47 CEST
     else:
         DACamplitude = 65536 + amplitude / 0.001125
+    '''
+    
+    DACamplitude= amplitude / (2*self.DAC2V)      
     DACamplitude = int(np.round(DACamplitude))
     return DACamplitude
 
@@ -46,6 +52,8 @@ def bias_offset2DAC(self,bias):
     convert bias offset voltage in Volts to DAC to send to QubicStudio
     '''
 
+    '''
+    # QubicStudio v2
     # conversion constant DAC <- Volts
     # A = 2.8156e-4
     A = 284.5e-6
@@ -54,7 +62,32 @@ def bias_offset2DAC(self,bias):
         #DACoffset = bias / A # "-1" removed Tue 17 Oct 2017 15:47:03 CEST
     else:
         DACoffset = 65536 + bias / A
+    '''
+
+    '''
+    Mon 12 Feb 2018 16:37:49 CET:  max bias offset is 8.6081536 with DAC2V=2.627e-4
+
+    bias offset can go from 0 to 2^15*DAC2V
+    DACoffset=0     ->  0V
+    DACoffset=32768 ->  8.608V
+    DACoffset=32769 ->  0V
+    DACoffset=32770 -> -8.608V
+                        and decreasing from there
+    '''
+    max_offset=self.DAC2V * 2**15
+    if abs(bias)>max_offset:
+        print('WARNING! Cannot set bias offset greater than %.3fV.' % max_offset)
+        if bias<0.0:
+            bias=-max_offset
+        else:
+            bias= max_offset
+        print('Setting bias to %.3fV' % bias)
+
+
+    DACoffset = abs(bias) / self.DAC2V
     DACoffset = int(np.round(DACoffset))
+    if bias<0.0: DACoffset = 2**16 - DACoffset
+
     self.debugmsg("DACoffset=%i" % DACoffset)
     return DACoffset
 
