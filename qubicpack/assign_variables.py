@@ -31,7 +31,8 @@ def assign_defaults(self):
     self.OxfordInstruments_ip='134.158.186.162'
     self.NPIXELS=128
     self.detector_name='undefined'
-    self.DAC2V=2.627e-4     # email from Michel Piat 2018/02/09 17:14 CET
+    #self.DAC2V=2.627e-4    # email from Michel Piat 2018/02/09 17:14 CET
+    self.DAC2V=9.404/2**15 # measured Tue 13 Feb 2018 15:25:11 CET
     self.kBoltzmann=1.3806485279e-23
     self.Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
     self.Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
