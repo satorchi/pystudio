@@ -61,15 +61,15 @@ import datetime as dt
 import matplotlib.pyplot as plt
 
 def connect_QubicStudio(self,client=None, ip=None):
-    if ip==None:
+    if ip is None:
         ip=self.QubicStudio_ip
     else:
         self.assign_QubicStudio_ip(ip)
     
-    if client==None:
+    if client is None:
         client = pystudio.get_client()
 
-    if client==None:
+    if client is None:
         print("connecting to QubicStudio on host: ",self.QubicStudio_ip)
         client = pystudio.DispatcherAccess(self.QubicStudio_ip, 3002)
         print('wait 3 seconds before doing anything')
@@ -89,7 +89,7 @@ def verify_QS_connection(self):
     This is useful for verifying that we're trying to connect to the correct ASIC
     '''
     client = self.connect_QubicStudio()
-    if client==None:return False
+    if client is None:return False
 
     parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
     req = client.request(parameter)
@@ -113,7 +113,7 @@ def configure_PID(self,P=0,I=20,D=0):
     configure the FLL (Flux Lock Loop) PID
     '''
     client = self.connect_QubicStudio()
-    if client==None:return False
+    if client is None:return False
 
     # first switch off the loop
     client.sendActivatePID(self.QS_asic_index,0)
@@ -141,7 +141,7 @@ def compute_offsets(self,count=10,consigne=0.0):
     measure the offsets and upload them to the table for future use
     '''
     client = self.connect_QubicStudio()
-    if client==None:return False
+    if client is None:return False
 
     # first switch off the loop
     client.sendActivatePID(self.QS_asic_index,0)
@@ -151,13 +151,13 @@ def compute_offsets(self,count=10,consigne=0.0):
 
     # set sampling frequency 400Hz
     freq=400.
-    # set sampling amplitude 0.1V
+    # set sampling amplitude 1V
     amplitude=1.0
     # set sampling offset 6V
     bias=6.0
     # set shape to sinus
     shape=0
-    self.set_VoffsetTES(bias, amplitude, freq, shape)
+    if not self.set_VoffsetTES(bias, amplitude, freq, shape):return False
 
     # to begin, assign zero offset
     offsets = np.zeros(self.NPIXELS)
@@ -186,7 +186,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
     measure the feedback offsets and upload them to the table for future use
     '''
     client = self.connect_QubicStudio()
-    if client==None:return False
+    if client is None:return False
 
     ## switch off the feedback loop
     client.sendActivatePID(self.QS_asic_index,0)
@@ -203,7 +203,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
     bias=6.0
     # set shape to sinus
     shape=0
-    self.set_VoffsetTES(bias, amplitude, freq, shape)
+    if not self.set_VoffsetTES(bias, amplitude, freq, shape):return False
 
     # to begin, assign zero offset
     offsets = np.zeros(self.NPIXELS)
@@ -271,7 +271,7 @@ def get_mean(self):
 
 def integrate_scientific_data(self):
     client = self.connect_QubicStudio()
-    if client==None:return None
+    if client is None:return None
 
     self.debugmsg('calling integrate_scientific_data for ASIC %i' % self.asic)
     
@@ -319,7 +319,13 @@ def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
     integration time, asic, should be selected previously with the appropriate assign_() method
     ''' 
     client = self.connect_QubicStudio()
-    if client==None:return None
+    if client is None:return None
+
+    # check that we don't surpass the max bias permitted by the ADC
+    max_offset=self.DAC2V * 2**15
+    if bias+amplitude>max_offset:
+        print('ERROR!  This combination of offset and amplitude will surpass the maximum bias available: max=%.3fV, offset+amplitude=%.3fV' % (max_offset,bias+amplitude))
+        return None
 
     DACoffset=self.bias_offset2DAC(bias)
     DACamplitude=self.amplitude2DAC(amplitude)
@@ -362,7 +368,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
         adu=self.adu
     else:
         client = self.connect_QubicStudio()
-        if client==None: return None
+        if client is None: return None
         self.assign_obsdate(dt.datetime.utcnow())
         if not isinstance(self.vbias,np.ndarray):
             vbias=make_Vbias()
@@ -434,11 +440,11 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     if vmin,vmax are not given, try to get them from self.vbias
     '''
 
-    if vmin==None:
+    if vmin is None:
         if not isinstance(self.vbias,np.ndarray):
             vbias=self.make_Vbias()
         vmin=min(self.vbias)
-    if vmax==None:
+    if vmax is None:
         if not isinstance(self.vbias,np.ndarray):
             vbias=self.make_Vbias()
         vmax=max(self.vbias)
@@ -449,10 +455,10 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     amplitude=0.5*(vmax-vmin)
     offset=vmin+amplitude
     
-    if frequency==None:frequency=99
+    if frequency is None:frequency=99
     #amplitude=2*amplitude # BUG CHECK: is this peak-to-peak or amplitude?
     self.debugmsg('amplitude=%.2f, offset=%.2f, frequency=%.2f' % (amplitude,offset,frequency))
-    ret=self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0)
+    if not self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0):return None
 
     timeline=self.integrate_scientific_data()
     if not isinstance(timeline,np.ndarray):
