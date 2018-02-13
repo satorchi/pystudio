@@ -24,7 +24,7 @@ from satorchipy.datefunctions import *
 go=qp()
 go.debuglevel=1
 
-detname=go.get_from_keyboard('Which array is it? ','P87')
+detname=go.get_from_keyboard('Which array is it? ','P90')
 go.assign_detector_name(detname)
 
 # can I get ASIC from QubicStudio?
@@ -35,19 +35,20 @@ ret=go.assign_asic(asic)
 # setup bias voltage range
 # Mon 22 Jan 2018 08:46:16 CET: we have removed the 5x bias factor
 go.max_permitted_bias=10.0
-min_bias=go.get_from_keyboard('minimum bias voltage ',3.5)
+min_bias=go.get_from_keyboard('minimum bias voltage ',3.0)
 if min_bias==None:quit()
-max_bias=go.get_from_keyboard('maximum bias voltage ',9.0)
+max_possible_bias=go.DAC2V * 2**15
+max_bias=go.get_from_keyboard('maximum bias voltage ',max_possible_bias)
 if max_bias==None:quit()
 
-monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',64)
+monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',34)
 if monitor_TES==None:quit()
 
 
 go.configure_PID()
 go.assign_integration_time(1.0) # int time 1sec for offset calculation
-go.compute_offsets()
-go.feedback_offsets()
+if not go.compute_offsets():quit()
+if not go.feedback_offsets():quit()
 go.assign_integration_time(240.0) # int time 4 minutes for I-V from timeline
 go.get_iv_timeline(vmin=min_bias,vmax=max_bias)
 
