@@ -54,9 +54,9 @@ def modulator_frequency(self,frequency=100.0,shape='SIN',amplitude=0.1):
     The wave form can be: SIN, SQU, TRI,     
     '''
 
-    if self.modulator==None:
+    if self.modulator is None:
         s=self.init_hp33120a()
-        if s==None:return False
+        if s is None:return False
         
     
     cmd='APPL:%s %.5E, %.2f\n' % (shape.upper(),frequency,amplitude)
@@ -68,9 +68,9 @@ def modulator_read_frequency(self):
     read the current frequency setting of the HP33120A waveform generator
     '''
 
-    if self.modulator==None:
+    if self.modulator is None:
         s=self.init_hp33120a()
-        if s==None:return False
+        if s is None:return False
         
     
     self.modulator.write('FREQ?\n')
@@ -84,9 +84,9 @@ def modulator_read_shape(self):
     read the current modulation shape setting of the HP33120A waveform generator
     '''
 
-    if self.modulator==None:
+    if self.modulator is None:
         s=self.init_hp33120a()
-        if s==None:return False
+        if s is None:return False
         
     
     self.modulator.write('FUNC:SHAPE?\n')

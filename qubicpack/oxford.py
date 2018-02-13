@@ -47,7 +47,7 @@ def oxford_send_cmd(self, cmd=None):
     '''
     send a command to the Oxford Instruments control computer for the dilution fridge
     '''
-    if cmd==None:
+    if cmd is None:
         cmd='READ:SYS:TIME\n'
 
     if not isinstance(cmd,str):
@@ -171,7 +171,7 @@ def oxford_check_calibration(self,chan=5):
 
     cmd='READ:DEV:T%i:TEMP:CAL:CHK\n' % chan
     d=self.oxford_send_cmd(cmd)
-    if d==None:return False
+    if d is None:return False
     ok=d[-1]
     if ok=='OK':return True
     return False
@@ -201,7 +201,7 @@ def oxford_read_all_temperatures(self):
         if not label=='NOT USED':
             chan=idx+1
             val=self.oxford_read_temperature(chan)
-            if val==None:
+            if val is None:
                 tempstr='INACCESSIBLE'
             else:
                 tempstr='%8.3f K' % val
@@ -249,7 +249,7 @@ def oxford_read_heater_level(self):
 
     # and we read the maximum range that we provided in the set_point command
     Imax=self.oxford_read_heater_range()
-    if Imax==None:return None
+    if Imax is None:return None
     # convert Imax to Amps
     Imax=0.001*Imax
     
@@ -263,7 +263,7 @@ def oxford_set_heater_range(self,heater=None):
     # determine heater level to apply
     if (not isinstance(heater,float)) and (not isinstance(heater,int)):
         heater=self.oxford_determine_best_heater_level()
-        if heater==None:return None
+        if heater is None:return None
 
     self.debugmsg('setting heater range: %f mA' % heater)
     cmdheat='SET:DEV:T5:TEMP:LOOP:RANGE:%f\n' % heater # mA
@@ -299,7 +299,7 @@ def oxford_determine_best_heater_level(self):
     NOTE: this is returned in mA
     '''
     Tsetpt=self.oxford_read_set_point()
-    if Tsetpt==None:return None
+    if Tsetpt is None:return None
 
     if Tsetpt>=0.3:
         heater=1.0
@@ -316,7 +316,7 @@ def oxford_increase_heater_range(self,testidx=-1):
     '''
     # first read the current setting
     heater=self.oxford_read_heater_range()
-    if heater==None:
+    if heater is None:
         if testidx<0:return None
         heater=self.oxford_heater_ranges[testidx]
 

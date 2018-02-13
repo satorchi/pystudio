@@ -137,7 +137,7 @@ def assign_lookup_table(self):
     return self.transdic
 
 def lookup_TEStable(self,key='PIX',value=100):
-    if self.transdic==None:
+    if self.transdic is None:
         print('No translation table.  Please load.')
         return None
     

@@ -46,11 +46,11 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                 return None
 
         
-    if asic1_obj==None:
+    if asic1_obj is None:
         asic1_obj=qp()
         asic1_obj.assign_asic(1)
         asic1_fontsize=figsize[0]
-    if asic2_obj==None:
+    if asic2_obj is None:
         asic2_obj=qp()
         asic2_obj.assign_asic(2)
         asic2_fontsize=figsize[0]
@@ -136,7 +136,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                     text_x=max(asic1_obj.vbias)
                     text_y=min(Iadjusted)
                     curve_colour='black'
-                    if (not asic1_obj.is_good_iv(TES)==None) and (not asic1_obj.is_good_iv(TES)):
+                    if (not asic1_obj.is_good_iv(TES) is None) and (not asic1_obj.is_good_iv(TES)):
                         face_colour='black'
                         label_colour='white'
                         curve_colour='white'
@@ -156,7 +156,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                     text_x=max(asic2_obj.vbias)
                     text_y=min(Iadjusted)
                     curve_colour='blue'
-                    if (not asic2_obj.is_good_iv(TES)==None) and (not asic2_obj.is_good_iv(TES)):
+                    if (not asic2_obj.is_good_iv(TES) is None) and (not asic2_obj.is_good_iv(TES)):
                         face_colour='black'
                         label_colour='white'
                         curve_colour='white'
