@@ -73,6 +73,9 @@ def bias_offset2DAC(self,bias):
     DACoffset=32769 ->  0V
     DACoffset=32770 -> -8.608V
                         and decreasing from there
+
+    Tue 13 Feb 2018 13:53:34 CET
+    max bias is now 8.837V.  It depends on the power supply of the FPGA card etc
     '''
     max_offset=self.DAC2V * 2**15
     if abs(bias)>max_offset:
