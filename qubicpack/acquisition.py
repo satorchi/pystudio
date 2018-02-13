@@ -216,10 +216,11 @@ def feedback_offsets(self,count=10,consigne=0.0):
     self.assign_pausetime(0.5)
 
     # correction direction changes with ASIC
+    # Tue 13 Feb 2018 15:16:48 CET:  switchover ASIC 1 & 2
     if self.QS_asic_index==0:
-        correction_direction = 1
-    else:
         correction_direction = -1
+    else:
+        correction_direction =  1
     
 
     k=1.0 # the first step is big
@@ -338,7 +339,7 @@ def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
     # wait and send the command again to make sure
     self.wait_a_bit()
     client.sendSetTESDAC(self.QS_asic_index, shape, frequency, DACamplitude, DACoffset)
-    return
+    return True
 
 def get_iv_data(self,replay=False,TES=None,monitor=False):
     '''
@@ -458,7 +459,7 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     if frequency is None:frequency=99
     #amplitude=2*amplitude # BUG CHECK: is this peak-to-peak or amplitude?
     self.debugmsg('amplitude=%.2f, offset=%.2f, frequency=%.2f' % (amplitude,offset,frequency))
-    if not self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0):return None
+    if self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0) is None:return None
 
     timeline=self.integrate_scientific_data()
     if not isinstance(timeline,np.ndarray):
