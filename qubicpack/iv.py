@@ -37,7 +37,7 @@ def exist_iv_data(self):
     return True
 
 def wait_a_bit(self,pausetime=None):
-    if pausetime==None:
+    if pausetime is None:
         pausetime=self.pausetime
     else:
         self.assign_pausetime(pausetime)
@@ -182,7 +182,7 @@ def plot_iv_multi(self, xwin=True):
             text_y=min(Iadjusted)
             axes[row,col].text(self.bias_factor*self.max_bias,text_y,str('%i' % (TES_index+1)),va='bottom',ha='right',color='black')
 
-            if (not self.is_good_iv()==None)\
+            if (not self.is_good_iv() is None)\
                and (not self.is_good_iv()[TES_index]):
                 axes[row,col].set_facecolor('red')
 
@@ -214,9 +214,9 @@ def plot_iv_physical_layout(self,xwin=True):
     figlen=max(self.figsize)
     fig,ax=plt.subplots(nrows,ncols,figsize=[figlen,figlen])
     subttl='Array %s, ASIC #%i' % (self.detector_name,self.asic)
-    if not self.temperature==None:
+    if not self.temperature is None:
         subttl+=', T$_\mathrm{bath}$=%.2f mK' % (1000*self.temperature)
-    if not ngood==None:
+    if not ngood is None:
         subttl+=': %i flagged as bad pixels : yield = %.1f%%' % (self.NPIXELS-ngood,100.0*ngood/self.NPIXELS)
     pngname='TES_IV_array-%s_ASIC%i_%s.png' % (self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC'))
     pngname_fullpath=self.output_filename(pngname)
@@ -250,7 +250,7 @@ def plot_iv_physical_layout(self,xwin=True):
                 turnover=self.turnover(TES)
                 pix_label=str('%i' % TES)
                 label_colour='black'
-                if turnover==None:
+                if turnover is None:
                     face_colour='red'
                 else:
                     face_colour=self.lut(turnover)
@@ -259,7 +259,7 @@ def plot_iv_physical_layout(self,xwin=True):
                 self.draw_iv(Iadjusted,colour='blue',axis=ax[row,col])
                 
                 
-                if (not self.is_good_iv(TES)==None) and (not self.is_good_iv(TES)):
+                if (not self.is_good_iv(TES) is None) and (not self.is_good_iv(TES)):
                     face_colour='black'
                     label_colour='white'
                     # ax[row,col].text(self.min_bias,text_y,'BAD',va='bottom',ha='left',color=label_colour)
@@ -296,7 +296,7 @@ def draw_tangent(self,TES):
     make a tangent line of the I-V curve fit at the maximum bias
     '''
     R1=self.R1(TES)
-    if R1==None: return None,None
+    if R1 is None: return None,None
 
     offset=self.offset(TES)
     
@@ -323,7 +323,7 @@ def fitted_iv_curve(self,TES):
     make a curve from the fit parameters
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo is None:return None
 
     offset=self.offset(TES)
 
@@ -458,7 +458,7 @@ def polynomial_fit_parameters(self,fit):
     idx=0
     for V0 in fit['turning']:
         concavity=fit['concavity'][idx]
-        if (not V0==None):
+        if (not V0 is None):
             if concavity>0:
                 found_turnover=True
                 fit['turnover']=V0
@@ -470,7 +470,7 @@ def polynomial_fit_parameters(self,fit):
 
     n_turnings_within_range=0
     for V0 in fit['turning']:
-        if (not V0==None) and V0>self.bias_factor*self.min_bias and V0<self.bias_factor*self.max_bias:
+        if (not V0 is None) and V0>self.bias_factor*self.min_bias and V0<self.bias_factor*self.max_bias:
             n_turnings_within_range+=1     
     fit['turnings within range']=n_turnings_within_range
 
@@ -485,7 +485,7 @@ def polynomial_fit_parameters(self,fit):
     # if the inflection is between the turnover and the max bias,
     # then we fit a straight line to the final points
     # instead of using the fit all the way through
-    if (not fit['turnover']==None) \
+    if (not fit['turnover'] is None) \
        and (inflection_V>fit['turnover']) \
        and (inflection_V<self.bias_factor*self.max_bias):
         # find the corresponding points to fit
@@ -652,9 +652,9 @@ def do_combinedfit(self,TES,bias,curve,Vsuper=None,Vnormal=None):
     Vmin=min(bias)
     Vturnover_idx=np.argmin(curve)
     Vturnover=bias[Vturnover_idx]
-    if Vnormal==None:
+    if Vnormal is None:
         Vnormal=Vturnover + 0.5*(Vmax-Vturnover)
-    if Vsuper==None:
+    if Vsuper is None:
         Vsuper=Vturnover - 0.5*(Vturnover-Vmin)
     self.debugmsg('I-V do_combined_fit, using Vsuper=%.2f and Vnormal=%.2f' % (Vsuper,Vnormal))
 
@@ -852,7 +852,7 @@ def fit_iv(self,TES,
     # from now on we use the best curve fit
     # unless there is request to override with the curve_index option
     fit['best curve index']=best_curve_index
-    if not curve_index==None:
+    if not curve_index is None:
         if not isinstance(curve_index,int) or curve_index>=ncurves or curve_index<0:
             print('Invalid option for curve index:  Please give an integer between 0 and %i' % (ncurves-1))
             print('Using default:  best curve index=%i' % best_curve_index)
@@ -910,7 +910,7 @@ def draw_iv(self,I,colour='blue',axis=plt,label=None):
 
 def setup_plot_iv(self,TES,xwin=True):
     ttl=str('QUBIC I-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    if self.temperature==None:
+    if self.temperature is None:
         tempstr='unknown'
     else:
         tempstr=str('%.0f mK' % (1000*self.temperature))
@@ -947,10 +947,10 @@ def oplot_iv(self,TES,label=None):
 
 def plot_iv(self,TES=None,multi=False,xwin=True):
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo is None:return None
     
     if multi:return self.plot_iv_multi()
-    if TES==None:return self.plot_iv_physical_layout()
+    if TES is None:return self.plot_iv_physical_layout()
     if not isinstance(TES,int): return self.plot_iv_physical_layout()
 
     self.TES=TES
@@ -981,7 +981,7 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     I0=self.draw_tangent(TES)
     
     R1=self.R1(TES)
-    if not R1==None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
+    if not R1 is None: txt+=str('\ndynamic normal resistance:  R$_1$=%.4f $\Omega$' % R1)
 
     # draw a fit to the I-V curve
     txt+=str('\nfit residual: %.4e' % filterinfo['residual'])
@@ -1018,7 +1018,7 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     
 
     # note the turnover point
-    if Vturnover==None:
+    if Vturnover is None:
         txt+='\nNo turnover!'
     else:
         ax.plot([Vturnover,Vturnover],[Ibot,Itop],linestyle='dashed',color='green')
@@ -1032,7 +1032,7 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
         
 
     # add room temp results, if loaded
-    if not self.transdic==None:
+    if not self.transdic is None:
         PIX=self.tes2pix(TES)
         # self.debugmsg('table lookup for PIX=%i' % PIX)
         entry=self.lookup_TEStable(key='PIX',value=PIX)
@@ -1066,7 +1066,7 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
 
 def plot_pv(self,TES,xwin=True):
     ttl=str('QUBIC P-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    if self.temperature==None:
+    if self.temperature is None:
         tempstr='unknown'
     else:
         tempstr=str('%.0f mK' % (1000*self.temperature))
@@ -1093,7 +1093,7 @@ def plot_pv(self,TES,xwin=True):
     return fig,ax
     
 def plot_rp(self,TES,xwin=True):
-    if self.R1(TES)==None:
+    if self.R1(TES) is None:
         print('No normal resistance estimate.')
         return None
 
@@ -1117,7 +1117,7 @@ def plot_rp(self,TES,xwin=True):
     plot_Pmax=Pmax+0.2*Pspan
     
     ttl=str('QUBIC R-P curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    if self.temperature==None:
+    if self.temperature is None:
         tempstr='unknown'
     else:
         tempstr=str('%.0f mK' % (1000*self.temperature))
@@ -1162,6 +1162,12 @@ def make_Vbias(self,cycle=True,ncycles=2,vmin=0.5,vmax=3.0,dv=0.002,lowhigh=True
         print('It is dangerous to set the bias voltage greater than %.2f V.' % self.max_permitted_bias)
         print('Setting maximum bias to %.2f V' % self.max_permitted_bias)
         vmax=self.max_permitted_bias
+
+    max_offset=self.DAC2V * 2**15
+    if vmax>max_offset:
+        print('WARNING! Cannot set bias offset greater than %.3f V.' % max_offset)
+        print('Setting maximum bias to %.2f V' % max_offset)
+        vmax=max_offset
 
     if vmin<0.0:
         print('No negative values! Setting minimum bias to 0 V')
@@ -1273,7 +1279,7 @@ def filter_iv(self,TES,
     
     # fourth filter: do we find a valid turnover for the Vbias?
     ret['turnover']=fit['turnover']
-    if fit['turning']==None or fit['turnover']==None:
+    if fit['turning'] is None or fit['turnover'] is None:
         ret['is_good']=False
         ret['comment']='no turnover'
         return self.assign_filterinfo(TES,ret)
@@ -1412,13 +1418,13 @@ def read_ADU_file(self,filename):
 def iv_tex_table_entry(self,TES):
     TES_index=self.TES_index(TES)
     PIX=self.tes2pix(TES)
-    if self.turnover(TES)==None:
+    if self.turnover(TES) is None:
         turnover='-'
     else:
         turnover=str('%.2f V' % self.turnover(TES))
 
     R1=self.R1(TES)
-    if R1==None or R1>10000:
+    if R1 is None or R1>10000:
         R1str='-'
     else:
         if abs(R1)<100:
@@ -1429,7 +1435,7 @@ def iv_tex_table_entry(self,TES):
     comment=self.filtersummary[TES_index]['comment']
     if comment=='no comment': comment='good'
 
-    if self.transdic==None:
+    if self.transdic is None:
         R300str='--'
         openloop='--'
         cf='--'
@@ -1519,7 +1525,7 @@ def make_iv_tex_report(self,tableonly=False):
     h.write('\\noindent\\begin{itemize}\n')
     h.write('\\item Array %s\n' % self.detector_name)
     h.write('\\item ASIC %i\n' % self.asic)
-    if self.temperature==None:
+    if self.temperature is None:
         tempstr='unknown'
     else:
         tempstr=str('%.0f mK' % (1000*self.temperature))
@@ -1575,7 +1581,7 @@ def make_iv_tex_report(self,tableonly=False):
 
 
     # make a table of disagreement
-    if not self.transdic==None:
+    if not self.transdic is None:
         h.write('\\noindent\\begin{longtable}{%s}\n' % colfmt)
         h.write('\\caption{Table of Disagreement\\\\\n')
         h.write('The carbon fibre measurements are from Sophie Henrot Versill\\a\'e, see \\url{http://qubic.in2p3.fr/wiki/pmwiki.php/TD/P73TestWithACarbonFiberSource}.\\\\\n')
@@ -1707,11 +1713,11 @@ def filterinfo(self,TES=None):
     if not self.exist_iv_data():return None
 
     # if no TES is specified, return the whole list
-    if TES==None:
+    if TES is None:
         # if filter has not been run, run it with defaults
         for TES_index in range(self.NPIXELS):
             f=self.filtersummary[TES_index]
-            if f==None: f=self.filter_iv(TES_index+1)
+            if f is None: f=self.filter_iv(TES_index+1)
             return self.filtersummary
 
     # if not a valid TES, return None
@@ -1721,7 +1727,7 @@ def filterinfo(self,TES=None):
 
     # if filter has not been run, run it with defaults
     f=self.filtersummary[self.TES_index(TES)]
-    if f==None: f=self.filter_iv(TES)
+    if f is None: f=self.filter_iv(TES)
     return self.filtersummary[self.TES_index(TES)]
 
 def assign_filterinfo(self,TES,filterinfo):
@@ -1734,13 +1740,13 @@ def assign_filterinfo(self,TES,filterinfo):
 def is_good_iv(self,TES=None):
     '''
     return the judgement about a TES
-    if TES==None, return a list of all TES determinations
+    if TES is None, return a list of all TES determinations
     '''
 
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return False
+    if filterinfo is None:return False
 
-    if TES==None:
+    if TES is None:
         filtersummary=filterinfo
         is_good=[]
         for finfo in filtersummary:
@@ -1771,12 +1777,12 @@ def ngood(self):
 def turnover(self,TES=None):
     '''
     return the turnover (operation) voltage for the TES
-    if TES==None, return a list for all the TES
+    if TES is None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo is None:return None
         
-    if TES==None:
+    if TES is None:
         filtersummary=filterinfo
         turnover=[]
         for finfo in filtersummary:
@@ -1787,12 +1793,12 @@ def turnover(self,TES=None):
 def offset(self,TES=None):
     '''
     return the offset current for the TES
-    if TES==None, return a list for all the TES
+    if TES is None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return 0.0
+    if filterinfo is None:return 0.0
         
-    if TES==None:
+    if TES is None:
         filtersummary=filterinfo
         turnover=[]
         for finfo in filtersummary:
@@ -1807,12 +1813,12 @@ def R1adjust(self,TES=None):
     if not self.exist_iv_data():return None
 
     # if no TES is specified, return the whole list
-    if TES==None:
+    if TES is None:
         R1adjust_vector=np.ones(self.NPIXELS)
         # if no R1adjust defined, return 1.0 for each
         for TES_index in range(self.NPIXELS):
             f=self.filtersummary[TES_index]
-            if (not f==None) and ('R1adjust' in f.keys()):
+            if (not f is None) and ('R1adjust' in f.keys()):
                 R1adjust_vector[TES_index]=f['R1adjust']
         return R1adjust_vector
 
@@ -1823,7 +1829,7 @@ def R1adjust(self,TES=None):
 
     # if filter has not been run, return 1.0
     f=self.filtersummary[self.TES_index(TES)]
-    if f==None: return 1.0
+    if f is None: return 1.0
 
     if 'R1adjust' in f.keys():
         return self.filtersummary[self.TES_index(TES)]['R1adjust']
@@ -1833,11 +1839,11 @@ def R1adjust(self,TES=None):
 def R1(self,TES=None):
     '''
     return the dynamic normal resistance for the TES
-    if TES==None, return a list for all the TES
+    if TES is None, return a list for all the TES
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
-    if TES==None:
+    if filterinfo is None:return None
+    if TES is None:
         filtersummary=filterinfo
         turnover=[]
         for finfo in filtersummary:
@@ -1856,7 +1862,7 @@ def selected_iv_curve(self,TES):
     return the index end points which selects the I-V cycle of the measurement used in the fit
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo is None:return None
     
     if 'curve index' in filterinfo['fit'].keys():
         curve_index=filterinfo['fit']['curve index']
@@ -1874,7 +1880,7 @@ def Ites(self,TES):
     return the TES current in Amps (not in microAmps)
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo is None:return None
     
     Ites=self.adjusted_iv(TES)*1e-6 # Amps
     return Ites
@@ -1894,7 +1900,7 @@ def Ptes(self,TES):
     return the power on the TES as a function of bias
     '''
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo is None:return None
     
     Ptes=self.Ites(TES)*self.Vtes(TES)*1e12 # pW
     return Ptes
@@ -1904,7 +1910,7 @@ def Rn_ratio(self,TES):
     '''
     return the ratio of TES resistance to Normal resistance
     '''
-    if self.R1(TES)==None:return None
+    if self.R1(TES) is None:return None
 
     Rn=self.Vtes(TES)/self.Ites(TES)
     Rn_ratio=100*Rn/self.R1(TES) # percent
@@ -1916,7 +1922,7 @@ def Pbias(self,TES):
     find the Pbias at 90% Rn
     '''    
     filterinfo=self.filterinfo(TES)
-    if filterinfo==None:return None
+    if filterinfo is None:return None
 
     Rn_ratio=self.Rn_ratio(TES)
     if not isinstance(Rn_ratio,np.ndarray):return None
