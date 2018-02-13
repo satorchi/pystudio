@@ -36,7 +36,7 @@ def calsource_init(self,source=None):
     '''
     setup communication to the Low Frequency source
     '''
-    if source==None:
+    if source is None:
         print('Please enter the calibration source: HF or LF')
         return None
 
@@ -100,19 +100,19 @@ def calsource_setFrequency(self,f=None,source=None):
     the method above calsource_setFreqCommand() only formats the command without sending
     '''
 
-    if source==None:
+    if source is None:
         print('Please enter the calibration source: HF or LF')
         return None
 
     if source.upper()=='HF':        
         factor=24.
-        if self.calsource_HF==None:
+        if self.calsource_HF is None:
             self.calsource_HF=self.calsource_init('HF')
         com=self.calsource_HF
 
     elif source.upper()=='LF':
         factor=12.
-        if self.calsource_LF==None:
+        if self.calsource_LF is None:
             self.calsource_LF=self.calsource_init('LF')
         com=self.calsource_LF            
 
