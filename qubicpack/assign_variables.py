@@ -31,6 +31,7 @@ def assign_defaults(self):
     self.OxfordInstruments_ip='134.158.186.162'
     self.NPIXELS=128
     self.detector_name='undefined'
+    self.DAC2V=2.627e-4     # email from Michel Piat 2018/02/09 17:14 CET
     self.kBoltzmann=1.3806485279e-23
     self.Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
     self.Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
@@ -76,7 +77,7 @@ def assign_observer(self,observer='APC LaboMM'):
     return
 
 def assign_asic(self,asic=1):
-    if asic==None:asic=self.asic
+    if asic is None:asic=self.asic
     if not isinstance(asic,int) or asic<1 or asic>2:
         print('asic should have an integer value: 1 or 2.  assigning default asic=1')
         self.asic=1
@@ -120,7 +121,7 @@ def TES_index(self,TES):
         
 
 def assign_integration_time(self,tinteg=0.1):
-    if tinteg==None:tinteg=self.tinteg
+    if tinteg is None:tinteg=self.tinteg
     if (not isinstance(tinteg,int))\
        and (not isinstance(tinteg,float))\
        and (tinteg<0.0):
