@@ -276,12 +276,12 @@ def get_nsamples(self):
     '''
     client = self.connect_QubicStudio()
     if client is None:return None
-
+    self.debugmsg('getting nsamples...')
     nsamples = client.fetch('QUBIC_Nsample')
     # QubicStudio returns an array of integer of length 1.
     # convert this to a simple integer
     nsamples = int(nsamples)
-    self.debugmsg('nsample=%i' % nsamples)
+    self.debugmsg('nsamples=%i' % nsamples)
     self.nsamples=nsamples
     return nsamples
 
@@ -306,19 +306,17 @@ def integrate_scientific_data(self):
     if client is None:return None
 
     self.debugmsg('calling integrate_scientific_data for ASIC %i' % self.asic)
+    self.debugmsg ('integration_time=%.2f' % self.tinteg)
     
-    integration_time=self.tinteg
-    asic=self.asic
-
     # reconfigure the FLL (stop/start)
     #if not self.configure_PID(0,20,0):return None ### this shouldn't go here.
 
     nsamples = self.get_nsamples()
+    self.debugmsg('nsamples=%i' % nsamples)
     if nsamples is None: return None
 
     period = self.sample_period()
     self.debugmsg('period=%.3f msec' % (1000*period))
-    self.debugmsg ('integration_time=%.2f' % self.tinteg)
     timeline_size = int(np.ceil(self.tinteg / period))
     self.debugmsg('timeline size=%i' % timeline_size)
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
