@@ -29,6 +29,23 @@ Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
 Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
 temperature_precision = 0.005 # close enough for temperature
 
+def print_datlist(datlist):
+    '''
+    print some of the main parameters of all the data in a list of qp objects
+    '''
+    print(' idx array ASIC date                temp')
+    datstr='[%2i][%2i] %s ASIC%i %s %.3fmK'
+    for idx,go in enumerate(datlist):
+        if go.exist_timeline_data():
+            ntimelines=len(go.timelines)
+            for t_idx in range(ntimelines):
+                print(datstr % (idx,t_idx,go.detector_name,go.asic,go.obsdates[t_idx],1000*go.temperatures[t_idx]))
+        else:
+            print(datstr % (idx,0,go.detector_name,go.asic,go.obsdate,1000*go.temperature))
+            
+    return
+
+
 def read_data_from_20170804():
     '''
     read data from the test campaign of 2017-08-04
