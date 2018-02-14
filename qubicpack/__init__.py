@@ -65,6 +65,7 @@ class qubicpack:
         exist_iv_data,\
         wait_a_bit,\
         lut,\
+        n_masked,\
         ADU2I,\
         setup_plot_Vavg,\
         plot_Vavg,\
@@ -128,7 +129,9 @@ class qubicpack:
         determine_bias_modulation,\
         timeline2adu,\
         plot_timeline,\
-        plot_timeline_physical_layout
+        plot_timeline_physical_layout,\
+        model_timeline,\
+        fit_timeline
 
 
     from .oxford import\
@@ -175,6 +178,8 @@ class qubicpack:
             get_amplitude,\
             get_mean,\
             integrate_scientific_data,\
+            get_nsamples,\
+            get_RawMask,\
             set_VoffsetTES,\
             get_iv_data,\
             get_iv_timeline
