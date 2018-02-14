@@ -32,7 +32,7 @@ def read_bath_temperature(qpobject,logfile):
     if Tbath is None:
         qpobject.writelog(logfile,'ERROR! Could not read bath temperature.')
         Tbath=qpobject.temperature
-    qpobject.writelog(logfile,'Tbath=.2f mK' % (1000*Tbath))
+    qpobject.writelog(logfile,'Tbath=%.2f mK' % (1000*Tbath))
     return Tbath
 
 # create the  qubicpack object
