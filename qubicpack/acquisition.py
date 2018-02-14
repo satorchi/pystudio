@@ -179,7 +179,7 @@ def compute_offsets(self,count=10,consigne=0.0):
         client.sendSetOffsetTable(self.QS_asic_index, offsets)
         self.wait_a_bit()
         k=0.5 # and subsequent steps are smaller
-    return offsets
+    return True
 
 def feedback_offsets(self,count=10,consigne=0.0):
     '''
