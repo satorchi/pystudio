@@ -240,7 +240,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
         self.debugmsg('count %i/%i: data for TES 37: %.5e' % (counter+1,count,this_data_avg[36]))
         k=0.2 # and subsequent steps are smaller
     
-    return offsets
+    return True
 
 def get_amplitude(self):
     """
