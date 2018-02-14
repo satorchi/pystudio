@@ -110,6 +110,12 @@ def write_fits(self):
     prihdr['DET_NAME']=(self.detector_name,'ID of the detector array')
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
+    tbhdu0=None
+    if not self.rawmask is None:
+        col  = pyfits.Column(name='RawMask',format='I', unit='bitmask', array=self.rawmask)
+        cols  = pyfits.ColDefs([col])
+        tbhdu0 = pyfits.BinTableHDU.from_columns(cols)
+    
     if isinstance(self.adu,np.ndarray):
         fitsfile=str('QUBIC_TES_%s.fits' % datestr)
         fitsfile_fullpath=self.output_filename(fitsfile)
@@ -119,7 +125,6 @@ def write_fits(self):
             fitsfile_fullpath=self.output_filename(fitsfile)
             print('instead, saving to file: %s' % fitsfile_fullpath)
 
-        nbias=len(self.vbias)
         fmtstr=str('%iD' % self.adu.shape[1])
         dimstr=str('%i' % self.adu.shape[0])
         #print('format=',fmtstr)
@@ -131,8 +136,11 @@ def write_fits(self):
         col2  = pyfits.Column(name='V_bias',format='D', unit='V', array=self.vbias)
         cols  = pyfits.ColDefs([col2])
         tbhdu2 = pyfits.BinTableHDU.from_columns(cols)
-        
-        thdulist = pyfits.HDUList([prihdu, tbhdu1, tbhdu2])
+
+        if tbhdu0 is None:
+            thdulist = pyfits.HDUList([prihdu, tbhdu1, tbhdu2])
+        else:
+            thdulist = pyfits.HDUList([prihdu, tbhdu0, tbhdu1, tbhdu2])
         thdulist.writeto(fitsfile_fullpath)
         print('FITS file written: %s' % fitsfile_fullpath)
 
@@ -148,6 +156,8 @@ def write_fits(self):
         ntimelines=len(self.timelines)
 
         hdulist=[prihdu]
+        if not tbhdu0 is None:hdulist.append(tbhdu0)
+            
         have_times=False
         if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
             have_times=True
@@ -238,12 +248,34 @@ def read_fits(self,filename):
     # in case detector name is undefined...
     self.guess_detector_name()        
 
+    self.debugmsg('Finished reading the primary header.')
+    
     timelines=[]
     obsdates=[]
     temperatures=[]
     for hdu in h[1:]:
         hdrtype=hdu.header['TTYPE1']
-        
+
+        if hdrtype=='RawMask':
+            '''
+            this is the mask of the samples (filtered out samples)
+            '''
+            self.debugmsg('Reading RawMask HDU')
+
+            # number of values should be 125
+            nvals=hdu.header['NAXIS2']
+            self.debugmsg('RawMask: nvals=%i' % nvals)
+            if nvals!=125:
+                print('WARNING! RawMask has the wrong number of mask values: %i' % nvals)
+
+            # read the raw mask
+            self.rawmask=np.zeros(nvals,dtype=int)
+            data=hdu.data
+            for idx in range(nvals):
+                self.rawmask[idx]=data[idx][0]
+            self.debugmsg('Finished reading RawMask HDU')
+
+                        
         if hdrtype=='V_tes':
             '''
             this is I-V data
