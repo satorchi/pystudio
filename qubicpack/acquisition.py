@@ -270,7 +270,38 @@ def get_mean(self):
     timeline = self.integrate_scientific_data()
     return timeline.mean(axis=-1)
 
+def get_nsamples(self):
+    '''
+    get the number of samples from QubicStudio
+    '''
+    client = self.connect_QubicStudio()
+    if client is None:return None
+
+    nsamples = client.fetch('QUBIC_Nsample')
+    # QubicStudio returns an array of integer of length 1.
+    # convert this to a simple integer
+    nsamples = int(nsamples)
+    self.debugmsg('nsample=%i' % nsamples)
+    self.nsamples=nsamples
+    return nsamples
+
+def get_RawMask(self):
+    '''
+    get the mask which identifies which samples are filtered out
+    This is 125 values, each an 8-bit bitmask: 1 -> masked
+    for example: 255,0,0,0,....  means that the first 8 samples are masked
+    '''
+    client = self.connect_QubicStudio()
+    if client is None:return None
+
+    rawmask=client.fetch('QUBIC_RawMask')
+    self.rawmask=rawmask
+    return rawmask
+    
 def integrate_scientific_data(self):
+    '''
+    get a data timeline
+    '''
     client = self.connect_QubicStudio()
     if client is None:return None
 
@@ -281,13 +312,9 @@ def integrate_scientific_data(self):
 
     # reconfigure the FLL (stop/start)
     #if not self.configure_PID(0,20,0):return None ### this shouldn't go here.
-        
-    nsample = client.fetch('QUBIC_Nsample')
-    # QubicStudio returns an array of integer of length 1.
-    # convert this to a simple integer
-    nsample = int(nsample)
-    self.debugmsg('nsample=%i' % nsample)
-    self.nsamples=nsample
+
+    nsamples = self.get_nsamples()
+    if nsamples is None: return None
 
     period = self.sample_period()
     self.debugmsg('period=%.3f msec' % (1000*period))
