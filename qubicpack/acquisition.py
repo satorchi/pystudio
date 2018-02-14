@@ -328,13 +328,16 @@ def integrate_scientific_data(self):
     # bath temperature
     self.oxford_read_bath_temperature()
 
-    self.debugmsg('requesting scientific data timeline')
+    self.debugmsg('requesting scientific data timeline...')
     parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
     req = client.request(parameter)
+    self.debugmsg('scientific data requested.')
     istart = 0
     for i in range(int(np.ceil(timeline_size / chunk_size))):
         delta = min(chunk_size, timeline_size - istart)
+        self.debugmsg('getting next data chunk...')
         timeline[:, istart:istart+delta] = req.next()[:, :delta]
+        self.debugmsg('got data chunk.')
         istart += chunk_size
     req.abort()
     return timeline    
