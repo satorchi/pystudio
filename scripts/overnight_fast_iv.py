@@ -27,10 +27,12 @@ sys.setdefaultencoding('utf8')
 from satorchipy.datefunctions import *
 
 def read_bath_temperature(qpobject,logfile):
+    qpobject.writelog(logfile,'reading temperature')
     Tbath=qpobject.oxford_read_bath_temperature()
-    if Tbath==None:
+    if Tbath is None:
         qpobject.writelog(logfile,'ERROR! Could not read bath temperature.')
         Tbath=qpobject.temperature
+    qpobject.writelog(logfile,'Tbath=.2f mK' % (1000*Tbath))
     return Tbath
 
 # create the  qubicpack object
@@ -109,7 +111,7 @@ for arg in argv:
         continue
     
 # precision required for bath temperature
-temp_precision=0.005 # in Kelvin
+temp_precision=0.002 # in Kelvin
 
 # timeout for waiting for temperature to settle
 if TESTMODE:
@@ -162,23 +164,23 @@ ret=go.assign_asic(asic)
 # setup bias voltage range
 if min_bias is None:
     min_bias=go.get_from_keyboard('minimum bias voltage ',3.5)
-    if min_bias==None:quit()
+    if min_bias is None:quit()
 
 if max_bias is None:
     max_bias=go.get_from_keyboard('maximum bias voltage ',max_possible_bias)
-    if max_bias==None:quit()
+    if max_bias is None:quit()
 
 # setup temperature range
 if start_temp is None:
     start_temp=go.get_from_keyboard('start bath temperature ',0.6)
-    if start_temp==None:quit()
+    if start_temp is None:quit()
 if end_temp is None:    
     end_temp=go.get_from_keyboard('end bath temperature ',0.3)
-    if end_temp==None:quit()
+    if end_temp is None:quit()
 if step_temp is None:
     step_temp_default=(end_temp-start_temp)/8.
     step_temp=go.get_from_keyboard('temperature steps',step_temp_default)
-    if step_temp==None:quit()
+    if step_temp is None:quit()
 
 # make sure steps are negative if we're going down in temperature
 if start_temp>end_temp:
@@ -190,7 +192,7 @@ Tbath_target=np.arange(start_temp,end_temp,step_temp)
 
 if monitor_TES is None:    
     monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',monitor_TES_default)
-    if monitor_TES==None:quit()
+    if monitor_TES is None:quit()
 
 # if running in test mode, use a random generated result
 if TESTMODE:
@@ -227,7 +229,7 @@ for T in Tbath_target:
     cmdret=go.oxford_set_point(T)
     # make sure the set point was accepted
     Tsetpt=go.oxford_read_set_point()
-    if Tsetpt==None:
+    if Tsetpt is None:
         go.writelog(logfile_fullpath,'ERROR! Could not read set point temperature.')
         Tsetpt=T
     go.writelog(logfile_fullpath,'Temperature set point = %.2f mK' % (1000*Tsetpt))
@@ -246,12 +248,10 @@ for T in Tbath_target:
 
         go.writelog(logfile_fullpath,wait_msg)
         time.sleep(tot_seconds(temp_wait))
-        go.writelog(logfile_fullpath,'reading temperature')
         Tbath=read_bath_temperature(go,logfile_fullpath)
         delta_step=np.abs(Tbath - Tbath_previous)
         Tbath_previous=Tbath
         delta=np.abs(Tbath - T)
-        go.writelog(logfile_fullpath,'Tbath=%0.2f mK' %  (1000*go.temperature))
 
         # check heater percentage
         heatpercent=go.oxford_read_heater_level()
