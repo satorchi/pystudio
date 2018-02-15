@@ -278,6 +278,7 @@ def get_nsamples(self):
     if client is None:return None
     self.debugmsg('getting nsamples...')
     nsamples = client.fetch('QUBIC_Nsample')
+    self.debugmsg('got nsamples.')
     # QubicStudio returns an array of integer of length 1.
     # convert this to a simple integer
     nsamples = int(nsamples)
