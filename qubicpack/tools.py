@@ -402,7 +402,7 @@ def writelog(self,msg):
         logfile_fullpath=go.output_filename(logfile)
         self.logfile=logfile_fullpath
     
-    handle=open(logfile,'a')
+    handle=open(self.logfile,'a')
     timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC -- ')
     handle.write(timestamp+msg+'\n')
     handle.close()
