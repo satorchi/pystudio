@@ -195,6 +195,10 @@ class qubicpack:
         return
 
     def debugmsg(self,msg):
-        if self.debuglevel>0: print('DEBUG %s : %s\r\f' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
+        if self.debuglevel>0:
+            print('DEBUG %s : %s\n' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
+            if not self.logfile is None:
+                self.writelog('DEBUG: %s' % msg)
+            
         return
     
