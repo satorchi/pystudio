@@ -327,7 +327,10 @@ def integrate_scientific_data(self):
     self.debugmsg('period=%.3f msec' % (1000*period))
     timeline_size = int(np.ceil(self.tinteg / period))
     self.debugmsg('timeline size=%i' % timeline_size)
+    self.debugmsg('getting chunk size...')
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
+    chunk_size = int(chunk_size)
+    self.debugmsg('chunk size=%i' % chunk_size)
     timeline = np.empty((self.NPIXELS, timeline_size))
 
     # date of the observation
