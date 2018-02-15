@@ -257,10 +257,12 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,xwin=True):
     labs = [l.get_label() for l in curves]
     ax.legend(curves, labs, loc=0)
 
-    pngname=str('TES%03i_array-%s_ASIC%i_timeline_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES%03i_array-%s_ASIC%i_timeline_%s.png' % (TES,self.detector_name,self.asic,timeline_date.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
-
+    if xwin:plt.show()
+    else: plt.close('all')
+    
     return fitparms
 
 
@@ -443,6 +445,7 @@ def fit_timeline(self,TES,timeline_index=None):
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
     fit['timeline_index']=timeline_index
+    fit['date']=self.obsdates[timeline_index]
     fit['Tbath']=self.temperatures[timeline_index]
     
     TES_index=self.TES_index(TES)
@@ -470,4 +473,5 @@ def fit_timeline(self,TES,timeline_index=None):
     fit['phaseshift']=phaseshift
     fit['offset']=offset
     fit['amplitude']=amplitude
+    fit['R amplitude']=abs(self.max_bias/amplitude)
     return fit
