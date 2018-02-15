@@ -274,6 +274,13 @@ def get_nsamples(self):
     '''
     get the number of samples from QubicStudio
     '''
+
+    # Thu 15 Feb 2018 11:01:09 CET
+    # pyStudio hangs sometimes.  I don't know why.  It's not the network switch.
+    # it seems to happen when I request nsamples, but not all the time.
+    # HACK: do not request nsamples again if we already have it.
+    if not self.nsamples is None: return self.nsamples
+    
     client = self.connect_QubicStudio()
     if client is None:return None
     self.debugmsg('getting nsamples...')
