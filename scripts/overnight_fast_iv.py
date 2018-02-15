@@ -26,13 +26,13 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 from satorchipy.datefunctions import *
 
-def read_bath_temperature(qpobject,logfile):
-    qpobject.writelog(logfile,'reading temperature')
+def read_bath_temperature(qpobject):
+    qpobject.writelog('reading temperature')
     Tbath=qpobject.oxford_read_bath_temperature()
     if Tbath is None:
-        qpobject.writelog(logfile,'ERROR! Could not read bath temperature.')
+        qpobject.writelog('ERROR! Could not read bath temperature.')
         Tbath=qpobject.temperature
-    qpobject.writelog(logfile,'Tbath=%.2f mK' % (1000*Tbath))
+    qpobject.writelog('Tbath=%.2f mK' % (1000*Tbath))
     return Tbath
 
 # create the  qubicpack object
@@ -235,7 +235,7 @@ for T in Tbath_target:
         go.writelog('ERROR! Could not read set point temperature.')
         Tsetpt=T
     go.writelog('Temperature set point = %.2f mK' % (1000*Tsetpt))
-    Tbath=read_bath_temperature(go,logfile_fullpath)
+    Tbath=read_bath_temperature(go)
     Tbath_previous=Tbath
     delta=np.abs(Tbath - T)
     delta_step=np.abs(Tbath - Tbath_previous)
@@ -250,7 +250,7 @@ for T in Tbath_target:
 
         go.writelog(wait_msg)
         time.sleep(tot_seconds(temp_wait))
-        Tbath=read_bath_temperature(go,logfile_fullpath)
+        Tbath=read_bath_temperature(go)
         delta_step=np.abs(Tbath - Tbath_previous)
         Tbath_previous=Tbath
         delta=np.abs(Tbath - T)
