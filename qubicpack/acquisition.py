@@ -293,6 +293,25 @@ def get_nsamples(self):
     self.nsamples=nsamples
     return nsamples
 
+def get_chunksize(self):
+    '''
+    get the timeline chunk size
+    '''
+
+    # HACK: don't ask for it if we've already got it (see get_nsamples())
+    if not self.chunk_size is None: return self.chunk_size
+    
+    if client is None:return None
+
+    self.debugmsg('getting chunk size...')
+    chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
+    # QubicStudio returns an array of integer of length 1.
+    # convert this to a simple integer
+    chunk_size = int(chunk_size)
+    self.debugmsg('chunk size=%i' % chunk_size)
+    self.chunk_size=chunk_size
+    return chunk_size
+
 def get_RawMask(self):
     '''
     get the mask which identifies which samples are filtered out
@@ -320,17 +339,14 @@ def integrate_scientific_data(self):
     #if not self.configure_PID(0,20,0):return None ### this shouldn't go here.
 
     nsamples = self.get_nsamples()
-    self.debugmsg('nsamples=%i' % nsamples)
     if nsamples is None: return None
 
     period = self.sample_period()
     self.debugmsg('period=%.3f msec' % (1000*period))
     timeline_size = int(np.ceil(self.tinteg / period))
     self.debugmsg('timeline size=%i' % timeline_size)
-    self.debugmsg('getting chunk size...')
-    chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
-    chunk_size = int(chunk_size)
-    self.debugmsg('chunk size=%i' % chunk_size)
+    chunk_size=self.get_chunksize()
+    if chunk_size is None: return None
     timeline = np.empty((self.NPIXELS, timeline_size))
 
     # date of the observation
