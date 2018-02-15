@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from glob import glob
 
 def assign_defaults(self):
+    self.logfile=None
     # on 6 Feb 2018, we reversed the wires for the ASICs
     # so now QubicStudio and the dilution fridge use the same ASIC designation
     self.asic_reversal_date=dt.datetime.strptime('2018-02-06 18:00','%Y-%m-%d %H:%M')
