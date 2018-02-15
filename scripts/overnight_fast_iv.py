@@ -139,11 +139,13 @@ if meastype is None:
 
 meastype=meastype.upper()    
 if not meastype=='RT':
+    meastype='IV'
     print('Doing I-V measurements.')
     timeline_period=240.0
     frequency=99
     PID_I=20
 else:
+    meastype='RT'
     print('Doing R-T measurements.')
     timeline_period=60.0
     frequency=10.0
@@ -207,21 +209,21 @@ else:
 # make a log file
 logfile=dt.datetime.utcnow().strftime('temperature_IV_logfile_%Y%m%dT%H%M%SUTC.txt')
 logfile_fullpath=go.output_filename(logfile)
-
-go.writelog(logfile_fullpath,'starting I-V measurements at different temperatures using the timeline (fast) method')
-go.writelog(logfile_fullpath,'ASIC=%i' % go.asic)
-go.writelog(logfile_fullpath,'minimum bias=%.2f V' % min_bias)
-go.writelog(logfile_fullpath,'maximum bias=%.2f V' % max_bias)
-go.writelog(logfile_fullpath,'start temperature=%.3f K' % start_temp)
-go.writelog(logfile_fullpath,'end temperature=%.3f K' % end_temp)
-go.writelog(logfile_fullpath,'temperature step=%.3f K' % step_temp)
+go.logfile=logfile_fullpath
+go.writelog('starting I-V measurements at different temperatures using the timeline (fast) method')
+go.writelog('ASIC=%i' % go.asic)
+go.writelog('minimum bias=%.2f V' % min_bias)
+go.writelog('maximum bias=%.2f V' % max_bias)
+go.writelog('start temperature=%.3f K' % start_temp)
+go.writelog('end temperature=%.3f K' % end_temp)
+go.writelog('temperature step=%.3f K' % step_temp)
 nsteps=len(Tbath_target)
-go.writelog(logfile_fullpath,'number of temperatures=%i' % nsteps)
+go.writelog('number of temperatures=%i' % nsteps)
 
 # estimated time: temperature settle time plus measurement time for I-V
 duration_estimate=nsteps*(temp_minwait+dt.timedelta(seconds=timeline_period))
 endtime_estimate=dt.datetime.utcnow()+duration_estimate
-go.writelog(logfile_fullpath,endtime_estimate.strftime('estimated end at %Y-%m-%d %H:%M:%S'))
+go.writelog(endtime_estimate.strftime('estimated end at %Y-%m-%d %H:%M:%S'))
 
 # run the measurement
 for T in Tbath_target:
@@ -230,9 +232,9 @@ for T in Tbath_target:
     # make sure the set point was accepted
     Tsetpt=go.oxford_read_set_point()
     if Tsetpt is None:
-        go.writelog(logfile_fullpath,'ERROR! Could not read set point temperature.')
+        go.writelog('ERROR! Could not read set point temperature.')
         Tsetpt=T
-    go.writelog(logfile_fullpath,'Temperature set point = %.2f mK' % (1000*Tsetpt))
+    go.writelog('Temperature set point = %.2f mK' % (1000*Tsetpt))
     Tbath=read_bath_temperature(go,logfile_fullpath)
     Tbath_previous=Tbath
     delta=np.abs(Tbath - T)
@@ -246,7 +248,7 @@ for T in Tbath_target:
           or dt.datetime.utcnow()<min_endtime)\
           and dt.datetime.utcnow()<end_waiting:
 
-        go.writelog(logfile_fullpath,wait_msg)
+        go.writelog(wait_msg)
         time.sleep(tot_seconds(temp_wait))
         Tbath=read_bath_temperature(go,logfile_fullpath)
         delta_step=np.abs(Tbath - Tbath_previous)
@@ -256,15 +258,15 @@ for T in Tbath_target:
         # check heater percentage
         heatpercent=go.oxford_read_heater_level()
         if heatpercent>99:
-            go.writelog(logfile_fullpath,'We need to increase the maximum current to the heater')
+            go.writelog('We need to increase the maximum current to the heater')
             cmdret=go.oxford_increase_heater_range()
             heater=go.oxford_read_heater_range()
-            go.writelog(logfile_fullpath,'heater range: %f mA' % heater)
+            go.writelog('heater range: %f mA' % heater)
         
-    go.writelog(logfile_fullpath,'starting I-V measurement')
+    go.writelog('starting I-V measurement')
     if delta>temp_precision:
-        go.writelog(logfile_fullpath,'WARNING! Did not reach target temperature!')
-        go.writelog(logfile_fullpath,'Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
+        go.writelog('WARNING! Did not reach target temperature!')
+        go.writelog('Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
 
     # reset FLL and re-compute the offsets before measurement
     if not TESTMODE:
@@ -274,18 +276,18 @@ for T in Tbath_target:
         go.configure_PID(I=PID_I) # feedback_offsets() configured the PID.  Now we set it to what we want.
         go.assign_integration_time(timeline_period) 
         if go.get_iv_timeline(vmin=min_bias,vmax=max_bias,frequency=frequency) is None:
-            go.writelog(logfile_fullpath,'ERROR! Did not successfully acquire a timeline!')
+            go.writelog('ERROR! Did not successfully acquire a timeline!')
         else:
             go.write_fits()
-            #go.timeline2adu(monitor_TES)
-    go.writelog(logfile_fullpath,'end I-V measurement')
+            if meastype=='IV':go.timeline2adu(monitor_TES)
+    go.writelog('end I-V measurement')
     plt.close('all')
 
-    if not TESTMODE:        
+    if not TESTMODE and meastype=='IV':        
         # generate the test document
-        go.writelog(logfile_fullpath,'generating test document')
+        go.writelog('generating test document')
         pdfname=go.make_iv_report()
-        go.writelog(logfile_fullpath,'test document generated')
+        go.writelog('test document generated')
 
     # reset the plotting figure size
     go.figsize=figsize
