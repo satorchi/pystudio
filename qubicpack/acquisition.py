@@ -301,6 +301,7 @@ def get_chunksize(self):
     # HACK: don't ask for it if we've already got it (see get_nsamples())
     if not self.chunk_size is None: return self.chunk_size
     
+    client = self.connect_QubicStudio()
     if client is None:return None
 
     self.debugmsg('getting chunk size...')
