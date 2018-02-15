@@ -55,6 +55,7 @@ def assign_defaults(self):
     self.pausetime=0.3
     self.observer='APC LaboMM'
     self.nsamples=None
+    self.chunk_size=None
     self.rawmask=None
     self.timelines=None
     self.timeline_conversion=None
