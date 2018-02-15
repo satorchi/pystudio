@@ -740,3 +740,90 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None,refresh=True):
     h.write('\n\n\\end{document}\n')
     h.close()
     return texfilename
+
+def rt_analysis(TES,datlist,xwin=True):
+    '''
+    do the analysis to find the critical temperature (resistance vs. temperature)
+    datlist is a list of qubicpack objects containing timeline data
+    '''
+
+    if not isinstance(TES,int):
+        print('ERROR!  Please enter a valid TES number.')
+        return None
+
+    if not isinstance(datlist,list):
+        if not isinstance(datlist,qp):
+            print('ERROR! datlist should be a list of qubicpack objects.')
+            return None
+        datlist=[datlist]
+
+    if not isinstance(datlist[0],qp):
+        print('ERROR! datlist should be a list of qubicpack objects.')
+        return None
+
+    # get all the results, including for multiple timelines in a single qp object
+    asic=None
+    detector_name=None
+    reslist=[]
+    dates=[]
+    Tbath=[]
+    amplitude=[]
+    R=[]
+    for go in datlist:
+        if not go.exist_timeline_data():continue
+        if asic is None: asic=go.asic
+        if go.asic!=asic:
+            print('ERROR! These data are not for the same ASIC!')
+        if detector_name is None:detector_name=go.detector_name
+        if go.detector_name!=detector_name:
+            print('ERROR! These data are not for the same detector array!')
+            
+        ntimelines=len(go.timelines)
+        for idx in range(ntimelines):
+            res=go.plot_timeline(TES,timeline_index=idx,fit=True,xwin=False)
+            reslist.append(res)
+            dates.append(go.obsdates[idx])
+            Tbath.append(go.temperatures[idx])
+            amplitude.append(abs(res['amplitude']))
+            R.append(res['R amplitude'])
+
+    PIX=go.tes2pix(TES)
+    ntemps=len(Tbath)
+    sorted_index=sorted(range(ntemps), key=lambda i: Tbath[i])
+
+    Tsorted=1000*np.array(Tbath)[sorted_index]
+    Asorted=np.array(amplitude)[sorted_index]
+    Rsorted=np.array(R)[sorted_index]
+
+    # show the dates of the measurements (just the day, not the time)
+    date_txt='Measurements taken:'
+    dates.sort()
+    d_prev=''
+    for d in dates:
+        d_str=d.strftime('%Y-%m-%d')
+        if d_str!=d_prev: date_txt+='\n   %s' % d_str
+        d_prev=d_str
+    
+    ttl='Array %s: Critical Temperature for TES %i (PIX %i) on ASIC %i' % (detector_name,TES,PIX,asic)
+    pngname='QUBIC_Array-%s_TES%03i_ASIC%i_Tcritical.png' % (detector_name,TES,asic)
+    figsize=go.figsize
+
+    if xwin: plt.ion()
+    else: plt.ioff()
+    fig=plt.figure(figsize=figsize)
+    fig.canvas.set_window_title('plt: '+ttl)
+    ax=plt.gca()
+    plt.title(ttl)
+    ax.plot(Tsorted,Rsorted,marker='D',color='blue')
+    ax.set_xlabel('T$_\mathrm{bath}$ / mK')
+    ax.set_ylabel('R$_\mathrm{TES}$ / M$\Omega$')
+
+    text_x=0.98
+    text_y=0.02
+    boxprops = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(text_x,text_y,date_txt,va='bottom',ha='right',fontsize=10,transform = ax.transAxes,bbox=boxprops)
+
+    plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
+    if xwin:plt.show()
+    else: plt.close('all')
+    return reslist
