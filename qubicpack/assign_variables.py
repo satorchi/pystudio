@@ -298,3 +298,13 @@ def guess_detector_name(self):
 
     return self.detector_name
 
+def assign_logfile(self,rootname=None):
+    '''
+    assign a filename for the log file
+    '''
+    if rootname is None:rootname='logfile'
+    
+    logfile='QUBIC_%s_%s.txt' % (rootname,dt.datetime.utcnow().strftime('%Y%m%dT%H%M%SUTC'))
+    logfile_fullpath=self.output_filename(logfile)
+    self.logfile=logfile_fullpath
+    return self.logfile
