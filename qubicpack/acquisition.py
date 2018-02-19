@@ -278,11 +278,22 @@ def get_nsamples(self):
     # Thu 15 Feb 2018 11:01:09 CET
     # pyStudio hangs sometimes.  I don't know why.  It's not the network switch.
     # it seems to happen when I request nsamples, but not all the time.
+
+    # is this because of "waitingForAckMode" ?
+    # what is the difference between client.fetch and client.request ?
+
     # HACK: do not request nsamples again if we already have it.
-    if not self.nsamples is None: return self.nsamples
+    #if not self.nsamples is None: return self.nsamples
+
+    # Mon 19 Feb 2018 10:59:53 CET
+    # I think I got it.  There is a hanging request which must be flushed.
     
     client = self.connect_QubicStudio()
     if client is None:return None
+
+    # flush the request queue just in case
+    client.abort_requests()
+    
     self.debugmsg('getting nsamples...')
     nsamples = client.fetch('QUBIC_Nsample')
     self.debugmsg('got nsamples.')
@@ -299,10 +310,13 @@ def get_chunksize(self):
     '''
 
     # HACK: don't ask for it if we've already got it (see get_nsamples())
-    if not self.chunk_size is None: return self.chunk_size
+    #if not self.chunk_size is None: return self.chunk_size
     
     client = self.connect_QubicStudio()
     if client is None:return None
+
+    # flush the request queue just in case
+    client.abort_requests()
 
     self.debugmsg('getting chunk size...')
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
