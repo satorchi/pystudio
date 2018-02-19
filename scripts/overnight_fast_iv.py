@@ -18,10 +18,12 @@ if 'SSH_CLIENT' in os.environ.keys():
     import matplotlib
     matplotlib.use('Agg')
 from qubicpack import qubicpack as qp
+from qubicpack.dummy_client import dummy_client
 import matplotlib.pyplot as plt
 import datetime as dt
 import subprocess,os,sys,time
 import numpy as np
+from copy import copy
 reload(sys)
 sys.setdefaultencoding('utf8')
 from satorchipy.datefunctions import *
@@ -37,7 +39,6 @@ def read_bath_temperature(qpobject):
 
 # create the  qubicpack object
 go=qp()
-figsize=go.figsize
 # set debuglevel to 1 if you want lots of messages on the screen
 go.debuglevel=1
 
@@ -49,8 +50,6 @@ TESTMODE=False
 asic=None
 detname=None
 meastype=None
-timeline_period=240.0 # int time 4 minutes for I-V from timeline
-frequency=99
 
 # Mon 22 Jan 2018 08:46:16 CET: we have removed the 5x bias factor
 go.max_permitted_bias=10.0
@@ -58,12 +57,24 @@ min_bias=None
 max_possible_bias=go.DAC2V * 2**15
 max_bias=None
 
+# temperature start, end, and stepsize
 start_temp=None
 end_temp=None
 step_temp=None
+cycle_temp=None
+
+# temperature waiting for temperature to settle:
+#  timeout = max time to wait
+#  minwait = minimum time to wait
+#  wait    = time to wait between temperature measurements
+temp_timeout=None
+temp_minwait=None
+temp_wait=None
+temp_precision=None
 
 monitor_TES=None
 monitor_TES_default=34
+
 
 PID_I=None
 
@@ -109,49 +120,50 @@ for arg in argv:
     if arg.upper().find('--MONITOR_TES=')==0:
         monitor_TES=int(eval(arg.split('=')[1]))
         continue
+
+    if arg.upper().find('--TIMEOUT=')==0:
+        temp_timeout_secs=eval(arg.split('=')[1])
+        temp_timeout=dt.timedelta(seconds=temp_timeout_secs)
+        continue
+
+    if arg.upper().find('--MINWAIT=')==0:
+        temp_minwait_secs=eval(arg.split('=')[1])
+        temp_minwait=dt.timedelta(seconds=temp_minwait_secs)
+        continue
+
+    if arg.upper().find('--WAIT=')==0:
+        temp_wait_secs=eval(arg.split('=')[1])
+        temp_wait=dt.timedelta(seconds=temp_wait_secs)
+        continue
     
+    if arg.upper().find('--PRECISION=')==0:
+        temp_precision=eval(arg.split('=')[1])
+        continue
+
+    if arg.upper().find('--CYCLE')==0:
+        cycle_temp=True
+        continue
+
+# check if we can connect
+if TESTMODE:
+    go.client=dummy_client()
+else:
+    ret=go.verify_QS_connection()
+    if not ret:quit()
+
+
+'''
+get parameters from keyboard if not already specified
+'''
+
 # precision required for bath temperature
-temp_precision=0.002 # in Kelvin
+if temp_precision is None:temp_precision=0.002 # in Kelvin
 
 # timeout for waiting for temperature to settle
-if TESTMODE:
-    temp_minwait=dt.timedelta(seconds=30)
-    temp_timeout=dt.timedelta(seconds=60)
-    temp_wait=dt.timedelta(seconds=1)
-    wait_msg='waiting %.0f seconds for temperature to settle' % tot_seconds(temp_wait)
-else:
-    temp_minwait=dt.timedelta(minutes=0.5)
-    temp_timeout=dt.timedelta(minutes=5)
-    temp_wait=dt.timedelta(minutes=0.25)
-    wait_msg='waiting %.2f minutes for temperature to settle' % (tot_seconds(temp_wait)/60.)
-
-
-    
-
-
-
-'''
-get parameters
-'''
-
-if meastype is None:
-    meastype=go.get_from_keyboard('Which type of measurement (IV or RT)? ','IV')
-
-meastype=meastype.upper()    
-if not meastype=='RT':
-    meastype='IV'
-    print('Doing I-V measurements.')
-    timeline_period=240.0
-    frequency=99
-    PID_I=20
-else:
-    meastype='RT'
-    print('Doing R-T measurements.')
-    timeline_period=60.0
-    frequency=10.0
-    min_bias=-0.5
-    max_bias= 0.5
-    PID_I=50
+if temp_minwait is None:temp_minwait=dt.timedelta(seconds=30)
+if temp_timeout is None:temp_timeout=dt.timedelta(minutes=10)
+if temp_wait    is None:temp_wait=dt.timedelta(seconds=15)
+wait_msg='waiting %.0f seconds for temperature to settle' % tot_seconds(temp_wait)
     
 if detname is None:
     detname=go.get_from_keyboard('Which array is it? ','P90')
@@ -164,15 +176,27 @@ if asic is None:
 ret=go.assign_asic(asic)
 
 # setup bias voltage range
-if min_bias is None:
+# don't ask if it's an R-T measurement
+if not meastype=='RT' and min_bias is None:
     min_bias=go.get_from_keyboard('minimum bias voltage ',3.5)
     if min_bias is None:quit()
+go.min_bias=min_bias
 
-if max_bias is None:
+if not meastype=='RT' and max_bias is None:
     max_bias=go.get_from_keyboard('maximum bias voltage ',max_possible_bias)
     if max_bias is None:quit()
+go.max_bias=max_bias
 
 # setup temperature range
+
+# cycle temperature back to start?
+if cycle_temp is None:
+    ans=go.get_from_keyboard('cycle temperature back to start (y/n)?','y')
+    if ans.upper()=='Y':
+        cycle_temp=True
+    else:
+        cycle_temp=False
+
 if start_temp is None:
     start_temp=go.get_from_keyboard('start bath temperature ',0.6)
     if start_temp is None:quit()
@@ -190,38 +214,86 @@ if start_temp>end_temp:
 else:
     if step_temp<0:step_temp=-step_temp
 
-Tbath_target=np.arange(start_temp,end_temp,step_temp)
-
+Tbath_target=list(np.arange(start_temp,end_temp,step_temp))
+if cycle_temp:
+    T_return=copy(Tbath_target)
+    T_return.reverse()
+    Tbath_target=Tbath_target+T_return
+    
 if monitor_TES is None:    
     monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',monitor_TES_default)
     if monitor_TES is None:quit()
 
 # if running in test mode, use a random generated result
 if TESTMODE:
-    #go.adu=np.random.rand(go.NPIXELS,len(go.vbias))
+    if meastype=='IV': go.adu=np.random.rand(go.NPIXELS,len(go.vbias))
     go.temperature=0.3
     go.nsamples=100
+    go.chunk_size=300
     go.OxfordInstruments_ip='127.0.0.1'
+
+
+# parameters specific to measurement type
+params_IV={}
+params_IV['meastype']='IV'
+params_IV['timeline_period']=240.0
+params_IV['frequency']=99
+params_IV['PID_I']=20
+params_IV['min_bias']=min_bias
+params_IV['max_bias']=max_bias
+
+params_RT={}
+params_RT['meastype']='RT'
+params_RT['timeline_period']=60.0
+params_RT['frequency']=10.0
+params_RT['PID_I']=50
+params_RT['min_bias']=-0.5
+params_RT['max_bias']= 0.5
+
+
+# check if we need a second qubicpack object
+if meastype is None:
+    meastype=go.get_from_keyboard('Which type of measurement (IV or RT)? ','IV')
+meastype=meastype.upper()    
+if meastype=='BOTH':
+    meastype_str='I-V and R-T'
+    go2=qp()
+    go2.debuglevel=1
+    go2.logfile=go.logfile
+    go2.assign_asic(go.asic)
+    go2.assign_detector_name(go.detector_name)
+    go2.min_bias=params_RT['min_bias']
+    go2.max_bias=params_RT['max_bias']
+    if TESTMODE:
+        go2.client=dummy_client()
+        go2.temperature=0.3
+        go2.nsamples=100
+        go2.chunk_size=300
+        go2.OxfordInstruments_ip='127.0.0.1'
+    measurement_period=params_IV['timeline_period']+params_RT['timeline_period']
+    
+elif meastype=='RT':
+    params=params_RT
+    meastype_str='R-T'
+    measurement_period=params['timeline_period']
 else:
-    ret=go.verify_QS_connection()
-    if not ret:quit()
+    params=params_IV
+    meastype_str='I-V'
+    measurement_period=params['timeline_period']
+
 
 # make a log file
-logfile=dt.datetime.utcnow().strftime('temperature_IV_logfile_%Y%m%dT%H%M%SUTC.txt')
-logfile_fullpath=go.output_filename(logfile)
-go.logfile=logfile_fullpath
-go.writelog('starting I-V measurements at different temperatures using the timeline (fast) method')
+go.assign_logfile('temperature_%s' % meastype)
+go.writelog('starting %s measurements at different temperatures using the timeline (fast) method' % meastype_str)
 go.writelog('ASIC=%i' % go.asic)
-go.writelog('minimum bias=%.2f V' % min_bias)
-go.writelog('maximum bias=%.2f V' % max_bias)
 go.writelog('start temperature=%.3f K' % start_temp)
 go.writelog('end temperature=%.3f K' % end_temp)
 go.writelog('temperature step=%.3f K' % step_temp)
 nsteps=len(Tbath_target)
 go.writelog('number of temperatures=%i' % nsteps)
-
+    
 # estimated time: temperature settle time plus measurement time for I-V
-duration_estimate=nsteps*(temp_minwait+dt.timedelta(seconds=timeline_period))
+duration_estimate=(nsteps+1)*(temp_minwait+dt.timedelta(seconds=measurement_period))
 endtime_estimate=dt.datetime.utcnow()+duration_estimate
 go.writelog(endtime_estimate.strftime('estimated end at %Y-%m-%d %H:%M:%S'))
 
@@ -263,7 +335,7 @@ for T in Tbath_target:
             heater=go.oxford_read_heater_range()
             go.writelog('heater range: %f mA' % heater)
         
-    go.writelog('starting I-V measurement')
+    go.writelog('starting %s measurement' % meastype)
     if delta>temp_precision:
         go.writelog('WARNING! Did not reach target temperature!')
         go.writelog('Tbath=%0.2f mK, Tsetpoint=%0.2f mK' % (1000*Tbath,1000*T))
@@ -273,25 +345,40 @@ for T in Tbath_target:
         go.assign_integration_time(1.0) # int time 1sec for offset calculation
         go.compute_offsets()
         go.feedback_offsets()
-        go.configure_PID(I=PID_I) # feedback_offsets() configured the PID.  Now we set it to what we want.
-        go.assign_integration_time(timeline_period) 
-        if go.get_iv_timeline(vmin=min_bias,vmax=max_bias,frequency=frequency) is None:
+        
+        go.configure_PID(I=params['PID_I']) # feedback_offsets() configured the PID.  Now we set it to what we want.
+        go.assign_integration_time(params['timeline_period']) 
+        go.writelog('minimum bias=%.2f V' % params['min_bias'])
+        go.writelog('maximum bias=%.2f V' % params['max_bias'])
+        do_measurement=go.get_iv_timeline(vmin=params['min_bias'],vmax=params['max_bias'],frequency=params['frequency'])
+        if do_measurement is None:
             go.writelog('ERROR! Did not successfully acquire a timeline!')
         else:
             go.write_fits()
-            if meastype=='IV':go.timeline2adu(monitor_TES)
-    go.writelog('end I-V measurement')
-    plt.close('all')
+        go.writelog('end %s measurement' % meastype)
 
-    if not TESTMODE and meastype=='IV':        
-        # generate the test document
-        go.writelog('generating test document')
-        pdfname=go.make_iv_report()
-        go.writelog('test document generated')
-
-    # reset the plotting figure size
-    go.figsize=figsize
-
+        # if we're doing both measurements, the second one is always the RT measurement
+        if meastype=='BOTH' and Tbath>0.375:
+            go2.configure_PID(I=params_rt['PID_I']) 
+            go2.assign_integration_time(params_rt['timeline_period'])
+            go.writelog('minimum bias=%.2f V' % params_rt['min_bias'])
+            go.writelog('maximum bias=%.2f V' % params_rt['max_bias'])
+            do_measurement=go2.get_iv_timeline(vmin=params_rt['min_bias'],vmax=params_rt['max_bias'],frequency=params_rt['frequency'])
+        if do_measurement is None:
+            go.writelog('ERROR! Did not successfully acquire a timeline for %s measurement!' % params_rt['meastype'])
+        else:
+            go2.write_fits()
+        go.writelog('end %s measurement' % params_rt['meastype'])
+            
+        '''
+        # do this in post processing instead
+        if meastype=='IV' or meastype=='BOTH':        
+            # generate the test document
+            go.timeline2adu(monitor_TES)
+            go.writelog('generating test document')
+            pdfname=go.make_iv_report()
+            go.writelog('test document generated')
+        '''
     # reset data
     if not TESTMODE:go.adu=None
 
