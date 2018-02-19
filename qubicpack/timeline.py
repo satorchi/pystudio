@@ -153,7 +153,7 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     peak1=time_axis[ipeak1]
     return (ipeak0,ipeak1)
 
-def plot_timeline(self,TES,timeline_index=None,fit=False,xwin=True):
+def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None,xwin=True):
     '''
     plot the timeline
     '''
@@ -205,7 +205,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,xwin=True):
 
     fitparms=None
     if fit:
-        fitparms=self.fit_timeline(TES,timeline_index)
+        fitparms=self.fit_timeline(TES,timeline_index,ipeak0,ipeak1)
 
     if self.timeline_conversion==None:
         self.timeline2adu(TES=TES,timeline_index=timeline_index)
@@ -431,13 +431,15 @@ def model_timeline(self,t,period,phaseshift,offset,amplitude):
     ysine=offset + amplitude*np.sin( 2*np.pi * (t/period + phaseshift) )
     return ysine
     
-def fit_timeline(self,TES,timeline_index=None):
+def fit_timeline(self,TES,timeline_index=None,ipeak0=None,ipeak1=None):
     '''
     fit the timeline to a sine curve
     '''
     # return a dictionary
     fit={}
     fit['TES']=TES
+    fit['DET_NAME']=self.detector_name
+    fit['ASIC']=self.asic
     
     if timeline_index is None:timeline_index=0    
     ntimelines=len(self.timelines)
@@ -457,7 +459,9 @@ def fit_timeline(self,TES,timeline_index=None):
     time_axis=sample_period*np.arange(timeline_npts)
 
     # first guess;  use the peak search algorithm
-    ipeak0,ipeak1=self.determine_bias_modulation(TES,timeline_index)
+    i0,i1=self.determine_bias_modulation(TES,timeline_index)
+    if ipeak0 is None:ipeak0=i0
+    if ipeak1 is None:ipeak1=i1
     peak0=time_axis[ipeak0]
     peak1=time_axis[ipeak1]
     period=peak1-peak0
