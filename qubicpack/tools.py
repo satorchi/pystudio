@@ -397,10 +397,7 @@ def writelog(self,msg):
     and also write it on the screen
     '''
 
-    if self.logfile is None:
-        logfile=dt.datetime.utcnow().strftime('QUBIC_measurement_logfile_%Y%m%dT%H%M%SUTC.txt')
-        logfile_fullpath=go.output_filename(logfile)
-        self.logfile=logfile_fullpath
+    if self.logfile is None: self.assign_logfile()
     
     handle=open(self.logfile,'a')
     timestamp=dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC -- ')
