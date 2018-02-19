@@ -58,7 +58,7 @@ def oxford_send_cmd(self, cmd=None):
     try:
         s.connect((self.OxfordInstruments_ip, 33576))
     except:
-        print('ERROR! network not available.')
+        print('ERROR! Oxford Instruments is not available.')
         return None
     s.send(cmd)
 
