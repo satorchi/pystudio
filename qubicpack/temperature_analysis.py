@@ -25,23 +25,37 @@ from scipy.optimize import curve_fit
 
 # some constants and values required
 kBoltzmann=1.3806485279e-23
-Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
-Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
 temperature_precision = 0.005 # close enough for temperature
 
-def print_datlist(datlist):
+def print_datlist(datlist,obsdate=None,temperature=None):
     '''
     print some of the main parameters of all the data in a list of qp objects
+    select members of the list according to obsdate and/or temperature
     '''
     print(' idx array ASIC date                temp')
     datstr='[%2i][%2i] %s ASIC%i %s %.3fmK'
     for idx,go in enumerate(datlist):
+        printit=True
         if go.exist_timeline_data():
             ntimelines=len(go.timelines)
             for t_idx in range(ntimelines):
-                print(datstr % (idx,t_idx,go.detector_name,go.asic,go.obsdates[t_idx],1000*go.temperatures[t_idx]))
+                printit=True
+                T=go.temperatures[t_idx]
+                d=go.obsdates[t_idx]
+                if not obsdate is None and d!=obsdate:
+                    printit=False
+                if not temperature is None and not (T<temperature+0.001 and T>temperature-0.001):
+                    printit=False
+                if printit: print(datstr % (idx,t_idx,go.detector_name,go.asic,d,1000*T))
         else:
-            print(datstr % (idx,0,go.detector_name,go.asic,go.obsdate,1000*go.temperature))
+            T=go.temperature
+            d=go.obsdate
+            t_idx=0
+            if not obsdate is None and d!=obsdate:
+                printit=False
+            if not temperature is None and not (T<temperature+0.001 and T>temperature-0.001):
+                printit=False
+            if printit: print(datstr % (idx,t_idx,go.detector_name,go.asic,d,1000*T))
             
     return
 
@@ -765,10 +779,6 @@ def rt_analysis(TES,datlist,xwin=True):
     asic=None
     detector_name=None
     reslist=[]
-    dates=[]
-    Tbath=[]
-    amplitude=[]
-    R=[]
     for go in datlist:
         if not go.exist_timeline_data():continue
         if asic is None: asic=go.asic
@@ -782,17 +792,32 @@ def rt_analysis(TES,datlist,xwin=True):
         for idx in range(ntimelines):
             res=go.plot_timeline(TES,timeline_index=idx,fit=True,xwin=False)
             reslist.append(res)
-            dates.append(go.obsdates[idx])
-            Tbath.append(go.temperatures[idx])
-            amplitude.append(abs(res['amplitude']))
-            R.append(res['R amplitude'])
 
+    plot_rt_analysis(reslist,xwin)
+    return reslist
+
+def plot_rt_analysis(reslist,xwin=True):
+    '''
+    plot the results of the R-T analysis
+    '''
+    TES=reslist[0]['TES']
+    detector_name=reslist[0]['DET_NAME']
+    asic=reslist[0]['ASIC']
+    go=qp()
     PIX=go.tes2pix(TES)
+
+    Tbath=[]
+    R=[]
+    dates=[]
+    for res in reslist:
+        Tbath.append(1000*res['Tbath'])
+        R.append(res['R amplitude'])
+        dates.append(res['date'])
+                     
     ntemps=len(Tbath)
     sorted_index=sorted(range(ntemps), key=lambda i: Tbath[i])
 
-    Tsorted=1000*np.array(Tbath)[sorted_index]
-    Asorted=np.array(amplitude)[sorted_index]
+    Tsorted=np.array(Tbath)[sorted_index]
     Rsorted=np.array(R)[sorted_index]
 
     # show the dates of the measurements (just the day, not the time)
@@ -826,4 +851,4 @@ def rt_analysis(TES,datlist,xwin=True):
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin:plt.show()
     else: plt.close('all')
-    return reslist
+    return
