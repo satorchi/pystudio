@@ -134,6 +134,12 @@ class qubicpack:
         model_timeline,\
         fit_timeline
 
+    from .ASD import\
+        read_ASD_picklefile,\
+        plot_ASD,\
+        plot_ASD_all,\
+        plot_ASD_physical_layout,\
+        make_ASD_tex_report
 
     from .oxford import\
         oxford_assign_temperature_labels,\
@@ -184,10 +190,9 @@ class qubicpack:
             get_RawMask,\
             set_VoffsetTES,\
             get_iv_data,\
-            get_iv_timeline
+            get_iv_timeline,\
+            get_ASD
 
-        from .ASD import\
-            plot_ASD
 
         from .squids import\
             squid_test
