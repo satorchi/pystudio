@@ -71,6 +71,7 @@ temp_timeout=None
 temp_minwait=None
 temp_wait=None
 temp_precision=None
+Tcrit=0.375
 
 monitor_TES=None
 monitor_TES_default=34
@@ -358,7 +359,7 @@ for T in Tbath_target:
         go.writelog('end %s measurement' % meastype)
 
         # if we're doing both measurements, the second one is always the RT measurement
-        if meastype=='BOTH' and Tbath>0.375:
+        if meastype=='BOTH' and Tbath>Tcrit:
             go2.configure_PID(I=params_rt['PID_I']) 
             go2.assign_integration_time(params_rt['timeline_period'])
             go.writelog('minimum bias=%.2f V' % params_rt['min_bias'])
