@@ -126,9 +126,7 @@ def TES_index(self,TES):
 
 def assign_integration_time(self,tinteg=0.1):
     if tinteg is None:tinteg=self.tinteg
-    if (not isinstance(tinteg,int))\
-       and (not isinstance(tinteg,float))\
-       and (tinteg<0.0):
+    if tinteg is None or tinteg<0.0:
         print('integration time should be a positive number of seconds.  Assigning default Tinteg=0.1')
         self.tinteg=0.1
     else:
