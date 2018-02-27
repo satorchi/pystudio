@@ -123,6 +123,8 @@ class qubicpack:
 
     from .timeline import\
         exist_timeline_data,\
+        ntimelines,\
+        timeline,\
         amplitude2DAC,\
         bias_offset2DAC,\
         sample_period,\
@@ -135,7 +137,6 @@ class qubicpack:
         fit_timeline
 
     from .ASD import\
-        read_ASD_picklefile,\
         plot_ASD,\
         plot_ASD_all,\
         plot_ASD_physical_layout,\
@@ -203,9 +204,9 @@ class qubicpack:
 
     def debugmsg(self,msg):
         if self.debuglevel>0:
-            print('DEBUG %s : %s\n' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
-            if not self.logfile is None:
+            if self.logfile is None:
+                print('DEBUG %s : %s\n' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
+            else:
                 self.writelog('DEBUG: %s' % msg)
-            
         return
     
