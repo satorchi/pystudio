@@ -98,6 +98,7 @@ def bias_offset2DAC(self,bias):
 def sample_period(self):
     '''
     the integration time per sample.  This is in seconds.
+    2MHz is the sampling rate of the ASIC
     '''
     if self.nsamples==None:return None
     period = 1.0 / (2e6 / self.NPIXELS / self.nsamples)
@@ -197,7 +198,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     
     TES_index=self.TES_index(TES)
     timeline=self.timelines[timeline_index][TES_index,:]
-    current=self.ADU2I(timeline)
+    current=self.ADU2I(timeline) # uAmps
     timeline_npts=len(timeline)
 
     sample_period=self.sample_period()
@@ -266,7 +267,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     return fitparms
 
 
-def plot_timeline_physical_layout(self,timeline_index=0,xwin=True):
+def plot_timeline_physical_layout(self,timeline_index=0,xwin=True,imin=None,imax=None):
     '''
     plot the timeline curves in thumbnails mapped to the physical location of each detector
     '''
@@ -305,7 +306,7 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True):
     # need a square figure for this plot to look right
     figlen=max(self.figsize)
     fig,ax=plt.subplots(nrows,ncols,figsize=[figlen,figlen])
-    pngname=str('QUBIC_TES_array-%s_ASIC%i_timeline_%s.png' % (self.detector_name,self.asic,timeline_date.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('QUBIC_Array-%s_ASIC%i_timeline_%s.png' % (self.detector_name,self.asic,timeline_date.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if xwin: fig.canvas.set_window_title('plt:  '+ttl)
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
@@ -313,7 +314,9 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True):
 
     # the pixel number is between 1 and 248
     TES_translation_table=self.TES2PIX[self.asic_index()]
-
+    ilim=[None,None]
+    text_y=0.0
+    text_x=1.0
     for row in range(nrows):
         for col in range(ncols):
             ax[row,col].get_xaxis().set_visible(False)
@@ -324,8 +327,6 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True):
             pix_index=physpix-1
             self.debugmsg('processing PIX %i' % physpix)
 
-            text_y=0.0
-            text_x=1.0
             if physpix==0:
                 pix_label='EMPTY'
                 label_colour='black'
@@ -338,11 +339,18 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True):
                 TES_index=self.TES_index(TES)
                 timeline=self.timelines[timeline_index][TES_index,:]
                 I=self.ADU2I(timeline)
-                text_y=min(I)
-                text_x=len(timeline)
                 self.debugmsg('plotting TES %i' % TES)
                 plt.sca(ax[row,col])
                 plt.plot(I,color='blue')
+                if imin is None:
+                    ilim[0]=min(I)
+                else:
+                    ilim[0]=imin
+                if imax is None:
+                    ilim[1]=max(I)
+                else:
+                    ilim[1]=imax
+                ax[row,col].set_ylim(ilim)
 
             else:
                 pix_label='other\nASIC'
@@ -350,7 +358,8 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True):
                 face_colour='blue'
 
             ax[row,col].set_facecolor(face_colour)
-            ax[row,col].text(text_x,text_y,pix_label,va='bottom',ha='right',color=label_colour,fontsize=8)
+            ax[row,col].text(text_x,text_y,pix_label,va='bottom',ha='right',
+                             color=label_colour,fontsize=8,transform=ax[row,col].transAxes)
             
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin: plt.show()
@@ -476,6 +485,8 @@ def fit_timeline(self,TES,timeline_index=None,ipeak0=None,ipeak1=None):
     fit['period']=period
     fit['phaseshift']=phaseshift
     fit['offset']=offset
-    fit['amplitude']=amplitude
-    fit['R amplitude']=abs(self.max_bias/amplitude)
+    fit['amplitude']=amplitude # this is in microAmps
+
+    Vtes=self.Rshunt*( (self.max_bias*self.bias_factor)/self.Rbias - 1e-6*abs(amplitude) )    
+    fit['R amplitude']=abs(Vtes/amplitude)
     return fit
