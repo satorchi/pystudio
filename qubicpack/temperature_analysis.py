@@ -839,9 +839,9 @@ def plot_rt_analysis(reslist,xwin=True):
     fig.canvas.set_window_title('plt: '+ttl)
     ax=plt.gca()
     plt.title(ttl)
-    ax.plot(Tsorted,Rsorted,marker='D',color='blue')
+    ax.plot(Tsorted,1e6*Rsorted,marker='D',color='blue')
     ax.set_xlabel('T$_\mathrm{bath}$ / mK')
-    ax.set_ylabel('R$_\mathrm{TES}$ / M$\Omega$')
+    ax.set_ylabel('R$_\mathrm{TES}$ / $\mu\Omega$')
 
     text_x=0.98
     text_y=0.02
