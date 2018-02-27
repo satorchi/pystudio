@@ -549,3 +549,49 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     self.obsdates.append(self.obsdate)
     self.temperatures.append(self.temperature)
     return timeline
+
+def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
+    '''
+    get timeline data and plot the Amplitude Spectral Density
+    timeline data is saved in FITS file, unless in monitor mode.
+    in monitor mode, the plots will refresh indefinitely.  exit with Ctrl-C
+    '''
+    TES_index=self.TES_index(TES)
+    monitor_mode=False
+    if not isinstance(ntimelines,int) or ntimelines<=0:
+        monitor_mode=True
+        
+    self.assign_integration_time(tinteg)
+    nsamples=self.get_nsamples()
+    chunksize=self.get_chunksize()
+    self.assign_obsdate()
+
+    if not self.exist_timeline_data():
+        self.timelines=[]
+        self.obsdates=[]
+        self.temperatures=[]
+    idx=0
+    ax_timeline=None
+    ax_asd=None
+    while idx<ntimelines or monitor_mode:
+        self.assign_obsdate()
+        self.obsdates.append(self.obsdate)
+        Tbath=self.oxford_read_bath_temperature()
+        
+        timeline = self.integrate_scientific_data()
+        if not monitor_mode:
+            self.timelines.append(timeline)
+            self.temperatures.append(Tbath)
+            self.obsdates.append(self.obsdate)
+
+        ntimelines=len(self.timelines)
+        result=self.plot_ASD(TES,ntimelines-1,ax_timeline=ax_timeline,ax_asd=ax_asd,save=not monitor_mode)
+        ax_asd=result['ax_asd']
+        ax_timeline=result['ax_timeline']
+        idx+=1
+
+    if not monitor_mode:
+        self.write_fits()
+
+    return self.timelines
+
