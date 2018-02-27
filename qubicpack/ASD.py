@@ -22,123 +22,311 @@ from glob import glob
 import matplotlib.mlab as mlab
 import pickle
 
-def plot_ASD(self,TES=1,tinteg=None,picklename=None,ntimelines=10,replay=False):
+
+def read_ASD_picklefile(self,picklename):
+    ''' 
+    legacy: pickle file was only used once.  Use FITS from now on.        
     '''
-    get timeline data and plot the Amplitude Spectral Density
-    timeline data is saved in FITS file, unless in monitor mode.
-    in monitor mode, the plots will refresh indefinitely.  exit with Ctrl-C
+    h=open(picklename,'r')
+    timelines=pickle.load(h)
+    self.timelines=timelines
+    replay=True
+    tinteg=10.
+    ntimelines=timelines.shape[0]
+    self.assign_obsdate(self.read_date_from_filename(picklename))
+    self.nsamples=100 # this should be read from file!
+    return
+
+def plot_ASD(self,TES=None,
+             timeline_index=0,
+             save=True,
+             ax_timeline=None,
+             ax_asd=None,
+             xwin=True,
+             amin=None,amax=None,
+             imin=None,imax=None):
     '''
+    plot the Amplitude Spectral Density
+    '''
+
+    if not self.exist_timeline_data():
+        print('ERROR! No timeline data!')
+        return None
+
+    ntimelines=len(self.timelines)
+    if timeline_index >= ntimelines:
+        print('ERROR! timeline index out of range.  Enter an index between 0 and %i' % (ntimelines-1))
+        return None
+    
+    if TES is None:
+        print('Please enter a valid TES number, between 1 and %i' % self.NPIXELS)
+        return None
     TES_index=self.TES_index(TES)
-    monitor_mode=False
-    if not isinstance(ntimelines,int) or ntimelines<=0:
-        monitor_mode=True
 
-        
-
-    if isinstance(picklename,str) and os.path.exists(picklename):
-        ''' 
-        legacy: pickle file was only used once.  Use FITS from now on.        
-        '''
-        h=open(picklename,'r')
-        timelines=pickle.load(h)
-        self.timelines=timelines
-        replay=True
-        tinteg=10.
-        ntimelines=timelines.shape[0]
-        self.assign_obsdate(self.read_date_from_filename(picklename))
-        self.nsamples=100 # this should be read from file!
-
-    if replay:
-        '''
-        replay data that is imported from file.  This is for testing.
-        '''
-        if not self.exist_timeline_data():
-            print('Please read a timeline file, or run a new measurement!')
-            return None
-        ntimelines=len(self.timelines)
-        
-    else:
-        '''
-        acquire new timeline data
-        '''
-        self.assign_integration_time(tinteg)  # s
-        client=self.connect_QubicStudio()
-        self.nsamples = client.fetch('QUBIC_Nsample')
-        self.assign_obsdate()
-
-    fs = 20000/self.NPIXELS*(100/self.nsamples)
+    result={}
+    result['TES']=TES
     
-    if not monitor_mode: saved_timelines=[]
+    timeline=self.timelines[timeline_index][TES_index,:]
+    obsdate=self.obsdates[timeline_index]
+    Tbath=self.temperatures[timeline_index]
+    current=self.ADU2I(timeline) # uA
+    timeline_npts=len(timeline)
+    sample_period=self.sample_period()
+    time_axis=sample_period*np.arange(timeline_npts)
+    result['timeline_index']=timeline_index
+    result['obsdate']=obsdate
+    result['Tbath']=Tbath
+    
     ttl='Timeline and Amplitude Spectral Density'
-    subttl='\nASIC %i, TES #%i' % (self.asic,TES)
-    
-    nrows=1
-    ncols=2
-    plt.ion()
-    fig,axes=plt.subplots(nrows,ncols,sharex=False,sharey=False,figsize=self.figsize)
-    ax_timeline=axes[0]
-    ax_asd=axes[1]
-    fig.canvas.set_window_title('plt: '+ttl)
-    fig.suptitle(ttl+subttl,fontsize=16)
+    subttl='\nQUBIC Array %s, ASIC %i, TES #%i, T$_\mathrm{bath}$=%.1f mK' % (self.detector_name,self.asic,TES,1000*Tbath)
+    pngname='QUBIC_Array-%s_ASIC%i_TES%03i_timeline%03i_AmplitudeSpectralDensity_%s.png'\
+             % (self.detector_name,self.asic,TES,timeline_index,obsdate.strftime('%Y%m%dT%H%M%SUTC'))
 
-    ax_asd.set_xlabel('freq')
-    ax_asd.set_ylabel('P')
-
-    ax_timeline.set_xlabel('time')
-    ax_timeline.set_ylabel('A')
+    pngname_fullpath=self.output_filename(pngname)
+    result['pngname']=pngname_fullpath
     
-    filerootname=self.obsdate.strftime('AmplitudeSpectralDensity_%Y%m%dT%H%M%SUTC')
+    # setup plot if we haven't done so already
+    if xwin: plt.ion()
+    else: plt.ioff()
+    if ax_timeline is None or ax_asd is None:
+        nrows=1
+        ncols=2
+        fig,axes=plt.subplots(nrows,ncols,sharex=False,sharey=False,figsize=self.figsize)
+        ax_timeline=axes[0]
+        ax_asd=axes[1]
+        if xwin: fig.canvas.set_window_title('plt: '+ttl)
+        fig.suptitle(ttl+subttl,fontsize=16)
+    result['ax_timeline']=ax_timeline
+    result['ax_asd']=ax_asd
+    
     txt_x=0.05
     txt_y=0.02
-    idx=0
-    if not replay:self.obsdates=[]
-    while idx<ntimelines or monitor_mode:
-	if not replay:
-            self.assign_obsdate()
-            self.obsdates.append(self.obsdate)
-            timeline = self.integrate_scientific_data()
-            if not monitor_mode: saved_timelines.append(timeline)
-        else:
-            self.assign_obsdate(self.obsdates[idx])
-            timeline = self.timelines[idx,:,:]
+
+    time_txt=obsdate.strftime('%Y-%m-%m %H:%M:%S UTC')
+        
+    # sampling frequency
+    fs = 1.0/self.sample_period()
+    
+    PSD, freqs = mlab.psd(current,
+                          Fs = fs,
+                          NFFT = timeline_npts,
+                          window=mlab.window_hanning,
+                          detrend='mean')
+
+        
+    ax_timeline.cla()
+    ax_timeline.plot(time_axis,current)
+    ax_timeline.text(txt_x,txt_y,time_txt,transform=ax_timeline.transAxes)
+    ax_timeline.set_xlabel('time  /  seconds')
+    ax_timeline.set_ylabel('Current  /  $\mu$A')
+    if imin is None:imin=min(current)
+    if imax is None:imax=max(current)
+    ax_timeline.set_ylim((imin,imax))
+    if xwin: plt.pause(0.01)
+
+    ASD=np.sqrt(PSD) # in uA
+    ax_asd.cla()
+    ax_asd.loglog(freqs,ASD)
+    ax_asd.text(txt_x,txt_y,time_txt,transform=ax_asd.transAxes)
+    ax_asd.set_xlabel('frequency')
+    ax_asd.set_ylabel('Amplitude / $\mu$A')
+    if amin is None:amin=min(ASD)
+    if amax is None:amax=max(ASD)
+    ax_asd.set_ylim((amin,amax))
+    if xwin: plt.pause(0.01)
+        
+    if save:
+        plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
+
+    if xwin:plt.show()
+    else: plt.close(fig)
+    return result
+
+def plot_ASD_all(self,timeline_index=0,imin=None,imax=None,amin=None,amax=None):
+    '''
+    plot all the ASD for all the TES for a given timeline
+    '''
+    reslist=[]
+    for TES_index in range(self.NPIXELS):
+        TES=TES_index+1
+        result=self.plot_ASD(TES,timeline_index,
+                             save=True,ax_timeline=None,ax_asd=None,xwin=False,
+                             imin=imin,imax=imax,amin=amin,amax=amax)
+        reslist.append(result)
+
+    return reslist
+
+def make_ASD_tex_report(self,timeline_index=0,reslist=None):
+    '''
+    make a tex source file with the report from the ASD measurement
+    '''
+    if not self.exist_timeline_data():return None
+
+    if reslist is None:
+        reslist=self.plot_ASD_all(timeline_index)
+
+    observer=self.observer.replace('<','$<$').replace('>','$>$')
+    obsdate=reslist[0]['obsdate']
+    Tbath=reslist[0]['Tbath']
+    
+    texfilename=str('QUBIC_Array-%s_ASIC%i_ASD_%s.tex' % (self.detector_name,self.asic,obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    texfilename_fullpath=self.output_filename(texfilename)
+    if texfilename_fullpath is None:
+        print('ERROR! Not possible to write tex file.')
+        return None
+    
+    h=open(texfilename_fullpath,'w')
+    h.write('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n')
+    h.write('%%%%% WARNING!  Automatically generated file.  Do not edit! %%%%%\n')
+    h.write('%%%%% This file could be overwritten                        %%%%%\n')
+    h.write(dt.datetime.utcnow().strftime('%%%%%%%%%% File generated %Y-%m-%d %H:%M:%S UTC                %%%%%%%%%%\n'))
+    h.write('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n')
+    h.write('\\documentclass[a4paper,12pt]{article}\n')
+    h.write('\\usepackage{graphicx}\n')
+    h.write('\\usepackage{hyperref}\n')
+    h.write('\\usepackage{longtable}\n')
+    h.write('\\usepackage{setspace}\n')
+    h.write('\\newcommand{\\comment}[1]{\n\\begin{minipage}[t]{20ex}\n\\setstretch{0.5}\\flushleft\\noindent\n#1\n\\vspace*{1ex}\n\\end{minipage}}\n')
+    
+    h.write('\\begin{document}\n')
+    h.write('\\begin{center}\n')
+    h.write('QUBIC TES Report: Amplitude Spectram Density\\\\\n')
+    h.write(obsdate.strftime('data from %Y-%m-%d %H:%M UTC\\\\\n'))
+    h.write('compiled by %s\\\\\nusing PyStudio/QubicPack: \\url{https://github.com/satorchi/pystudio}\n' % observer)
+    h.write(dt.datetime.utcnow().strftime('this report compiled %Y-%m-%d %H:%M UTC\\\\\n'))
+    h.write('\\end{center}\n')
+
+    h.write('\\vspace*{3ex}\n')
+    h.write('\\noindent Summary:\n')
+    h.write('\\noindent\\begin{itemize}\n')
+    h.write('\\item Array %s\n' % self.detector_name)
+    h.write('\\item ASIC %i\n' % self.asic)
+    if Tbath is None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.0f mK' % (1000*Tbath))
+    h.write('\\item TES physical temperature: %s\n' % tempstr)
+
+    h.write('\\end{itemize}\n')
+    
+    h.write('\n\\vspace*{3ex}\n\\noindent This document includes the following:\n')
+    h.write('\\begin{itemize}\n')
+    h.write('\\item Plot of all timeline curves in their physical location on the focal plane.\n')
+    h.write('\\item Plot of all Spectral Density curves in their physical location on the focal plane.\n')
+    h.write('\\item Plot of all the ASD curves.\n')
+    h.write('\\end{itemize}\n\\clearpage\n')
+
+    png=str('QUBIC_Array-%s_ASIC%i_timeline_%s.png' % (self.detector_name,self.asic,obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    png_fullpath=self.output_filename(png)
+    h.write('\n\\noindent\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % png)
+
+    png=str('QUBIC_Array-%s_ASIC%i_ASD_%s.png' % (self.detector_name,self.asic,obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    png_fullpath=self.output_filename(png)
+    h.write('\n\\noindent\\includegraphics[width=0.8\\linewidth,clip]{%s}\n' % png)
+
+    h.write('\\clearpage\n')
+    
+    for idx,result in enumerate(reslist):
+        png=result['pngname']
+        h.write('\n\\noindent\\includegraphics[width=0.8\\linewidth,clip]{%s}\\\\' % png)
+
+    
+    
+    h.write('\n\n\\end{document}\n')
+    h.close()
+    return texfilename_fullpath
+    
+def plot_ASD_physical_layout(self,timeline_index=0,xwin=True,amin=None,amax=None):
+    '''
+    plot the ASD for each TES in it's location in the focal plane
+    '''
+    if not self.exist_timeline_data():
+        print('ERROR! No timeline data!')
+        return None
+
+    ntimelines=len(self.timelines)
+    if timeline_index >= ntimelines:
+        print('ERROR! timeline index out of range.  Enter an index between 0 and %i' % (ntimelines-1))
+        return None
+    
+    
+    Tbath=self.temperatures[timeline_index]
+    obsdate=self.obsdates[timeline_index]
+    fs = 1.0/self.sample_period()
+
+    nrows=self.pix_grid.shape[0]
+    ncols=self.pix_grid.shape[1]
+    if xwin: plt.ion()
+    else: plt.ioff()
+    # need a square figure for this plot to look right
+    figlen=max(self.figsize)
+    fig,ax=plt.subplots(nrows,ncols,figsize=[figlen,figlen])
+    pngname=str('QUBIC_Array-%s_ASIC%i_ASD_%s.png' % (self.detector_name,self.asic,obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname_fullpath=self.output_filename(pngname)
+
+    ttl='Amplitude Spectral Density (%s)' % obsdate.strftime('%Y-%m-%d %H:%M')
+    subttl='\nQUBIC Array %s, ASIC %i, T$_\mathrm{bath}$=%.1f mK' % (self.detector_name,self.asic,1000*Tbath)
+
+    if xwin: fig.canvas.set_window_title('plt:  '+ttl)
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    
+    # the pixel number is between 1 and 248
+    TES_translation_table=self.TES2PIX[self.asic_index()]
+    alim=[None,None]
+    for row in range(nrows):
+        for col in range(ncols):
+            ax[row,col].get_xaxis().set_visible(False)
+            ax[row,col].get_yaxis().set_visible(False)
+
+            # the pixel identity associated with its physical location in the array
+            physpix=self.pix_grid[row,col]
+            pix_index=physpix-1
+            self.debugmsg('processing PIX %i' % physpix)
+
+            text_y=0.0
+            text_x=1.0
+            if physpix==0:
+                pix_label='EMPTY'
+                label_colour='black'
+                face_colour='black'
+            elif physpix in TES_translation_table:
+                TES=self.pix2tes(physpix)
+                pix_label=str('%i' % TES)
+                label_colour='black'
+                face_colour='white'
+                TES_index=self.TES_index(TES)
+                timeline=self.timelines[timeline_index][TES_index,:]
+                current=self.ADU2I(timeline)
+                timeline_npts=len(timeline)
+                PSD, freqs = mlab.psd(current,
+                                      Fs = fs,
+                                      NFFT = timeline_npts,
+                                      window=mlab.window_hanning,
+                                      detrend='mean')
+                ASD=np.sqrt(PSD)
+                if amin is None:
+                    alim[0]=min(ASD)
+                else:
+                    alim[0]=amin
+                if amax is None:
+                    alim[1]=max(ASD)
+                else:
+                    alim[1]=amax
+                plt.sca(ax[row,col])
+                plt.loglog(freqs,ASD)
+                ax[row,col].set_ylim(alim)
+            else:
+                pix_label='other\nASIC'
+                label_colour='yellow'
+                face_colour='blue'
+
+            ax[row,col].set_facecolor(face_colour)
+            ax[row,col].text(text_x,text_y,pix_label,va='bottom',ha='right',color=label_colour,
+                             fontsize=8,transform=ax[row,col].transAxes)
             
-        if not isinstance(timeline,np.ndarray):
-            plt.close(fig)
-            return None
+    if not pngname_fullpath is None: plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
 
-
-        data_time=self.obsdate
-        time_txt=data_time.strftime('%Y-%m-%m %H:%M:%S UTC')
-        
-	PSD, freqs = mlab.psd(timeline[TES_index],
-                              Fs = fs,
-                              NFFT = timeline.shape[1],
-                              window=mlab.window_hanning,
-                              detrend='mean')
-
-        
-        ax_timeline.cla()
-	ax_timeline.plot(timeline[TES_index])
-        ax_timeline.text(txt_x,txt_y,time_txt,transform=ax_timeline.transAxes)
-        plt.pause(0.01)
-
-        ASD=np.sqrt(PSD)
-        ax_asd.cla()
-	ax_asd.loglog(freqs,ASD)
-        ax_asd.text(txt_x,txt_y,time_txt,transform=ax_asd.transAxes)
-        plt.pause(0.01)
-        
-        if not monitor_mode:
-            pngname=str('%s_TES%03i_timeline%03i.png' % (filerootname,TES,idx))
-            plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
-
-        idx+=1
-
-    plt.show()
-
-    if not replay and not monitor_mode:
-        self.timelines=np.array(saved_timelines)
-        self.write_fits()
-
-    return self.timelines
-
+    return
+    
