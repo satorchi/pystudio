@@ -23,20 +23,6 @@ import matplotlib.mlab as mlab
 import pickle
 
 
-def read_ASD_picklefile(self,picklename):
-    ''' 
-    legacy: pickle file was only used once.  Use FITS from now on.        
-    '''
-    h=open(picklename,'r')
-    timelines=pickle.load(h)
-    self.timelines=timelines
-    replay=True
-    tinteg=10.
-    ntimelines=timelines.shape[0]
-    self.assign_obsdate(self.read_date_from_filename(picklename))
-    self.nsamples=100 # this should be read from file!
-    return
-
 def plot_ASD(self,TES=None,
              timeline_index=0,
              save=True,
@@ -53,7 +39,7 @@ def plot_ASD(self,TES=None,
         print('ERROR! No timeline data!')
         return None
 
-    ntimelines=len(self.timelines)
+    ntimelines=self.ntimelines()
     if timeline_index >= ntimelines:
         print('ERROR! timeline index out of range.  Enter an index between 0 and %i' % (ntimelines-1))
         return None
@@ -66,9 +52,9 @@ def plot_ASD(self,TES=None,
     result={}
     result['TES']=TES
     
-    timeline=self.timelines[timeline_index][TES_index,:]
-    obsdate=self.obsdates[timeline_index]
-    Tbath=self.temperatures[timeline_index]
+    timeline=self.timeline(TES,timeline_index)
+    obsdate=self.tdata[timeline_index]['DATE-OBS']
+    Tbath=self.tdata[timeline_index]['TES_TEMP']
     current=self.ADU2I(timeline) # uA
     timeline_npts=len(timeline)
     sample_period=self.sample_period()
@@ -244,14 +230,14 @@ def plot_ASD_physical_layout(self,timeline_index=0,xwin=True,amin=None,amax=None
         print('ERROR! No timeline data!')
         return None
 
-    ntimelines=len(self.timelines)
+    ntimelines=self.ntimelines()
     if timeline_index >= ntimelines:
         print('ERROR! timeline index out of range.  Enter an index between 0 and %i' % (ntimelines-1))
         return None
     
     
-    Tbath=self.temperatures[timeline_index]
-    obsdate=self.obsdates[timeline_index]
+    Tbath=self.tdata[timeline_index]['TES_TEMP']
+    obsdate=self.tdata[timeline_index]['DATE-OBS']
     fs = 1.0/self.sample_period()
 
     nrows=self.pix_grid.shape[0]
@@ -295,7 +281,7 @@ def plot_ASD_physical_layout(self,timeline_index=0,xwin=True,amin=None,amax=None
                 label_colour='black'
                 face_colour='white'
                 TES_index=self.TES_index(TES)
-                timeline=self.timelines[timeline_index][TES_index,:]
+                timeline=self.timeline(TES,timeline_index)
                 current=self.ADU2I(timeline)
                 timeline_npts=len(timeline)
                 PSD, freqs = mlab.psd(current,

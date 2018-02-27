@@ -24,7 +24,6 @@ def assign_defaults(self):
     # so now QubicStudio and the dilution fridge use the same ASIC designation
     self.asic_reversal_date=dt.datetime.strptime('2018-02-06 18:00','%Y-%m-%d %H:%M')
     self.assign_obsdate()
-    self.obsdates=None
     self.endobs=None
     self.debuglevel=0
     self.zero=1e-9
@@ -57,8 +56,8 @@ def assign_defaults(self):
     self.nsamples=None
     self.chunk_size=None
     self.rawmask=None
-    self.timelines=None
     self.timeline_conversion=None
+    self.tdata=None
     self.assign_pix_grid()
     self.assign_pix2tes()
     self.filtersummary=[]
@@ -66,7 +65,6 @@ def assign_defaults(self):
     #self.assign_datadir() # already called from assign_obsdate() above
     self.assign_lookup_table()
     self.temperature=None
-    self.temperatures=None
     self.oxford_assign_temperature_labels()
     self.oxford_assign_heater_ranges()
     self.calsource_LF=None

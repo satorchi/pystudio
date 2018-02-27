@@ -316,7 +316,7 @@ def get_chunksize(self):
     if client is None:return None
 
     # flush the request queue just in case
-    client.abort_requests()
+    q=client.abort_requests()
 
     self.debugmsg('getting chunk size...')
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
@@ -340,36 +340,44 @@ def get_RawMask(self):
     self.rawmask=rawmask
     return rawmask
     
-def integrate_scientific_data(self):
+def integrate_scientific_data(self,monitor_mode=False):
     '''
     get a data timeline
     '''
     client = self.connect_QubicStudio()
     if client is None:return None
 
+    if not self.exist_timeline_data():self.tdata=[]
+    tdata={}
+    
     self.debugmsg('calling integrate_scientific_data for ASIC %i' % self.asic)
     self.debugmsg ('integration_time=%.2f' % self.tinteg)
     
-    # reconfigure the FLL (stop/start)
-    #if not self.configure_PID(0,20,0):return None ### this shouldn't go here.
-
     nsamples = self.get_nsamples()
     if nsamples is None: return None
-
+    tdata['nsamples']=nsamples
+    
     period = self.sample_period()
     self.debugmsg('period=%.3f msec' % (1000*period))
+    tdata['sample_period']=period
+    
     timeline_size = int(np.ceil(self.tinteg / period))
     self.debugmsg('timeline size=%i' % timeline_size)
+
     chunk_size=self.get_chunksize()
     if chunk_size is None: return None
+    tdata['CHUNK']=chunk_size
+    
     timeline = np.empty((self.NPIXELS, timeline_size))
 
     # date of the observation
     self.assign_obsdate()
-
+    tdata['DATE-OBS']=self.obsdate
+    
     # bath temperature
     self.oxford_read_bath_temperature()
-
+    tdata['TES_TEMP']=self.temperature
+    
     self.debugmsg('requesting scientific data timeline...')
     parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
     req = client.request(parameter)
@@ -382,6 +390,8 @@ def integrate_scientific_data(self):
         self.debugmsg('got data chunk.')
         istart += chunk_size
     req.abort()
+    tdata['TIMELINE']=timeline
+    if not monitor_mode:self.tdata.append(tdata)
     return timeline    
 
 def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
@@ -539,15 +549,11 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     npts_timeline=timeline.shape[1]
     self.debugmsg('number of points in timeline: %i' % npts_timeline)
 
-
-    # if this is the first one, assign a new timeline array
-    if not self.exist_timeline_data():
-        self.timelines=[]
-        self.obsdates=[]
-        self.temperatures=[]
-    self.timelines.append(timeline)
-    self.obsdates.append(self.obsdate)
-    self.temperatures.append(self.temperature)
+    ntimelines=self.ntimelines()
+    timeline_index=ntimelines-1
+    self.tdata[timeline_index]['BIAS_MIN']=vmin
+    self.tdata[timeline_index]['BIAS_MAX']=vmax
+    self.tdata[timeline_index]['BIAS_MOD']=frequency
     return timeline
 
 def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
@@ -566,26 +572,14 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     chunksize=self.get_chunksize()
     self.assign_obsdate()
 
-    if not self.exist_timeline_data():
-        self.timelines=[]
-        self.obsdates=[]
-        self.temperatures=[]
     idx=0
     ax_timeline=None
     ax_asd=None
     while idx<ntimelines or monitor_mode:
-        self.assign_obsdate()
-        self.obsdates.append(self.obsdate)
-        Tbath=self.oxford_read_bath_temperature()
-        
         timeline = self.integrate_scientific_data()
-        if not monitor_mode:
-            self.timelines.append(timeline)
-            self.temperatures.append(Tbath)
-            self.obsdates.append(self.obsdate)
-
-        ntimelines=len(self.timelines)
-        result=self.plot_ASD(TES,ntimelines-1,ax_timeline=ax_timeline,ax_asd=ax_asd,save=not monitor_mode)
+        ntimelines=self.ntimelines()
+        timeline_index=ntimelines-1
+        result=self.plot_ASD(TES,timeline_index,ax_timeline=ax_timeline,ax_asd=ax_asd,save=not monitor_mode)
         ax_asd=result['ax_asd']
         ax_timeline=result['ax_timeline']
         idx+=1
@@ -593,5 +587,5 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     if not monitor_mode:
         self.write_fits()
 
-    return self.timelines
+    return 
 

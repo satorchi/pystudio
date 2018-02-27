@@ -37,11 +37,11 @@ def print_datlist(datlist,obsdate=None,temperature=None):
     for idx,go in enumerate(datlist):
         printit=True
         if go.exist_timeline_data():
-            ntimelines=len(go.timelines)
+            ntimelines=go.ntimelines()
             for t_idx in range(ntimelines):
                 printit=True
-                T=go.temperatures[t_idx]
-                d=go.obsdates[t_idx]
+                T=go.tdata[t_idx]['TES_TEMP']
+                d=go.tdata[t_idx]['DATE-OBS']
                 if not obsdate is None and d!=obsdate:
                     printit=False
                 if not temperature is None and not (T<temperature+0.001 and T>temperature-0.001):
@@ -788,7 +788,7 @@ def rt_analysis(TES,datlist,xwin=True):
         if go.detector_name!=detector_name:
             print('ERROR! These data are not for the same detector array!')
             
-        ntimelines=len(go.timelines)
+        ntimelines=go.ntimelines()
         for idx in range(ntimelines):
             res=go.plot_timeline(TES,timeline_index=idx,fit=True,xwin=False)
             reslist.append(res)

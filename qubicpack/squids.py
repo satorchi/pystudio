@@ -36,20 +36,17 @@ def squid_test(self,vmin=0.0,vmax=15.0,dv=1.0,tinteg=None):
     mean_SQUIDs = np.zeros((self.NPIXELS, voltages.size))
     min_SQUIDs  = np.zeros((self.NPIXELS, voltages.size))
     max_SQUIDs  = np.zeros((self.NPIXELS, voltages.size))
-    timelines=[]
     for idx, bias in enumerate(voltages):
         client.sendSetAsicVicm(self.QS_asic_index, 3)
         client.waitMs(500)
         client.sendSetAsicSpol(self.QS_asic_index, bias)
         client.waitMs(500)
         timeline = self.integrate_scientific_data()
-        timelines.append(timeline)
         mean_SQUIDs[:, idx] = timeline.mean(axis=-1)
         min_SQUIDs[:, idx] = timeline.min(axis=-1)
         max_SQUIDs[:, idx] = timeline.max(axis=-1)
 
 
-    self.timelines=np.array(timelines)
     delta_SQUIDs = max_SQUIDs - min_SQUIDs
 
     # Recherche max

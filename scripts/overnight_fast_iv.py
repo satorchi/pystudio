@@ -145,6 +145,10 @@ for arg in argv:
         cycle_temp=True
         continue
 
+    if arg.upper().find('--NO-CYCLE')==0:
+        cycle_temp=False
+        continue
+    
 # check if we can connect
 if TESTMODE:
     go.client=dummy_client()
@@ -257,6 +261,7 @@ if meastype is None:
     meastype=go.get_from_keyboard('Which type of measurement (IV or RT)? ','IV')
 meastype=meastype.upper()    
 if meastype=='BOTH':
+    params=params_IV # first measurement is I-V
     meastype_str='I-V and R-T'
     go2=qp()
     go2.debuglevel=1
@@ -365,11 +370,11 @@ for T in Tbath_target:
             go.writelog('minimum bias=%.2f V' % params_rt['min_bias'])
             go.writelog('maximum bias=%.2f V' % params_rt['max_bias'])
             do_measurement=go2.get_iv_timeline(vmin=params_rt['min_bias'],vmax=params_rt['max_bias'],frequency=params_rt['frequency'])
-        if do_measurement is None:
-            go.writelog('ERROR! Did not successfully acquire a timeline for %s measurement!' % params_rt['meastype'])
-        else:
-            go2.write_fits()
-        go.writelog('end %s measurement' % params_rt['meastype'])
+            if do_measurement is None:
+                go.writelog('ERROR! Did not successfully acquire a timeline for %s measurement!' % params_rt['meastype'])
+            else:
+                go2.write_fits()
+            go.writelog('end %s measurement' % params_rt['meastype'])
             
         '''
         # do this in post processing instead

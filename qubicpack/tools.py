@@ -12,7 +12,7 @@ tools which are generally useful for scripts using pystudio
 """
 from __future__ import division, print_function
 import numpy as np
-import sys,os,time,subprocess
+import sys,os,time,subprocess,struct
 import datetime as dt
 import matplotlib.pyplot as plt
 from glob import glob
@@ -153,28 +153,33 @@ def write_fits(self):
             fitsfile_fullpath=self.output_filename(fitsfile)
             print('instead, saving to file: %s' % fitsfile_fullpath)
 
-        ntimelines=len(self.timelines)
+        ntimelines=self.ntimelines()
 
         hdulist=[prihdu]
         if not tbhdu0 is None:hdulist.append(tbhdu0)
-            
-        have_times=False
-        if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
-            have_times=True
-        have_temperatures=False
-        if isinstance(self.temperatures,list) and len(self.temperatures)==ntimelines:
-            have_temperatures=True
-        
-        for n in range(ntimelines):
-            fmtstr=str('%iD' % self.timelines[n].shape[1])
-            dimstr=str('%i' % self.timelines[n].shape[0])
-            col1  = pyfits.Column(name='timelines', format=fmtstr, dim=dimstr, unit='ADU', array=self.timelines[n])
+                    
+        for timeline_index in range(ntimelines):
+            timeline_array=self.tdata[timeline_index]['TIMELINE']
+            fmtstr=str('%iD' % timeline_array.shape[1])
+            dimstr=str('%i' % timeline_array.shape[0])
+            col1  = pyfits.Column(name='timelines', format=fmtstr, dim=dimstr, unit='ADU', array=timeline_array)
             cols  = pyfits.ColDefs([col1])
             tbhdu = pyfits.BinTableHDU.from_columns(cols)
-            if have_times:
-                tbhdu.header['DATE-OBS']=(self.obsdates[n].strftime('%Y-%m-%d %H:%M:%S UTC'),'date of the observation in UTC')
-            if have_temperatures:
-                tbhdu.header['TES_TEMP']=(self.temperatures[n],'TES physical temperature in K')
+            if 'DATE-OBS' in self.tdata[timeline_index].keys():
+                obsdate=self.tdata[timeline_index]['DATE-OBS']
+                tbhdu.header['DATE-OBS']=(obsdate.strftime('%Y-%m-%d %H:%M:%S UTC'),'date of the observation in UTC')
+            if 'TES_TEMP' in self.tdata[timeline_index].keys():
+                Tbath=self.tdata[timeline_index]['TES_TEMP']
+                tbhdu.header['TES_TEMP']=(Tbath,'TES physical temperature in K')
+            if 'BIAS_MIN' in self.tdata[timeline_index].keys():
+                min_bias=self.tdata[timeline_index]['BIAS_MIN']
+                tbhdu.header['BIAS_MIN']=(min_bias,'minimum bias in V')
+            if 'BIAS_MAX' in self.tdata[timeline_index].keys():
+                max_bias=self.tdata[timeline_index]['BIAS_MAX']
+                tbhdu.header['BIAS_MAX']=(max_bias,'maximum bias in V')
+            if 'BIAS_MOD' in self.tdata[timeline_index].keys():
+                bias_frequency=self.tdata[timeline_index]['BIAS_MOD']
+                tbhdu.header['BIAS_MOD']=(bias_frequency,'bias modulation frequency in Hz')
 
             hdulist.append(tbhdu)
             
@@ -250,9 +255,7 @@ def read_fits(self,filename):
 
     self.debugmsg('Finished reading the primary header.')
     
-    timelines=[]
-    obsdates=[]
-    temperatures=[]
+    self.tdata=[]
     for hdu in h[1:]:
         hdrtype=hdu.header['TTYPE1']
 
@@ -309,31 +312,26 @@ def read_fits(self,filename):
             this is the timeline data
             '''
             print('reading timeline data')
+            tdata={}
             data=hdu.data
             npts=eval(hdu.header['TFORM1'].strip()[:-1])
             timeline=np.empty((self.NPIXELS,npts))
             for n in range(self.NPIXELS):
                 timeline[n,:]=data[n][0]
+            tdata['TIMELINE']=timeline
             if 'DATE-OBS' in hdu.header.keys():
                 obsdate=dt.datetime.strptime(hdu.header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC')
-                obsdates.append(obsdate)
+                tdata['DATE-OBS']=obsdate
             if 'TES_TEMP' in hdu.header.keys():
                 temperature=hdu.header['TES_TEMP']
-                temperatures.append(temperature)
+                tdata['TES_TEMP']=temperature
                 
-            timelines.append(timeline)
-            
+            self.tdata.append(tdata)
 
-    # print('hdrtype=%s' % hdrtype)
-    if hdrtype=='timelines':
-        print('assigning timeline data')
-        self.timelines=timelines
-        if len(obsdates)>0:self.obsdates=obsdates
-        if len(temperatures)>0:self.temperatures=temperatures
     h.close()
 
 
-    if isinstance(self.adu,np.ndarray):
+    if self.exist_iv_data():
         f=self.read_filter()
         if f==None:f=self.filter_iv_all()
 
@@ -341,8 +339,6 @@ def read_fits(self,filename):
 
 
 def read_bins(self,filename):
-    import struct
-            
     if not isinstance(filename,str):
         print('ERROR! please enter a valid filename.')
         return None
@@ -352,9 +348,9 @@ def read_bins(self,filename):
         return None
             
     print('reading binary file: %s, I suppose this is a timeline' % filename)
-        
+
+    self.tdata=[]
     data=[]
-    timelines=[]
     with open(filename, "rb") as f:
         b = f.read(14)
         data.append(struct.unpack('128i', f.read(4*128)))
@@ -363,13 +359,18 @@ def read_bins(self,filename):
     data=np.asarray(zip(*data))
     self.NPIXELS=128
     npts=data.size/128.
-            
-    timeline=np.empty((npts))
+
+    timeline_array=[]
+    timeline_tes=np.empty((npts))
     for n in range(self.NPIXELS):
-        timeline=data[n]
-        timelines.append(timeline)
-        
-    self.timelines=np.array(timelines)
+        timeline_tes=data[n]        
+        timeline_array.append(timeline_tes)
+
+    timeline_array=np.array(timeline_array)
+    self.tdata=[]
+    tdata={}
+    tdata['TIMELINE']=timeline_array
+    self.tdata.append(tdata)
     f.close()
     return
         

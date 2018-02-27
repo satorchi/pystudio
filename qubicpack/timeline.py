@@ -22,13 +22,39 @@ def exist_timeline_data(self):
     '''
     check if we have timeline data
     '''
-    if not isinstance(self.timelines,list):
+    if self.tdata is None:
         return False
-    if len(self.timelines)==0:
+    if not isinstance(self.tdata,list):
         return False
-    if not isinstance(self.timelines[0],np.ndarray):
+    if len(self.tdata)==0:
+        return False
+    if not 'TIMELINE' in self.tdata[0].keys():
+        return False
+    if not isinstance(self.tdata[0]['TIMELINE'],np.ndarray):
         return False
     return True
+
+def ntimelines(self):
+    '''
+    return the number of timelines collected
+    '''
+    if not self.exist_timeline_data():
+        return 0
+    return len(self.tdata)
+
+def timeline(self,TES,timeline_index=0):
+    '''
+    return the timeline for a given TES and timeline index
+    '''
+    if not self.exist_timeline_data():return None
+    ntimelines=self.ntimelines()
+    if timeline_index>=ntimelines:
+        print('ERROR! timeline index out of range.  Enter an index between 0 and %i' % (ntimelines-1))
+        return None
+    TES_index=self.TES_index(TES)
+    if TES_index is None:return None
+    timeline=self.tdata[timeline_index]['TIMELINE'][TES_index,:]
+    return timeline
 
 def amplitude2DAC(self,amplitude):
     '''
@@ -121,13 +147,13 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     '''
     if not self.exist_timeline_data():return None
     if not isinstance(timeline_index,int):timeline_index=0
-    ntimelines=len(self.timelines)
+    ntimelines=self.ntimelines()
     if timeline_index>=ntimelines:
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
     
     TES_index=self.TES_index(TES)
-    timeline=self.timelines[timeline_index][TES_index,:]
+    timeline=self.timeline(TES,timeline_index)
     timeline_npts=len(timeline)
 
     sample_period=self.sample_period()
@@ -166,20 +192,20 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
         # by default, plot the first one.  this could change
         timeline_index=0
 
-    ntimelines=len(self.timelines)
+    ntimelines=self.ntimelines()
     if timeline_index>=ntimelines:
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
 
-    if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
-        timeline_date=self.obsdates[timeline_index]
+    if 'DATE-OBS' in self.tdata[timeline_index].keys():
+        timeline_date=self.tdata[timeline_index]['DATE-OBS']
     else:
         timeline_date=self.obsdate
     
     ttl=str('QUBIC Timeline curve for TES#%3i (%s)' % (TES,timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
 
-    if isinstance(self.temperatures,list) and len(self.temperatures)==ntimelines:
-        tempstr=str('%.0f mK' % (1000*self.temperatures[timeline_index]))
+    if 'TES_TEMP' in self.tdata[timeline_index].keys():
+        tempstr='%.0f mK' % (1000*self.tdata[timeline_index]['TES_TEMP'])
     else:
         if self.temperature==None:
             tempstr='unknown'
@@ -197,7 +223,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     ax.set_ylabel('Current  /  $\mu$A')
     
     TES_index=self.TES_index(TES)
-    timeline=self.timelines[timeline_index][TES_index,:]
+    timeline=self.timeline(TES,timeline_index)
     current=self.ADU2I(timeline) # uAmps
     timeline_npts=len(timeline)
 
@@ -272,7 +298,7 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True,imin=None,imax
     plot the timeline curves in thumbnails mapped to the physical location of each detector
     '''
     if not self.exist_timeline_data():return None
-    ntimelines=len(self.timelines)
+    ntimelines=self.ntimelines()
 
     if not isinstance(timeline_index,int):
         # by default, plot the first one.
@@ -281,16 +307,16 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True,imin=None,imax
     if timeline_index>=ntimelines:
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
-    
-    if isinstance(self.obsdates,list) and len(self.obsdates)==ntimelines:
-        timeline_date=self.obsdates[timeline_index]
+
+    if 'DATE-OBS' in self.tdata[timeline_index].keys():
+        timeline_date=self.tdata[timeline_index]['DATE-OBS']
     else:
         timeline_date=self.obsdate
 
     ttl=str('QUBIC Timeline curves (%s)' % (timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
 
-    if isinstance(self.temperatures,list) and len(self.temperatures)==ntimelines:
-        tempstr=str('%.0f mK' % (1000*self.temperatures[timeline_index]))
+    if 'TES_TEMP' in self.tdata[timeline_index].keys():
+        tempstr='%.0f mK' % (1000*self.tdata[timeline_index]['TES_TEMP'])
     else:
         if self.temperature==None:
             tempstr='unknown'
@@ -337,7 +363,7 @@ def plot_timeline_physical_layout(self,timeline_index=0,xwin=True,imin=None,imax
                 label_colour='black'
                 face_colour='white'
                 TES_index=self.TES_index(TES)
-                timeline=self.timelines[timeline_index][TES_index,:]
+                timeline=self.timeline(TES,timeline_index)
                 I=self.ADU2I(timeline)
                 self.debugmsg('plotting TES %i' % TES)
                 plt.sca(ax[row,col])
@@ -374,7 +400,7 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0,shift=0.
     this is done so that we can directly use all the I-V methods
     '''
     if not self.exist_timeline_data():return None
-    ntimelines=len(self.timelines)
+    ntimelines=self.ntimelines()
     if timeline_index>=ntimelines:
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
@@ -423,12 +449,14 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0,shift=0.
     self.vbias=ysine[ipeak0:ipeak1]
     self.min_bias=min(self.vbias)
     self.max_bias=max(self.vbias)
-    self.obsdate=self.obsdates[timeline_index]
-    self.temperature=self.temperatures[timeline_index]
+    self.obsdate=self.tdata[timeline_index]['DATE-OBS']
+    self.temperature=self.tdata[timeline_index]['TES_TEMP']
     npts=len(self.vbias)
     self.adu=np.empty((self.NPIXELS,npts))
     for idx in range(self.NPIXELS):
-        self.adu[idx,:]=self.timelines[timeline_index][idx,ipeak0:ipeak1]
+        TES=idx+1
+        self.adu[idx,:]=self.timeline(TES,timeline_index)[ipeak0:ipeak1]
+        
 
     return True
 
@@ -451,16 +479,16 @@ def fit_timeline(self,TES,timeline_index=None,ipeak0=None,ipeak1=None):
     fit['ASIC']=self.asic
     
     if timeline_index is None:timeline_index=0    
-    ntimelines=len(self.timelines)
+    ntimelines=self.ntimelines()
     if timeline_index>=ntimelines:
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
     fit['timeline_index']=timeline_index
-    fit['date']=self.obsdates[timeline_index]
-    fit['Tbath']=self.temperatures[timeline_index]
+    fit['date']=self.tdata[timeline_index]['DATE-OBS']
+    fit['Tbath']=self.tdata[timeline_index]['TES_TEMP']
     
     TES_index=self.TES_index(TES)
-    timeline=self.timelines[timeline_index][TES_index,:]
+    timeline=self.timeline(TES,timeline_index)
     current=self.ADU2I(timeline)
     timeline_npts=len(timeline)
 
