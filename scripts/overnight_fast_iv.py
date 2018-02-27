@@ -265,7 +265,6 @@ if meastype=='BOTH':
     meastype_str='I-V and R-T'
     go2=qp()
     go2.debuglevel=1
-    go2.logfile=go.logfile
     go2.assign_asic(go.asic)
     go2.assign_detector_name(go.detector_name)
     go2.min_bias=params_RT['min_bias']
@@ -290,6 +289,7 @@ else:
 
 # make a log file
 go.assign_logfile('temperature_%s' % meastype)
+if meastype=='BOTH':go2.logfile=go.logfile
 go.writelog('starting %s measurements at different temperatures using the timeline (fast) method' % meastype_str)
 go.writelog('ASIC=%i' % go.asic)
 go.writelog('start temperature=%.3f K' % start_temp)
