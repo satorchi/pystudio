@@ -365,16 +365,16 @@ for T in Tbath_target:
 
         # if we're doing both measurements, the second one is always the RT measurement
         if meastype=='BOTH' and Tbath>Tcrit:
-            go2.configure_PID(I=params_rt['PID_I']) 
-            go2.assign_integration_time(params_rt['timeline_period'])
-            go.writelog('minimum bias=%.2f V' % params_rt['min_bias'])
-            go.writelog('maximum bias=%.2f V' % params_rt['max_bias'])
-            do_measurement=go2.get_iv_timeline(vmin=params_rt['min_bias'],vmax=params_rt['max_bias'],frequency=params_rt['frequency'])
+            go2.configure_PID(I=params_RT['PID_I']) 
+            go2.assign_integration_time(params_RT['timeline_period'])
+            go.writelog('minimum bias=%.2f V' % params_RT['min_bias'])
+            go.writelog('maximum bias=%.2f V' % params_RT['max_bias'])
+            do_measurement=go2.get_iv_timeline(vmin=params_RT['min_bias'],vmax=params_RT['max_bias'],frequency=params_RT['frequency'])
             if do_measurement is None:
-                go.writelog('ERROR! Did not successfully acquire a timeline for %s measurement!' % params_rt['meastype'])
+                go.writelog('ERROR! Did not successfully acquire a timeline for %s measurement!' % params_RT['meastype'])
             else:
                 go2.write_fits()
-            go.writelog('end %s measurement' % params_rt['meastype'])
+            go.writelog('end %s measurement' % params_RT['meastype'])
             
         '''
         # do this in post processing instead
