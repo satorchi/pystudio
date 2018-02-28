@@ -405,5 +405,10 @@ def writelog(self,msg):
     handle.write(timestamp+msg+'\n')
     handle.close()
     print(timestamp+msg)
+
+    # send it to the QubicStudio logbook, if possible
+    client=self.connect_QubicStudio(silent=True)
+    if not client is None:client.sendAddToLogbook('pyStudio',msg)
+
     return
          
