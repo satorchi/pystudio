@@ -164,6 +164,8 @@ def make_ASD_tex_report(self,timeline_index=0,reslist=None):
     observer=self.observer.replace('<','$<$').replace('>','$>$')
     obsdate=reslist[0]['obsdate']
     Tbath=reslist[0]['Tbath']
+    min_bias=reslist[0]['min_bias']
+    max_bias=reslist[0]['max_bias']
     
     texfilename=str('QUBIC_Array-%s_ASIC%i_ASD_%s.tex' % (self.detector_name,self.asic,obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     texfilename_fullpath=self.output_filename(texfilename)
