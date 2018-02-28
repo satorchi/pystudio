@@ -60,7 +60,7 @@ import sys,os,time
 import datetime as dt
 import matplotlib.pyplot as plt
 
-def connect_QubicStudio(self,client=None, ip=None):
+def connect_QubicStudio(self,client=None, ip=None, silent=False):
     if ip is None:
         ip=self.QubicStudio_ip
     else:
@@ -70,13 +70,13 @@ def connect_QubicStudio(self,client=None, ip=None):
         client = pystudio.get_client()
 
     if client is None:
-        print("connecting to QubicStudio on host: ",self.QubicStudio_ip)
+        if not silent:print("connecting to QubicStudio on host: ",self.QubicStudio_ip)
         client = pystudio.DispatcherAccess(self.QubicStudio_ip, 3002)
-        print('wait 3 seconds before doing anything')
+        if not silent:print('wait 3 seconds before doing anything')
         time.sleep(3)
 
     if not client.connected:
-        print("ERROR: could not connect to QubicStudio")
+        if not silent:print("ERROR: could not connect to QubicStudio")
         return None
 
     client.waitingForAckMode = True
@@ -172,7 +172,7 @@ def compute_offsets(self,count=10,consigne=0.0):
     for counter in range(count):
 
         print('count: %i/%i' % (counter+1,count))
-        timeline = self.integrate_scientific_data()
+        timeline = self.integrate_scientific_data(save=False)
         this_data_avg=timeline.mean(axis=-1)
         prev_offsets=offsets
         offsets=-k*(this_data_avg-consigne)+prev_offsets
@@ -227,7 +227,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
     for counter in range(count):
 
         self.debugmsg('count %i/%i: integrating...' % (counter+1,count))
-        timeline = self.integrate_scientific_data()
+        timeline = self.integrate_scientific_data(save=False)
         self.debugmsg('count %i/%i: finished integrating' % (counter+1,count))
         this_data_avg=timeline.mean(axis=-1)
         prev_offsets=offsets
@@ -252,7 +252,7 @@ def get_amplitude(self):
     ASIC number.
         
     """
-    timeline = self.integrate_scientific_data()
+    timeline = self.integrate_scientific_data(save=False)
     min_timeline = np.min(timeline, axis=-1)
     max_timeline = np.max(timeline, axis=-1)
     return max_timeline - min_timeline
@@ -267,7 +267,7 @@ def get_mean(self):
     ASIC number.
 
     """
-    timeline = self.integrate_scientific_data()
+    timeline = self.integrate_scientific_data(save=False)
     return timeline.mean(axis=-1)
 
 def get_nsamples(self):
@@ -341,7 +341,7 @@ def get_RawMask(self):
     self.rawmask=rawmask
     return rawmask
     
-def integrate_scientific_data(self,monitor_mode=False):
+def integrate_scientific_data(self,save=True):
     '''
     get a data timeline
     '''
@@ -356,11 +356,10 @@ def integrate_scientific_data(self,monitor_mode=False):
     
     nsamples = self.get_nsamples()
     if nsamples is None: return None
-    tdata['nsamples']=nsamples
+    tdata['NSAMPLES']=nsamples
     
     period = self.sample_period()
     self.debugmsg('period=%.3f msec' % (1000*period))
-    tdata['sample_period']=period
     
     timeline_size = int(np.ceil(self.tinteg / period))
     self.debugmsg('timeline size=%i' % timeline_size)
@@ -391,8 +390,12 @@ def integrate_scientific_data(self,monitor_mode=False):
         self.debugmsg('got data chunk.')
         istart += chunk_size
     req.abort()
+    #req.abort() # maybe we need this twice?
+    tdata['BIAS_MIN']=self.bias_min
+    tdata['BIAS_MAX']=self.bias_max
+    tdata['BIAS_MOD']=self.bias_frequency
     tdata['TIMELINE']=timeline
-    if not monitor_mode:self.tdata.append(tdata)
+    if save:self.tdata.append(tdata)
     return timeline    
 
 def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
@@ -412,6 +415,8 @@ def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
     DACoffset=self.bias_offset2DAC(bias)
     DACamplitude=self.amplitude2DAC(amplitude)
 
+    self.bias_min=bias-amplitude
+    self.bias_max=bias+amplitude
     
     # arguments (see comments at top of file):
     #                                  asic, shape, frequency, amplitude,   offset
@@ -538,6 +543,7 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     offset=vmin+amplitude
     
     if frequency is None:frequency=99
+    self.bias_frequency=frequency
     #amplitude=2*amplitude # BUG CHECK: is this peak-to-peak or amplitude?
     self.debugmsg('amplitude=%.2f, offset=%.2f, frequency=%.2f' % (amplitude,offset,frequency))
     if self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0) is None:return None
@@ -552,9 +558,6 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
 
     ntimelines=self.ntimelines()
     timeline_index=ntimelines-1
-    self.tdata[timeline_index]['BIAS_MIN']=vmin
-    self.tdata[timeline_index]['BIAS_MAX']=vmax
-    self.tdata[timeline_index]['BIAS_MOD']=frequency
     return timeline
 
 def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
@@ -567,6 +570,7 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     monitor_mode=False
     if not isinstance(ntimelines,int) or ntimelines<=0:
         monitor_mode=True
+    save=not monitor_mode
         
     self.assign_integration_time(tinteg)
     nsamples=self.get_nsamples()
@@ -577,7 +581,7 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     ax_timeline=None
     ax_asd=None
     while idx<ntimelines or monitor_mode:
-        timeline = self.integrate_scientific_data()
+        timeline = self.integrate_scientific_data(save=save)
         ntimelines=self.ntimelines()
         timeline_index=ntimelines-1
         result=self.plot_ASD(TES,timeline_index,ax_timeline=ax_timeline,ax_asd=ax_asd,save=not monitor_mode)
@@ -585,8 +589,7 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
         ax_timeline=result['ax_timeline']
         idx+=1
 
-    if not monitor_mode:
-        self.write_fits()
+    if not monitor_mode: self.write_fits()
 
     return 
 
