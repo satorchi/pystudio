@@ -28,11 +28,9 @@ def exist_iv_data(self):
     check if we have I-V data
     '''
     if not isinstance(self.adu,np.ndarray):
-        print('ERROR! No data!')
         return False
 
     if not isinstance(self.vbias,np.ndarray):
-        print('ERROR! No Vbias array!')
         return False
     return True
 
