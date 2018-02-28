@@ -32,7 +32,8 @@ def print_datlist(datlist,obsdate=None,temperature=None):
     print some of the main parameters of all the data in a list of qp objects
     select members of the list according to obsdate and/or temperature
     '''
-    print(' idx array ASIC date                temp')
+    if not isinstance(datlist,list):datlist=[datlist]
+    print(' idx    array ASIC date                temp')
     datstr='[%2i][%2i] %s ASIC%i %s %.3fmK'
     for idx,go in enumerate(datlist):
         printit=True
