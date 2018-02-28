@@ -40,7 +40,7 @@ def read_bath_temperature(qpobject):
 # create the  qubicpack object
 go=qp()
 # set debuglevel to 1 if you want lots of messages on the screen
-go.debuglevel=1
+go.debuglevel=0
 
 # set TESTMODE to False for a real measurement (default)
 TESTMODE=False
