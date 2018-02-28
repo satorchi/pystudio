@@ -55,6 +55,14 @@ def plot_ASD(self,TES=None,
     timeline=self.timeline(TES,timeline_index)
     obsdate=self.tdata[timeline_index]['DATE-OBS']
     Tbath=self.tdata[timeline_index]['TES_TEMP']
+    if 'BIAS_MIN' in self.tdata[timeline_index].keys():
+        min_bias=self.tdata[timeline_index]['BIAS_MIN']
+    else:
+        min_bias=self.min_bias
+    if 'BIAS_MAX' in self.tdata[timeline_index].keys():
+        max_bias=self.tdata[timeline_index]['BIAS_MAX']
+    else:
+        max_bias=self.max_bias        
     current=self.ADU2I(timeline) # uA
     timeline_npts=len(timeline)
     sample_period=self.sample_period()
@@ -62,6 +70,8 @@ def plot_ASD(self,TES=None,
     result['timeline_index']=timeline_index
     result['obsdate']=obsdate
     result['Tbath']=Tbath
+    result['min_bias']=min_bias
+    result['max_bias']=max_bias
     
     ttl='Timeline and Amplitude Spectral Density'
     subttl='\nQUBIC Array %s, ASIC %i, TES #%i, T$_\mathrm{bath}$=%.1f mK' % (self.detector_name,self.asic,TES,1000*Tbath)
@@ -192,7 +202,12 @@ def make_ASD_tex_report(self,timeline_index=0,reslist=None):
     else:
         tempstr=str('%.0f mK' % (1000*Tbath))
     h.write('\\item TES physical temperature: %s\n' % tempstr)
-
+    h.write('\\item minimum bias: %.2f V' % min_bias)
+    h.write('\\item maximum bias: %.2f V' % max_bias)
+    if min_bias!=max_bias:
+        amplitude=0.5*(max_bias-min_bias)
+        offset=min_bias+amplitude
+        h.write('\\item   equivalent to amplitude %.2f V with offset %.2f V' % (amplitude,offset))
     h.write('\\end{itemize}\n')
     
     h.write('\n\\vspace*{3ex}\n\\noindent This document includes the following:\n')
