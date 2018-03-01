@@ -62,10 +62,16 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     if not asic1_obj.exist_iv_data():
         asic1_data=False
         asic1_fontsize=figsize[0]
+        asic1_subttl='ASIC 1 blue background'
+    else:
+        asic1_subttl='Array %s ASIC1 black curves' % asic1_obj.detector_name
     if not asic2_obj.exist_iv_data():
         asic2_data=False
         asic2_fontsize=figsize[0]
-            
+        asic2_subttl='ASIC 2 green background'
+    else:
+        asic2_subttl='Array %s ASIC2 blue curves' % asic2_obj.detector_name
+
     asic1_obj.figsize=figsize
     fontsize=figsize[0]
     ttlfontsize=figsize[0]*1.2
@@ -82,8 +88,6 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     pngname='TES_Array-%s_%s.png' % (detector_name,temperature_str)
     if xwin: fig.canvas.set_window_title('plt:  QUBIC TES array')
 
-    asic1_subttl='Array %s ASIC1 black curves' % asic1_obj.detector_name
-    asic2_subttl='Array %s ASIC2 blue curves' % asic2_obj.detector_name
     ngood=0
     npix=0
     if asic1_data:
