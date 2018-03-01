@@ -60,25 +60,15 @@ def assign_pix2tes(self):
         asic_lower_right_row2=asic_lower_right[64:96]
         asic_lower_right_row3=asic_lower_right[96:128]
         new_asic_lower_right=np.concatenate([asic_lower_right_row3,asic_lower_right_row2,asic_lower_right_row1,asic_lower_right_row0])
-        self.TES2PIX=np.array([new_asic_lower_right,asic_upper_left])
 
-    # and make the reverse lookup... This is no longer used.  see pix2tes() below.
-    # Note that the index is counting from zero, but the pixel number counts from 1
-    PIX2TES_asic1=np.zeros(2*self.NPIXELS,dtype=int)
-    for i in range(self.NPIXELS):
-        pix=self.TES2PIX[0][i]
-        if pix<=2*self.NPIXELS: # we ignore the unused pixels labelled 1000 etc
-            PIX2TES_asic1[pix-1]=i+1
+        asic_upper_left_row0=asic_upper_left[0:32]
+        asic_upper_left_row1=asic_upper_left[32:64]
+        asic_upper_left_row2=asic_upper_left[64:96]
+        asic_upper_left_row3=asic_upper_left[96:128]
+        new_asic_upper_left=np.concatenate([asic_upper_left_row3,asic_upper_left_row2,asic_upper_left_row1,asic_upper_left_row0])
 
-    PIX2TES_asic2=np.zeros(2*self.NPIXELS,dtype=int)
-    for i in range(self.NPIXELS):
-        pix=self.TES2PIX[1][i]
-        if pix<=2*self.NPIXELS: # we ignore the unused pixels labelled 1000 etc
-            PIX2TES_asic2[pix-1]=i+1
-    
-    PIX2TES=[PIX2TES_asic1,PIX2TES_asic2]    
+        self.TES2PIX=np.array([new_asic_lower_right,new_asic_upper_left])
 
-    self.PIX2TES=np.array(PIX2TES)
     return
 
 def tes2pix(self,TES):
