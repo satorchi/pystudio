@@ -325,6 +325,12 @@ def read_fits(self,filename):
             if 'TES_TEMP' in hdu.header.keys():
                 temperature=hdu.header['TES_TEMP']
                 tdata['TES_TEMP']=temperature
+            if 'BIAS_MOD' in hdu.header.keys():
+                tdata['BIAS_MOD']=hdu.header['BIAS_MOD']
+            if 'BIAS_MIN' in hdu.header.keys():
+                tdata['BIAS_MIN']=hdu.header['BIAS_MIN']
+            if 'BIAS_MAX' in hdu.header.keys():
+                tdata['BIAS_MAX']=hdu.header['BIAS_MAX']
                 
             self.tdata.append(tdata)
 
