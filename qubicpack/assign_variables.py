@@ -34,8 +34,13 @@ def assign_defaults(self):
     #self.DAC2V=2.627e-4    # email from Michel Piat 2018/02/09 17:14 CET
     self.DAC2V=9.404/2**15 # measured Tue 13 Feb 2018 15:25:11 CET
     self.kBoltzmann=1.3806485279e-23
-    self.Rshunt=10.e-3 # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
-    self.Rbias =10.e3  # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
+    self.Rshunt=10.e-3  # 10mOhm, mail from M.Piat to M.Salatino 2017-08-10
+    self.Rbias =10.e3   # 10kOhm, mail from M.Piat to M.Salatino 2017-08-10
+    self.Rfeedback=10e3 # 10kOhm, this is selectable between 10kOhm and 100kOhm (also called "relay" resistance)
+    self.FLL_state=None
+    self.FLL_P=None
+    self.FLL_I=None
+    self.FLL_D=None
     self.figsize=(12.80,6.40)
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
     self.assign_asic(1)
@@ -51,6 +56,7 @@ def assign_defaults(self):
     self.min_bias=None
     self.max_bias_position=None
     self.bias_factor=1.0
+    self.bias_mode=None
     self.pausetime=0.3
     self.observer='APC LaboMM'
     self.nsamples=None
@@ -70,6 +76,32 @@ def assign_defaults(self):
     self.calsource_LF=None
     self.calsource_HF=None
     self.modulator=None
+
+    # keynames and descriptions for FITS files
+    self.fitsblurbs={}
+    self.fitsblurbs['TELESCOP']='Telescope used for the observation'
+    self.fitsblurbs['OBSERVER']='name of the observer'
+    self.fitsblurbs['DATE-OBS']='date of the observation in UTC'
+    self.fitsblurbs['END-OBS']='end time of the observation in UTC'
+    self.fitsblurbs['NSAMPLES']='number of samples per integration time'
+    self.fitsblurbs['INT-TIME']='integration time in seconds'
+    self.fitsblurbs['NPIXELS'] ='number of TES detectors in the array'
+    self.fitsblurbs['ASIC']    ='ASIC id (one quarter of the full QUBIC array)'
+    self.fitsblurbs['QUBIC-IP']='address of the QUBIC Local Control Computer'
+    self.fitsblurbs['NCYCLES'] ='number of cycles of the Bias voltage'
+    self.fitsblurbs['CYCBIAS'] ='ramp return Bias,  yes or no'
+    self.fitsblurbs['TES_TEMP']='TES physical temperature in K'
+    self.fitsblurbs['BIAS_MOD']='bias modulation frequency'
+    self.fitsblurbs['BIAS_MIN']='minimum bias in V'
+    self.fitsblurbs['BIAS_MAX']='maximum bias in V'
+    self.fitsblurbs['BIAS_FAC']='multiplicative factor for bias'
+    self.fitsblurbs['BIASMODE']='sinusoidal, triangle, continuous'
+    self.fitsblurbs['FLL_STAT']='Flux Lock Loop state (on/off)'
+    self.fitsblurbs['FLL_P']   ='Flux Lock Loop P level'
+    self.fitsblurbs['FLL_I']   ='Flux Lock Loop I level'
+    self.fitsblurbs['FLL_D']   ='Flux Lock Loop D level'
+    self.fitsblurbs['DET_NAME']='ID of the detector array'
+    self.fitsblurbs['R_FEEDBK']='Feedback resistance in Flux Lock Loop'
     return
 
 def assign_observer(self,observer='APC LaboMM'):
