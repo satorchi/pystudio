@@ -149,13 +149,6 @@ for arg in argv:
         cycle_temp=False
         continue
     
-# check if we can connect
-if TESTMODE:
-    go.client=dummy_client()
-else:
-    ret=go.verify_QS_connection()
-    if not ret:quit()
-
 
 '''
 get parameters from keyboard if not already specified
@@ -286,6 +279,12 @@ else:
     meastype_str='I-V'
     measurement_period=params['timeline_period']
 
+# check if we can connect
+if TESTMODE:
+    go.client=dummy_client()
+else:
+    ret=go.verify_QS_connection()
+    if not ret:quit()
 
 # make a log file
 go.assign_logfile('temperature_%s' % meastype)
