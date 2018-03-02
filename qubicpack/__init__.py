@@ -54,6 +54,7 @@ class qubicpack:
     
     from .tools import\
         read_date_from_filename,\
+        keyvals,\
         write_fits,\
         read_fits,\
         read_bins,\
@@ -189,6 +190,8 @@ class qubicpack:
             get_nsamples,\
             get_chunksize,\
             get_RawMask,\
+            get_bias,\
+            get_PID,\
             set_VoffsetTES,\
             get_iv_data,\
             get_iv_timeline,\
@@ -205,7 +208,7 @@ class qubicpack:
     def debugmsg(self,msg):
         if self.debuglevel>0:
             if self.logfile is None:
-                print('DEBUG %s : %s\n' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
+                print('DEBUG %s : %s' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
             else:
                 self.writelog('DEBUG: %s' % msg)
         return
