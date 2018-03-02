@@ -30,7 +30,8 @@ def plot_ASD(self,TES=None,
              ax_asd=None,
              xwin=True,
              amin=None,amax=None,
-             imin=None,imax=None):
+             imin=None,imax=None,
+             nbins=None):
     '''
     plot the Amplitude Spectral Density
     '''
@@ -49,9 +50,11 @@ def plot_ASD(self,TES=None,
         return None
     TES_index=self.TES_index(TES)
 
+    if nbins is None:nbins=1
+    
     result={}
     result['TES']=TES
-    
+    result['nbins']=nbins
     timeline=self.timeline(TES,timeline_index)
     obsdate=self.tdata[timeline_index]['DATE-OBS']
     Tbath=self.tdata[timeline_index]['TES_TEMP']
@@ -65,6 +68,9 @@ def plot_ASD(self,TES=None,
         max_bias=self.max_bias        
     current=self.ADU2I(timeline) # uA
     timeline_npts=len(timeline)
+    result['timeline_npts']=timeline_npts
+    bin_npts=timeline_npts//nbins
+    result['bin_npts']=bin_npts
     sample_period=self.sample_period()
     time_axis=sample_period*np.arange(timeline_npts)
     result['timeline_index']=timeline_index
@@ -105,7 +111,7 @@ def plot_ASD(self,TES=None,
     
     PSD, freqs = mlab.psd(current,
                           Fs = fs,
-                          NFFT = timeline_npts,
+                          NFFT = bin_npts,
                           window=mlab.window_hanning,
                           detrend='mean')
 
@@ -138,7 +144,7 @@ def plot_ASD(self,TES=None,
     else: plt.close(fig)
     return result
 
-def plot_ASD_all(self,timeline_index=0,imin=None,imax=None,amin=None,amax=None):
+def plot_ASD_all(self,timeline_index=0,imin=None,imax=None,amin=None,amax=None,nbins=None):
     '''
     plot all the ASD for all the TES for a given timeline
     '''
@@ -147,12 +153,12 @@ def plot_ASD_all(self,timeline_index=0,imin=None,imax=None,amin=None,amax=None):
         TES=TES_index+1
         result=self.plot_ASD(TES,timeline_index,
                              save=True,ax_timeline=None,ax_asd=None,xwin=False,
-                             imin=imin,imax=imax,amin=amin,amax=amax)
+                             imin=imin,imax=imax,amin=amin,amax=amax,nbins=nbins)
         reslist.append(result)
 
     return reslist
 
-def make_ASD_tex_report(self,timeline_index=0,reslist=None):
+def make_ASD_tex_report(self,reslist=None,timeline_index=0):
     '''
     make a tex source file with the report from the ASD measurement
     '''
@@ -166,6 +172,10 @@ def make_ASD_tex_report(self,timeline_index=0,reslist=None):
     Tbath=reslist[0]['Tbath']
     min_bias=reslist[0]['min_bias']
     max_bias=reslist[0]['max_bias']
+    timeline_index=reslist[0]['timeline_index']
+    timeline_npts=reslist[0]['timeline_npts']
+    nbins=reslist[0]['nbins']
+    bin_npts=reslist[0]['bin_npts']
     
     texfilename=str('QUBIC_Array-%s_ASIC%i_ASD_%s.tex' % (self.detector_name,self.asic,obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     texfilename_fullpath=self.output_filename(texfilename)
@@ -188,7 +198,7 @@ def make_ASD_tex_report(self,timeline_index=0,reslist=None):
     
     h.write('\\begin{document}\n')
     h.write('\\begin{center}\n')
-    h.write('QUBIC TES Report: Amplitude Spectram Density\\\\\n')
+    h.write('QUBIC TES Report: Amplitude Spectral Density\\\\\n')
     h.write(obsdate.strftime('data from %Y-%m-%d %H:%M UTC\\\\\n'))
     h.write('compiled by %s\\\\\nusing PyStudio/QubicPack: \\url{https://github.com/satorchi/pystudio}\n' % observer)
     h.write(dt.datetime.utcnow().strftime('this report compiled %Y-%m-%d %H:%M UTC\\\\\n'))
@@ -204,12 +214,15 @@ def make_ASD_tex_report(self,timeline_index=0,reslist=None):
     else:
         tempstr=str('%.0f mK' % (1000*Tbath))
     h.write('\\item TES physical temperature: %s\n' % tempstr)
-    h.write('\\item minimum bias: %.2f V' % min_bias)
-    h.write('\\item maximum bias: %.2f V' % max_bias)
+    h.write('\\item minimum bias: %.2f V\n' % min_bias)
+    h.write('\\item maximum bias: %.2f V\n' % max_bias)
     if min_bias!=max_bias:
         amplitude=0.5*(max_bias-min_bias)
         offset=min_bias+amplitude
-        h.write('\\item   equivalent to amplitude %.2f V with offset %.2f V' % (amplitude,offset))
+        h.write('\\item   equivalent to amplitude %.2f V with offset %.2f V\n' % (amplitude,offset))
+    h.write('\\item number of points per timeline: %i\n' % timeline_npts)
+    if nbins>1:
+        h.write('\\item timeline divided into %i bins with %i points per bin\n' % (nbins,bin_npts))
     h.write('\\end{itemize}\n')
     
     h.write('\n\\vspace*{3ex}\n\\noindent This document includes the following:\n')
@@ -239,7 +252,7 @@ def make_ASD_tex_report(self,timeline_index=0,reslist=None):
     h.close()
     return texfilename_fullpath
     
-def plot_ASD_physical_layout(self,timeline_index=0,xwin=True,amin=None,amax=None):
+def plot_ASD_physical_layout(self,timeline_index=0,xwin=True,amin=None,amax=None,nbins=None):
     '''
     plot the ASD for each TES in it's location in the focal plane
     '''
@@ -251,7 +264,8 @@ def plot_ASD_physical_layout(self,timeline_index=0,xwin=True,amin=None,amax=None
     if timeline_index >= ntimelines:
         print('ERROR! timeline index out of range.  Enter an index between 0 and %i' % (ntimelines-1))
         return None
-    
+
+    if nbins is None:nbins=1
     
     Tbath=self.tdata[timeline_index]['TES_TEMP']
     obsdate=self.tdata[timeline_index]['DATE-OBS']
@@ -303,7 +317,7 @@ def plot_ASD_physical_layout(self,timeline_index=0,xwin=True,amin=None,amax=None
                 timeline_npts=len(timeline)
                 PSD, freqs = mlab.psd(current,
                                       Fs = fs,
-                                      NFFT = timeline_npts,
+                                      NFFT = timeline_npts//nbins,
                                       window=mlab.window_hanning,
                                       detrend='mean')
                 ASD=np.sqrt(PSD)
