@@ -107,6 +107,27 @@ def verify_QS_connection(self):
 
     return True
     
+def get_PID(self):
+    '''
+    get the current Flux Lock Loop P,I,D and state
+    '''
+    client = self.connect_QubicStudio()
+    if client is None:return False
+    
+    req=client.fetch('QUBIC_FLL_State')
+    self.FLL_state=req[self.QS_asic_index]
+    
+    req=client.fetch('QUBIC_FLL_P')
+    self.FLL_P=req[self.QS_asic_index]
+    
+    req=client.fetch('QUBIC_FLL_I')
+    self.FLL_I=req[self.QS_asic_index]
+    
+    req=client.fetch('QUBIC_FLL_D')
+    self.FLL_D=req[self.QS_asic_index]
+
+    return self.FLL_state,self.FLL_P,self.FLL_I,self.FLL_D
+
 
 def configure_PID(self,P=0,I=20,D=0):
     '''
@@ -147,8 +168,10 @@ def compute_offsets(self,count=10,consigne=0.0):
     client.sendActivatePID(self.QS_asic_index,0)
 
     # make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
+    # This is Rfeedback
     client.sendSetRelay(self.QS_asic_index,1)
-
+    self.Rfeedback=10e3
+    
     # set sampling frequency 400Hz
     freq=400.
     # set sampling amplitude 1V
@@ -193,7 +216,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
 
     # make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
     client.sendSetRelay(self.QS_asic_index,1)
-
+    self.Rfeedback=10e3
 
     # set sampling frequency 10Hz
     freq=10.
@@ -341,6 +364,32 @@ def get_RawMask(self):
     self.rawmask=rawmask
     return rawmask
     
+def get_bias(self):
+    '''
+    get the bias configuration value from QubicStudio
+    '''
+    client = self.connect_QubicStudio()
+    if client is None:return None
+
+    DACoffset_all=client.fetch('QUBIC_CalibOffset')
+    DACoffset=DACoffset_all[self.QS_asic_index]
+    bias_offset=DACoffset*self.DAC2V
+
+    DACamplitude_all=client.fetch('QUBIC_CalibAmplitude')
+    DACamplitude=DACamplitude_all[self.QS_asic_index]
+    bias_amplitude=DACamplitude*self.DAC2V
+
+    self.min_bias=bias_offset-bias_amplitude
+    self.max_bias=bias_offset+bias_amplitude
+    
+    mode_all=client.fetch('QUBIC_CalibMode')
+    self.bias_mode=mode_all[self.QS_asic_index]
+
+    modulation_all=client.fetch('QUBIC_CalibFreq')
+    self.bias_frequency=modulation_all[self.QS_asic_index]
+    
+    return self.bias_mode,bias_offset,bias_amplitude,self.bias_frequency
+    
 def integrate_scientific_data(self,save=True):
     '''
     get a data timeline
@@ -367,6 +416,12 @@ def integrate_scientific_data(self,save=True):
     chunk_size=self.get_chunksize()
     if chunk_size is None: return None
     tdata['CHUNK']=chunk_size
+
+    bias_config=self.get_bias()
+    tdata['BIAS_MIN']=self.min_bias
+    tdata['BIAS_MAX']=self.max_bias
+    tdata['BIAS_MOD']=self.bias_frequency
+    tdata['BIASMODE']=self.bias_mode
     
     timeline = np.empty((self.NPIXELS, timeline_size))
 
@@ -391,12 +446,13 @@ def integrate_scientific_data(self,save=True):
         istart += chunk_size
     req.abort()
     #req.abort() # maybe we need this twice?
-    tdata['BIAS_MIN']=self.bias_min
-    tdata['BIAS_MAX']=self.bias_max
+    tdata['BIAS_MIN']=self.min_bias
+    tdata['BIAS_MAX']=self.max_bias
     tdata['BIAS_MOD']=self.bias_frequency
     tdata['TIMELINE']=timeline
     if save:self.tdata.append(tdata)
-    return timeline    
+    return timeline
+
 
 def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
     '''
@@ -415,8 +471,8 @@ def set_VoffsetTES(self, bias, amplitude, frequency=99, shape=0):
     DACoffset=self.bias_offset2DAC(bias)
     DACamplitude=self.amplitude2DAC(amplitude)
 
-    self.bias_min=bias-amplitude
-    self.bias_max=bias+amplitude
+    self.min_bias=bias-amplitude
+    self.max_bias=bias+amplitude
     
     # arguments (see comments at top of file):
     #                                  asic, shape, frequency, amplitude,   offset
@@ -580,13 +636,17 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     idx=0
     ax_timeline=None
     ax_asd=None
-    while idx<ntimelines or monitor_mode:
-        timeline = self.integrate_scientific_data(save=save)
-        ntimelines=self.ntimelines()
-        timeline_index=ntimelines-1
-        result=self.plot_ASD(TES,timeline_index,ax_timeline=ax_timeline,ax_asd=ax_asd,save=not monitor_mode)
+    while monitor_mode or idx<ntimelines:
+        self.debugmsg('ASD monitoring loop count: %i' % idx)
+        timeline = self.integrate_scientific_data(save=True) # have to save in memory for plotting afterwards
+        self.debugmsg('ASD monitoring: ntimelines=%i' % self.ntimelines())
+        timeline_index=self.ntimelines()-1
+        result=self.plot_ASD(TES,timeline_index,ax_timeline=ax_timeline,ax_asd=ax_asd,save=save)
         ax_asd=result['ax_asd']
         ax_timeline=result['ax_timeline']
+
+        # if only monitoring, get rid of the one just plotted
+        if monitor_mode:del(self.tdata[-1])
         idx+=1
 
     if not monitor_mode: self.write_fits()
