@@ -76,9 +76,8 @@ def ADU2I(self,ADU, offset=None, R1adjust=1.0):
     This is the magic formula to convert the measured output of the TES to current
     the voltage (ADU) returned by the TES is converted to a current in uA        
     '''
-    Rfb   = 10000. # Ohm
     q_ADC = 20./(2**16-1)
-    G_FLL = (10.4 / 0.2) * Rfb
+    G_FLL = (10.4 / 0.2) * self.Rfeedback
     n_masked=self.n_masked()
     
     I = 1e6 * (ADU / 2**7) * (q_ADC/G_FLL) * (self.nsamples - n_masked) * R1adjust
@@ -1343,7 +1342,7 @@ def filter_iv_all(self,
 
     # assign the R1 adjustment for each TES
     R1adjust_vector=np.ones(self.NPIXELS)
-    if type(R1adjust)==type(None):R1adjust=1.0
+    if R1adjust is None:R1adjust=1.0
     if isinstance(R1adjust,float) or isinstance(R1adjust,int):
         for idx in range(self.NPIXELS):R1adjust_vector[idx]=R1adjust
     elif len(R1adjust)==self.NPIXELS:R1adjust_vector=R1adjust
