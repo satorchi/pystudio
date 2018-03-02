@@ -75,7 +75,38 @@ def output_filename(self,rootname):
         filename='%s%s%s' % (self.datadir,os.sep,rootname)
 
     return filename
-        
+
+
+def keyvals(self):
+    '''
+    assign the FITS keyword values for the primary header
+    the keyword descriptions are done in assign_variables.py
+    '''
+    keyvals={}
+    keyvals['TELESCOP']='QUBIC'
+    keyvals['OBSERVER']=self.observer
+    keyvals['DATE-OBS']=self.obsdate.strftime('%Y-%m-%d %H:%M:%S UTC')
+    keyvals['END-OBS']=self.endobs.strftime('%Y-%m-%d %H:%M:%S UTC')
+    keyvals['NSAMPLES']=self.nsamples
+    keyvals['INT-TIME']=self.tinteg
+    keyvals['NPIXELS'] =self.NPIXELS
+    keyvals['ASIC']    =self.asic
+    keyvals['QUBIC-IP']=self.QubicStudio_ip
+    keyvals['NCYCLES'] =self.nbiascycles
+    keyvals['CYCBIAS'] =self.cycle_vbias
+    keyvals['TES_TEMP']=self.temperature
+    keyvals['BIAS_MOD']=self.bias_frequency
+    keyvals['BIAS_MIN']=self.min_bias
+    keyvals['BIAS_MAX']=self.max_bias
+    keyvals['BIAS_FAC']=self.bias_factor
+    keyvals['BIASMODE']=self.bias_mode
+    keyvals['FLL_STAT']=self.FLL_state
+    keyvals['FLL_P']   =self.FLL_P
+    keyvals['FLL_I']   =self.FLL_I
+    keyvals['FLL_D']   =self.FLL_D
+    keyvals['DET_NAME']=self.detector_name
+    keyvals['R_FEEDBK']=self.Rfeedback
+    return keyvals
     
 
 def write_fits(self):
@@ -89,25 +120,11 @@ def write_fits(self):
 
     if self.endobs==None:
         self.endobs=self.obsdate
-    
+
+    keyvals=self.keyvals()
     prihdr = pyfits.Header()
-    prihdr['TELESCOP']=('QUBIC','Telescope used for the observation')
-    prihdr['OBSERVER']=(self.observer,'name of the observer')
-    prihdr['DATE-OBS']=(self.obsdate.strftime('%Y-%m-%d %H:%M:%S UTC'),'date of the observation in UTC')
-    prihdr['END-OBS']=(self.endobs.strftime('%Y-%m-%d %H:%M:%S UTC'),'end time of the observation in UTC')
-    prihdr['NSAMPLES']=(self.nsamples,'number of samples per integration time')
-    prihdr['INT-TIME']=(self.tinteg,'integration time in seconds')
-    prihdr['NPIXELS']=(self.NPIXELS,'number of TES detectors in the array')
-    prihdr['ASIC']=(self.asic,'ASIC id (one quarter of the full QUBIC array)')
-    prihdr['QUBIC-IP']=(self.QubicStudio_ip,'address of the QUBIC Local Control Computer')
-    prihdr['NCYCLES']=(self.nbiascycles,'number of cycles of the Bias voltage')
-    prihdr['CYCBIAS']=(self.cycle_vbias,'ramp return Bias, yes or no')
-    prihdr['TES_TEMP']=(self.temperature,'TES physical temperature in K')
-    prihdr['BIAS_MOD']=(self.bias_frequency,'bias modulation frequency')
-    prihdr['BIAS_MIN']=(self.min_bias,'minimum bias in V')
-    prihdr['BIAS_MAX']=(self.max_bias,'maximum bias in V')
-    prihdr['BIAS_FAC']=(self.bias_factor,'multiplicative factor for bias')
-    prihdr['DET_NAME']=(self.detector_name,'ID of the detector array')
+    for key in self.fitsblurbs.keys():
+        prihdr[key]=(keyvals[key],self.fitsblurbs[key])
     prihdu = pyfits.PrimaryHDU(header=prihdr)
 
     tbhdu0=None
@@ -165,22 +182,14 @@ def write_fits(self):
             col1  = pyfits.Column(name='timelines', format=fmtstr, dim=dimstr, unit='ADU', array=timeline_array)
             cols  = pyfits.ColDefs([col1])
             tbhdu = pyfits.BinTableHDU.from_columns(cols)
-            if 'DATE-OBS' in self.tdata[timeline_index].keys():
-                obsdate=self.tdata[timeline_index]['DATE-OBS']
-                tbhdu.header['DATE-OBS']=(obsdate.strftime('%Y-%m-%d %H:%M:%S UTC'),'date of the observation in UTC')
-            if 'TES_TEMP' in self.tdata[timeline_index].keys():
-                Tbath=self.tdata[timeline_index]['TES_TEMP']
-                tbhdu.header['TES_TEMP']=(Tbath,'TES physical temperature in K')
-            if 'BIAS_MIN' in self.tdata[timeline_index].keys():
-                min_bias=self.tdata[timeline_index]['BIAS_MIN']
-                tbhdu.header['BIAS_MIN']=(min_bias,'minimum bias in V')
-            if 'BIAS_MAX' in self.tdata[timeline_index].keys():
-                max_bias=self.tdata[timeline_index]['BIAS_MAX']
-                tbhdu.header['BIAS_MAX']=(max_bias,'maximum bias in V')
-            if 'BIAS_MOD' in self.tdata[timeline_index].keys():
-                bias_frequency=self.tdata[timeline_index]['BIAS_MOD']
-                tbhdu.header['BIAS_MOD']=(bias_frequency,'bias modulation frequency in Hz')
-
+            for keyword in self.fitsblurbs.keys():
+                if keyword in self.tdata[timeline_index].keys():
+                    val=self.tdata[timeline_index][keyword]
+                    if isinstance(val,dt.datetime):
+                        tbhdu.header[keyword]=(val.strftime('%Y-%m-%d %H:%M:%S UTC'),self.fitsblurbs[keyword])
+                    else:
+                        tbhdu.header[keyword]=(val,self.fitsblurbs[keyword])
+                
             hdulist.append(tbhdu)
             
         thdulist = pyfits.HDUList(hdulist)
@@ -241,6 +250,8 @@ def read_fits(self,filename):
 
     if 'BIAS_MOD' in h[0].header.keys():
         self.bias_frequency=h[0].header['BIAS_MOD']
+    if 'BIASMODE' in h[0].header.keys():
+        self.bias_mode=h[0].header['BIASMODE']
     if 'BIAS_MIN' in h[0].header.keys():
         self.min_bias=h[0].header['BIAS_MIN']
     if 'BIAS_MAX' in h[0].header.keys():
@@ -251,7 +262,20 @@ def read_fits(self,filename):
     if 'DET_NAME' in h[0].header.keys():
         self.detector_name=h[0].header['DET_NAME']
     # in case detector name is undefined...
-    self.guess_detector_name()        
+    self.guess_detector_name()
+
+    if 'R_FEEDBK' in h[0].header.keys():
+        self.Rfeedback=h[0].header['R_FEEDBK']
+
+    if 'FLL_STAT' in h[0].header.keys():
+        self.FLL_state=h[0].header['FLL_STAT']
+    if 'FLL_P' in h[0].header.keys():
+        self.FLL_P=h[0].header['FLL_P']
+    if 'FLL_I' in h[0].header.keys():
+        self.FLL_I=h[0].header['FLL_I']
+    if 'FLL_D' in h[0].header.keys():
+        self.FLL_D=h[0].header['FLL_D']
+                
 
     self.debugmsg('Finished reading the primary header.')
     
@@ -319,19 +343,14 @@ def read_fits(self,filename):
             for n in range(self.NPIXELS):
                 timeline[n,:]=data[n][0]
             tdata['TIMELINE']=timeline
-            if 'DATE-OBS' in hdu.header.keys():
-                obsdate=dt.datetime.strptime(hdu.header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC')
-                tdata['DATE-OBS']=obsdate
-            if 'TES_TEMP' in hdu.header.keys():
-                temperature=hdu.header['TES_TEMP']
-                tdata['TES_TEMP']=temperature
-            if 'BIAS_MOD' in hdu.header.keys():
-                tdata['BIAS_MOD']=hdu.header['BIAS_MOD']
-            if 'BIAS_MIN' in hdu.header.keys():
-                tdata['BIAS_MIN']=hdu.header['BIAS_MIN']
-            if 'BIAS_MAX' in hdu.header.keys():
-                tdata['BIAS_MAX']=hdu.header['BIAS_MAX']
-                
+            for keyword in self.fitsblurbs.keys():
+                if keyword in hdu.header.keys():
+                    if keyword=='DATE-OBS':
+                        val=dt.datetime.strptime(hdu.header[keyword],'%Y-%m-%d %H:%M:%S UTC')
+                    else:
+                        val=hdu.header[keyword]
+                    tdata[keyword]=val
+
             self.tdata.append(tdata)
 
     h.close()
