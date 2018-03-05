@@ -659,7 +659,7 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     timeline_index=ntimelines-1
     return timeline
 
-def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
+def get_ASD(self,TES=1,tinteg=None,ntimelines=10,nbins=1):
     '''
     get timeline data and plot the Amplitude Spectral Density
     timeline data is saved in FITS file, unless in monitor mode.
@@ -694,7 +694,7 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
         timeline = self.integrate_scientific_data(save=True) # have to save in memory for plotting afterwards
         self.debugmsg('ASD monitoring: ntimelines=%i' % self.ntimelines())
         timeline_index=self.ntimelines()-1
-        result=self.plot_ASD(TES,timeline_index,ax_timeline=ax_timeline,ax_asd=ax_asd,save=save)
+        result=self.plot_ASD(TES,timeline_index,ax_timeline=ax_timeline,ax_asd=ax_asd,save=save,nbins=nbins)
         ax_asd=result['ax_asd']
         ax_timeline=result['ax_timeline']
 
