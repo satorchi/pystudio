@@ -57,14 +57,12 @@ def plot_ASD(self,TES=None,
     timeline=self.timeline(TES,timeline_index)
     obsdate=self.tdata[timeline_index]['DATE-OBS']
     Tbath=self.tdata[timeline_index]['TES_TEMP']
+    min_bias=self.min_bias
     if 'BIAS_MIN' in self.tdata[timeline_index].keys():
         min_bias=self.tdata[timeline_index]['BIAS_MIN']
-    else:
-        min_bias=self.min_bias
+    max_bias=self.max_bias
     if 'BIAS_MAX' in self.tdata[timeline_index].keys():
         max_bias=self.tdata[timeline_index]['BIAS_MAX']
-    else:
-        max_bias=self.max_bias        
     current=self.ADU2I(timeline) # uA
     timeline_npts=len(timeline)
     result['timeline_npts']=timeline_npts
