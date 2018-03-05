@@ -102,7 +102,8 @@ def plot_ASD(self,TES=None,
     txt_y=0.02
 
     time_txt=obsdate.strftime('%Y-%m-%m %H:%M:%S UTC')
-        
+    time_label='%s Tbath=%.1fmK' % (time_txt,Tbath*1000)
+    
     # sampling frequency
     fs = 1.0/self.sample_period()
     
@@ -115,7 +116,7 @@ def plot_ASD(self,TES=None,
         
     ax_timeline.cla()
     ax_timeline.plot(time_axis,current)
-    ax_timeline.text(txt_x,txt_y,time_txt,transform=ax_timeline.transAxes)
+    ax_timeline.text(txt_x,txt_y,time_label,transform=ax_timeline.transAxes)
     ax_timeline.set_xlabel('time  /  seconds')
     ax_timeline.set_ylabel('Current  /  $\mu$A')
     if imin is None:imin=min(current)
@@ -126,7 +127,7 @@ def plot_ASD(self,TES=None,
     ASD=np.sqrt(PSD) # in uA
     ax_asd.cla()
     ax_asd.loglog(freqs,ASD)
-    ax_asd.text(txt_x,txt_y,time_txt,transform=ax_asd.transAxes)
+    ax_asd.text(txt_x,txt_y,time_label,transform=ax_asd.transAxes)
     ax_asd.set_xlabel('frequency')
     ax_asd.set_ylabel('Amplitude / $\mu$A')
     if amin is None:amin=min(ASD)
