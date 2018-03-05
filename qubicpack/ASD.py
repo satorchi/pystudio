@@ -14,7 +14,6 @@ plot Amplitude Spectrum Density of time varying TES current
 """
 from __future__ import division, print_function
 import numpy as np
-import pystudio
 import sys,os,time
 import datetime as dt
 import matplotlib.pyplot as plt
