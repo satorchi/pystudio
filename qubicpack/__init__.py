@@ -192,6 +192,7 @@ class qubicpack:
             get_RawMask,\
             get_bias,\
             get_PID,\
+            set_Rfeedback,\
             set_VoffsetTES,\
             get_iv_data,\
             get_iv_timeline,\

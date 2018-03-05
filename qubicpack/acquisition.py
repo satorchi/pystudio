@@ -157,6 +157,29 @@ def configure_PID(self,P=0,I=20,D=0):
     return True
 
 
+def set_Rfeedback(self,Rfeedback):
+    '''
+    set the resistance for the feedback loop
+    it can be 10kOhm or 100kOhm.
+
+    for the QubicStudio command:
+          val=1 -> 10kOhm
+          val=0 -> 100kOhm
+
+    '''
+    client = self.connect_QubicStudio()
+    if client is None:return None
+
+    # by default, we set it to 10kOhm.
+    if Rfeedback<100:
+        client.sendSetRelay(self.QS_asic_index,1)
+        self.Rfeedback=10e3
+    else:
+        client.sendSetRelay(self.QS_asic_index,0)
+        self.Rfeedback=100e3
+
+    return self.Rfeedback
+
 def compute_offsets(self,count=10,consigne=0.0):
     '''
     measure the offsets and upload them to the table for future use
@@ -167,10 +190,8 @@ def compute_offsets(self,count=10,consigne=0.0):
     # first switch off the loop
     client.sendActivatePID(self.QS_asic_index,0)
 
-    # make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
-    # This is Rfeedback
-    client.sendSetRelay(self.QS_asic_index,1)
-    self.Rfeedback=10e3
+    # make sure relay=10kOhm
+    self.set_Rfeedback(10)
     
     # set sampling frequency 400Hz
     freq=400.
@@ -214,9 +235,8 @@ def feedback_offsets(self,count=10,consigne=0.0):
     ## switch off the feedback loop
     client.sendActivatePID(self.QS_asic_index,0)
 
-    # make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
-    client.sendSetRelay(self.QS_asic_index,1)
-    self.Rfeedback=10e3
+    # make sure relay=10kOhm
+    self.set_Rfeedback(10)
 
     # set sampling frequency 10Hz
     freq=10.
@@ -446,9 +466,6 @@ def integrate_scientific_data(self,save=True):
         istart += chunk_size
     req.abort()
     #req.abort() # maybe we need this twice?
-    tdata['BIAS_MIN']=self.min_bias
-    tdata['BIAS_MAX']=self.max_bias
-    tdata['BIAS_MOD']=self.bias_frequency
     tdata['TIMELINE']=timeline
     if save:self.tdata.append(tdata)
     return timeline
@@ -494,6 +511,8 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
     enormously!  Not recommended!!
 
     '''
+    client = self.connect_QubicStudio()
+    if client is None:return None
 
     monitor_iv=False
     if isinstance(TES,int):
@@ -582,6 +601,8 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     integration time should be set previously with assign_integration_time()
     if vmin,vmax are not given, try to get them from self.vbias
     '''
+    client = self.connect_QubicStudio()
+    if client is None:return None
 
     if vmin is None:
         if not isinstance(self.vbias,np.ndarray):
@@ -622,6 +643,9 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     timeline data is saved in FITS file, unless in monitor mode.
     in monitor mode, the plots will refresh indefinitely.  exit with Ctrl-C
     '''
+    client = self.connect_QubicStudio()
+    if client is None:return None
+
     TES_index=self.TES_index(TES)
     monitor_mode=False
     if not isinstance(ntimelines,int) or ntimelines<=0:
@@ -633,6 +657,9 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     chunksize=self.get_chunksize()
     self.assign_obsdate()
 
+    # for noise measurements, we set the feedback resistance to 100kOhm
+    self.set_Rfeedback(100)
+    
     idx=0
     ax_timeline=None
     ax_asd=None
