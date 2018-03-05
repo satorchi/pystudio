@@ -397,26 +397,31 @@ def get_bias(self):
     # flush the request queue just in case
     #q=client.abort_requests()
 
-    self.debugmsg('getting bias offset')
-    DACoffset_all=client.fetch('QUBIC_CalibOffset')
-    DACoffset=DACoffset_all[self.QS_asic_index]
-    bias_offset=DACoffset*self.DAC2V
+    # HACK! if we already have these values, don't ask again
+    # still searching for the cause of the hangups
+    if self.min_bias is None:
+        self.debugmsg('getting bias offset')
+        DACoffset_all=client.fetch('QUBIC_CalibOffset')
+        DACoffset=DACoffset_all[self.QS_asic_index]
+        bias_offset=DACoffset*self.DAC2V
 
-    self.debugmsg('getting bias amplitude')
-    DACamplitude_all=client.fetch('QUBIC_CalibAmplitude')
-    DACamplitude=DACamplitude_all[self.QS_asic_index]
-    bias_amplitude=DACamplitude*self.DAC2V
+        self.debugmsg('getting bias amplitude')
+        DACamplitude_all=client.fetch('QUBIC_CalibAmplitude')
+        DACamplitude=DACamplitude_all[self.QS_asic_index]
+        bias_amplitude=DACamplitude*self.DAC2V
 
-    self.min_bias=bias_offset-bias_amplitude
-    self.max_bias=bias_offset+bias_amplitude
-    
-    self.debugmsg('getting bias mode')
-    mode_all=client.fetch('QUBIC_CalibMode')
-    self.bias_mode=mode_all[self.QS_asic_index]
+        self.min_bias=bias_offset-bias_amplitude
+        self.max_bias=bias_offset+bias_amplitude
 
-    self.debugmsg('getting bias frequency')
-    modulation_all=client.fetch('QUBIC_CalibFreq')
-    self.bias_frequency=modulation_all[self.QS_asic_index]
+    if self.bias_mode is None:
+        self.debugmsg('getting bias mode')
+        mode_all=client.fetch('QUBIC_CalibMode')
+        self.bias_mode=mode_all[self.QS_asic_index]
+
+    if self.bias_frequency is None:
+        self.debugmsg('getting bias frequency')
+        modulation_all=client.fetch('QUBIC_CalibFreq')
+        self.bias_frequency=modulation_all[self.QS_asic_index]
 
     self.debugmsg('returning bias info')
     return self.bias_mode,bias_offset,bias_amplitude,self.bias_frequency
