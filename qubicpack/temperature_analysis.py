@@ -742,12 +742,20 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None,refresh=True):
         if refresh or not os.path.exists(pngPV):
             res=plot_TES_temperature_curves(qplist,TES,plot='P',xwin=False)
 
+        pngRP ='QUBIC_Array-%s_TES%03i_ASIC%i_R-V_Temperatures.png' % (detector_name,TES,asic)
+        if refresh or not os.path.exists(pngRP):
+            res=plot_TES_temperature_curves(qplist,TES,plot='R',xwin=False)
+
+        pngTurnover='QUBIC_TES%03i_ASIC%i_Turnover_Temperature.png' % (TES,asic)
+        if refresh or not os.path.exists(pngTurnover):
+            res=plot_TES_turnover_temperature(qplist,TES,xwin=False)
+            
         pngNEP='QUBIC_Array-%s_TES%03i_ASIC%i_NEP.png' % (detector_name,TES,asic)
         if refresh or not os.path.exists(pngNEP):
             res=plot_TES_NEP(qplist,TES,xwin=False)
 
         
-        pngFiles=[pngIV,pngPV,pngNEP]
+        pngFiles=[pngIV,pngPV,pngRP,pngTurnover,pngNEP]
         for png in pngFiles:
             if os.path.exists(png):
                 h.write('\n\\noindent\\includegraphics[width=0.7\\linewidth,clip]{%s}\\\\' % png)
