@@ -970,6 +970,7 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     if TES is None:return self.plot_iv_physical_layout()
     if not isinstance(TES,int): return self.plot_iv_physical_layout()
 
+    self.debugmsg('plotting I-V curve for TES %i' % TES)
     self.TES=TES
     TES_index=self.TES_index(TES)
     fit=filterinfo['fit']
