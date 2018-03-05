@@ -336,7 +336,7 @@ def get_nsamples(self):
     if client is None:return None
 
     # flush the request queue just in case
-    client.abort_requests()
+    #q=client.abort_requests()
     
     self.debugmsg('getting nsamples...')
     nsamples = client.fetch('QUBIC_Nsample')
@@ -360,7 +360,7 @@ def get_chunksize(self):
     if client is None:return None
 
     # flush the request queue just in case
-    q=client.abort_requests()
+    #q=client.abort_requests()
     
     self.debugmsg('getting chunk size...')
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
@@ -381,7 +381,7 @@ def get_RawMask(self):
     if client is None:return None
 
     # flush the request queue just in case
-    q=client.abort_requests()
+    #q=client.abort_requests()
 
     rawmask=client.fetch('QUBIC_RawMask')
     self.rawmask=rawmask
@@ -395,7 +395,7 @@ def get_bias(self):
     if client is None:return None
 
     # flush the request queue just in case
-    q=client.abort_requests()
+    #q=client.abort_requests()
 
     self.debugmsg('getting bias offset')
     DACoffset_all=client.fetch('QUBIC_CalibOffset')
