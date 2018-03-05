@@ -452,6 +452,9 @@ def integrate_scientific_data(self,save=True):
     # bath temperature
     self.oxford_read_bath_temperature()
     tdata['TES_TEMP']=self.temperature
+
+    # feedback loop resistance (relay)
+    tdata['R_FEEDBK']=self.Rfeedback
     
     self.debugmsg('requesting scientific data timeline...')
     parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
