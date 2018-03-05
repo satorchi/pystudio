@@ -293,14 +293,14 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     return fitparms
 
 
-def plot_timeline_physical_layout(self,timeline_index=0,xwin=True,imin=None,imax=None):
+def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,imax=None):
     '''
     plot the timeline curves in thumbnails mapped to the physical location of each detector
     '''
     if not self.exist_timeline_data():return None
     ntimelines=self.ntimelines()
 
-    if not isinstance(timeline_index,int):
+    if timeline_index is None:
         # by default, plot the first one.
         timeline_index=0
     

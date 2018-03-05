@@ -341,7 +341,7 @@ def get_chunksize(self):
 
     # flush the request queue just in case
     q=client.abort_requests()
-
+    
     self.debugmsg('getting chunk size...')
     chunk_size = client.fetch('QUBIC_PixelScientificDataTimeLineSize')
     # QubicStudio returns an array of integer of length 1.
