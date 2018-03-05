@@ -380,6 +380,9 @@ def get_RawMask(self):
     client = self.connect_QubicStudio()
     if client is None:return None
 
+    # flush the request queue just in case
+    q=client.abort_requests()
+
     rawmask=client.fetch('QUBIC_RawMask')
     self.rawmask=rawmask
     return rawmask
@@ -391,10 +394,15 @@ def get_bias(self):
     client = self.connect_QubicStudio()
     if client is None:return None
 
+    # flush the request queue just in case
+    q=client.abort_requests()
+
+    self.debugmsg('getting bias offset')
     DACoffset_all=client.fetch('QUBIC_CalibOffset')
     DACoffset=DACoffset_all[self.QS_asic_index]
     bias_offset=DACoffset*self.DAC2V
 
+    self.debugmsg('getting bias amplitude')
     DACamplitude_all=client.fetch('QUBIC_CalibAmplitude')
     DACamplitude=DACamplitude_all[self.QS_asic_index]
     bias_amplitude=DACamplitude*self.DAC2V
@@ -402,12 +410,15 @@ def get_bias(self):
     self.min_bias=bias_offset-bias_amplitude
     self.max_bias=bias_offset+bias_amplitude
     
+    self.debugmsg('getting bias mode')
     mode_all=client.fetch('QUBIC_CalibMode')
     self.bias_mode=mode_all[self.QS_asic_index]
 
+    self.debugmsg('getting bias frequency')
     modulation_all=client.fetch('QUBIC_CalibFreq')
     self.bias_frequency=modulation_all[self.QS_asic_index]
-    
+
+    self.debugmsg('returning bias info')
     return self.bias_mode,bias_offset,bias_amplitude,self.bias_frequency
     
 def integrate_scientific_data(self,save=True):
