@@ -412,6 +412,9 @@ def get_bias(self):
 
         self.min_bias=bias_offset-bias_amplitude
         self.max_bias=bias_offset+bias_amplitude
+    else:
+        bias_amplitude=0.5*(self.max_bias-self.min_bias)
+        bias_offset=self.min_bias+bias_amplitude
 
     if self.bias_mode is None:
         self.debugmsg('getting bias mode')
@@ -684,6 +687,10 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10):
     ax_asd=None
     while monitor_mode or idx<ntimelines:
         self.debugmsg('ASD monitoring loop count: %i' % idx)
+
+        # read the bath temperature at each loop
+        Tbath=self.oxford_read_bath_temperature()
+        
         timeline = self.integrate_scientific_data(save=True) # have to save in memory for plotting afterwards
         self.debugmsg('ASD monitoring: ntimelines=%i' % self.ntimelines())
         timeline_index=self.ntimelines()-1
