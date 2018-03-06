@@ -19,13 +19,14 @@ import matplotlib.pyplot as plt
 from glob import glob
 
 def assign_defaults(self):
+    self.debuglevel=0
     self.logfile=None
     # on 6 Feb 2018, we reversed the wires for the ASICs
     # so now QubicStudio and the dilution fridge use the same ASIC designation
     self.asic_reversal_date=dt.datetime.strptime('2018-02-06 18:00','%Y-%m-%d %H:%M')
     self.assign_obsdate()
+    #self.assign_datadir() # already called from assign_obsdate() above
     self.endobs=None
-    self.debuglevel=0
     self.zero=1e-9
     self.QubicStudio_ip='134.158.186.233'
     self.OxfordInstruments_ip='134.158.186.162'
@@ -68,7 +69,6 @@ def assign_defaults(self):
     self.assign_pix2tes()
     self.filtersummary=[]
     for idx in range(self.NPIXELS): self.filtersummary.append(None)
-    #self.assign_datadir() # already called from assign_obsdate() above
     self.assign_lookup_table()
     self.temperature=None
     self.oxford_assign_temperature_labels()
@@ -264,7 +264,8 @@ def assign_datadir(self,d=None):
             print('ERROR! Could not find a suitable data directory!')
             return None
 
-    print('Data will be written to directory: %s' % self.datadir)
+    msg='Data will be written to directory: %s' % self.datadir
+    self.debugmsg(msg)
 
     # check how much space is available
     cmd='df %s' % self.datadir
