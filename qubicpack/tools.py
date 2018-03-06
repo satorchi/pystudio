@@ -345,10 +345,11 @@ def read_fits(self,filename):
             tdata['TIMELINE']=timeline
             for keyword in self.fitsblurbs.keys():
                 if keyword in hdu.header.keys():
-                    if keyword=='DATE-OBS':
+                    if keyword=='DATE-OBS' or keyword=='END-OBS':
                         val=dt.datetime.strptime(hdu.header[keyword],'%Y-%m-%d %H:%M:%S UTC')
                     else:
                         val=hdu.header[keyword]
+                    if val=='':val=None
                     tdata[keyword]=val
 
             self.tdata.append(tdata)
