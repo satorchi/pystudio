@@ -112,23 +112,27 @@ def get_PID(self):
     get the current Flux Lock Loop P,I,D and state
     '''
     client = self.connect_QubicStudio()
-    if client is None:return False
+    if client is None:return None
+
+    if not self.AVOID_HANGUP or self.FLL_state is None:
+        self.debugmsg('getting FLL State...')
+        req=client.fetch('QUBIC_FLL_State')
+        self.FLL_state=req[self.QS_asic_index]
     
-    self.debugmsg('getting FLL State...')
-    req=client.fetch('QUBIC_FLL_State')
-    self.FLL_state=req[self.QS_asic_index]
+    if not self.AVOID_HANGUP or self.FLL_P is None:
+        self.debugmsg('getting FLL P...')
+        req=client.fetch('QUBIC_FLL_P')
+        self.FLL_P=req[self.QS_asic_index]
     
-    self.debugmsg('getting FLL P...')
-    req=client.fetch('QUBIC_FLL_P')
-    self.FLL_P=req[self.QS_asic_index]
+    if not self.AVOID_HANGUP or self.FLL_I is None:
+        self.debugmsg('getting FLL I...')
+        req=client.fetch('QUBIC_FLL_I')
+        self.FLL_I=req[self.QS_asic_index]
     
-    self.debugmsg('getting FLL I...')
-    req=client.fetch('QUBIC_FLL_I')
-    self.FLL_I=req[self.QS_asic_index]
-    
-    self.debugmsg('getting FLL D...')
-    req=client.fetch('QUBIC_FLL_D')
-    self.FLL_D=req[self.QS_asic_index]
+    if not self.AVOID_HANGUP or self.FLL_D is None:
+        self.debugmsg('getting FLL D...')
+        req=client.fetch('QUBIC_FLL_D')
+        self.FLL_D=req[self.QS_asic_index]
 
     return self.FLL_state,self.FLL_P,self.FLL_I,self.FLL_D
 
@@ -505,7 +509,7 @@ def integrate_scientific_data(self,save=True):
         self.debugmsg('got data chunk.')
         istart += chunk_size
     req.abort()
-    #req.abort() # maybe we need this twice?
+    req.abort() # maybe we need this twice?
     tdata['TIMELINE']=timeline
     if save:self.tdata.append(tdata)
     return timeline
