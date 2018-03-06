@@ -474,6 +474,9 @@ def integrate_scientific_data(self,save=True):
 
     # feedback loop resistance (relay)
     tdata['R_FEEDBK']=self.Rfeedback
+
+    # integration time
+    tdata['INT-TIME']=self.tinteg
     
     self.debugmsg('requesting scientific data timeline...')
     parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
@@ -681,6 +684,8 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10,nbins=1):
 
     # for noise measurements, we set the feedback resistance to 100kOhm
     self.set_Rfeedback(100)
+
+
     
     idx=0
     ax_timeline=None
