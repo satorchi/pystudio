@@ -52,29 +52,41 @@ def plot_ASD(self,TES=None,
     if nbins is None:nbins=1
     
     result={}
+    result['timeline_index']=timeline_index
     result['TES']=TES
     result['nbins']=nbins
     timeline=self.timeline(TES,timeline_index)
     obsdate=self.tdata[timeline_index]['DATE-OBS']
+    result['obsdate']=obsdate
+
+    tinteg=self.tinteg
+    if 'INT-TIME' in self.tdata[timeline_index].keys():
+        tinteg=self.tdata[timeline_index]['INT-TIME']
+
     Tbath=self.tdata[timeline_index]['TES_TEMP']
+    result['Tbath']=Tbath
+
     min_bias=self.min_bias
     if 'BIAS_MIN' in self.tdata[timeline_index].keys():
         min_bias=self.tdata[timeline_index]['BIAS_MIN']
+    if min_bias is None:min_bias=self.min_bias
+    result['min_bias']=min_bias
+
     max_bias=self.max_bias
     if 'BIAS_MAX' in self.tdata[timeline_index].keys():
         max_bias=self.tdata[timeline_index]['BIAS_MAX']
+    if max_bias is None:max_bias=self.max_bias
+    result['max_bias']=max_bias
+
     current=self.ADU2I(timeline) # uA
     timeline_npts=len(timeline)
     result['timeline_npts']=timeline_npts
+
     bin_npts=timeline_npts//nbins
     result['bin_npts']=bin_npts
+
     sample_period=self.sample_period()
     time_axis=sample_period*np.arange(timeline_npts)
-    result['timeline_index']=timeline_index
-    result['obsdate']=obsdate
-    result['Tbath']=Tbath
-    result['min_bias']=min_bias
-    result['max_bias']=max_bias
     
     ttl='Timeline and Amplitude Spectral Density'
     subttl='\nQUBIC Array %s, ASIC %i, TES #%i, T$_\mathrm{bath}$=%.1f mK' % (self.detector_name,self.asic,TES,1000*Tbath)
@@ -103,6 +115,8 @@ def plot_ASD(self,TES=None,
 
     time_txt=obsdate.strftime('%Y-%m-%m %H:%M:%S UTC')
     time_label='%s Tbath=%.1fmK' % (time_txt,Tbath*1000)
+    full_label='%s\nTbath=%.1fmK\nsample period=%.3fmsec\nintegration time=%.1fsec\nnbins=%i\nmin bias=%.2fV\nmax bias=%.2fV'\
+                % (time_txt,1000*Tbath,1000*sample_period,tinteg,nbins,min_bias,max_bias)
     
     # sampling frequency
     fs = 1.0/self.sample_period()
@@ -127,7 +141,8 @@ def plot_ASD(self,TES=None,
     ASD=np.sqrt(PSD) # in uA
     ax_asd.cla()
     ax_asd.loglog(freqs,ASD)
-    ax_asd.text(txt_x,txt_y,time_label,transform=ax_asd.transAxes)
+    boxprops = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax_asd.text(txt_x,txt_y,full_label,transform=ax_asd.transAxes,ha='left',va='bottom',bbox=boxprops)
     ax_asd.set_xlabel('frequency')
     ax_asd.set_ylabel('Amplitude / $\mu$A')
     if amin is None:amin=min(ASD)
