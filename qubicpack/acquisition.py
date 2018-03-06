@@ -114,15 +114,19 @@ def get_PID(self):
     client = self.connect_QubicStudio()
     if client is None:return False
     
+    self.debugmsg('getting FLL State...')
     req=client.fetch('QUBIC_FLL_State')
     self.FLL_state=req[self.QS_asic_index]
     
+    self.debugmsg('getting FLL P...')
     req=client.fetch('QUBIC_FLL_P')
     self.FLL_P=req[self.QS_asic_index]
     
+    self.debugmsg('getting FLL I...')
     req=client.fetch('QUBIC_FLL_I')
     self.FLL_I=req[self.QS_asic_index]
     
+    self.debugmsg('getting FLL D...')
     req=client.fetch('QUBIC_FLL_D')
     self.FLL_D=req[self.QS_asic_index]
 
@@ -325,8 +329,9 @@ def get_nsamples(self):
     # is this because of "waitingForAckMode" ?
     # what is the difference between client.fetch and client.request ?
 
-    # HACK: do not request nsamples again if we already have it.
-    if not self.nsamples is None: return self.nsamples
+    if self.AVOID_HANGUP:
+        # HACK: do not request nsamples again if we already have it.
+        if not self.nsamples is None: return self.nsamples
 
     # Mon 19 Feb 2018 10:59:53 CET
     # I think I got it.  There is a hanging request which must be flushed.
@@ -352,9 +357,9 @@ def get_chunksize(self):
     '''
     get the timeline chunk size
     '''
-
-    # HACK: don't ask for it if we've already got it (see get_nsamples())
-    if not self.chunk_size is None: return self.chunk_size
+    if self.AVOID_HANGUP:
+        # HACK: don't ask for it if we've already got it (see get_nsamples())
+        if not self.chunk_size is None: return self.chunk_size
     
     client = self.connect_QubicStudio()
     if client is None:return None
@@ -377,6 +382,10 @@ def get_RawMask(self):
     This is 125 values, each an 8-bit bitmask: 1 -> masked
     for example: 255,0,0,0,....  means that the first 8 samples are masked
     '''
+    if self.AVOID_HANGUP:
+        # HACK: don't ask for it if we've already got it (see get_nsamples())
+        if not self.rawmask is None: return self.rawmask
+    
     client = self.connect_QubicStudio()
     if client is None:return None
 
@@ -397,9 +406,9 @@ def get_bias(self):
     # flush the request queue just in case
     #q=client.abort_requests()
 
-    # HACK! if we already have these values, don't ask again
-    # still searching for the cause of the hangups
-    if self.min_bias is None:
+    if not self.AVOID_HANGUP or self.min_bias is None:
+        # HACK! if we already have these values, don't ask again
+        # still searching for the cause of the hangups
         self.debugmsg('getting bias offset')
         DACoffset_all=client.fetch('QUBIC_CalibOffset')
         DACoffset=DACoffset_all[self.QS_asic_index]
@@ -416,12 +425,12 @@ def get_bias(self):
         bias_amplitude=0.5*(self.max_bias-self.min_bias)
         bias_offset=self.min_bias+bias_amplitude
 
-    if self.bias_mode is None:
+    if not self.AVOID_HANGUP or self.bias_mode is None:
         self.debugmsg('getting bias mode')
         mode_all=client.fetch('QUBIC_CalibMode')
         self.bias_mode=mode_all[self.QS_asic_index]
 
-    if self.bias_frequency is None:
+    if not self.AVOID_HANGUP or self.bias_frequency is None:
         self.debugmsg('getting bias frequency')
         modulation_all=client.fetch('QUBIC_CalibFreq')
         self.bias_frequency=modulation_all[self.QS_asic_index]
@@ -475,6 +484,12 @@ def integrate_scientific_data(self,save=True):
     # feedback loop resistance (relay)
     tdata['R_FEEDBK']=self.Rfeedback
 
+    FLL_state,FLL_P,FLL_I,FLL_D=self.get_PID()
+    tdata['FLL_STAT']=FLL_state
+    tdata['FLL_P']=FLL_P
+    tdata['FLL_I']=FLL_I
+    tdata['FLL_D']=FLL_D
+        
     # integration time
     tdata['INT-TIME']=self.tinteg
     
