@@ -187,6 +187,7 @@ class qubicpack:
             get_amplitude,\
             get_mean,\
             integrate_scientific_data,\
+            get_NPIXELS,\
             get_nsamples,\
             get_chunksize,\
             get_RawMask,\

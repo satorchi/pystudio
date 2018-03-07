@@ -106,7 +106,30 @@ def verify_QS_connection(self):
         return False
 
     return True
+
+def get_NPIXELS(self):
+    '''
+    get the number of pixels currently being samples
+    '''
+    if self.AVOID_HANGUP:
+        # HACK: do not request NPIXELS again if we already have it.
+        if not self.NPIXELS_sampled is None: return self.NPIXELS_sampled
+
+    client = self.connect_QubicStudio()
+    if client is None:return None
+
+    # flush the request queue just in case
+    #q=client.abort_requests()
     
+    self.debugmsg('getting NPIXELS...')
+    NPIXELS_all = client.fetch('ASIC_NbPixelSelected')
+    self.debugmsg('got NPIXELS.')
+    NPIXELS=NPIXELS_all[self.QS_asic_index]
+    self.debugmsg('NPIXELS=%i' % NPIXELS)
+    self.NPIXELS_sampled=NPIXELS
+    self.NPIXELS_requested=True
+    return NPIXELS
+
 def get_PID(self):
     '''
     get the current Flux Lock Loop P,I,D and state
@@ -454,6 +477,9 @@ def integrate_scientific_data(self,save=True):
     
     self.debugmsg('calling integrate_scientific_data for ASIC %i' % self.asic)
     self.debugmsg ('integration_time=%.2f' % self.tinteg)
+
+    npixels=self.get_NPIXELS()
+    tdata['NPIXSAMP']=npixels
     
     nsamples = self.get_nsamples()
     if nsamples is None: return None
@@ -496,6 +522,9 @@ def integrate_scientific_data(self,save=True):
         
     # integration time
     tdata['INT-TIME']=self.tinteg
+
+    # get the rawmask from which we calculate n_masked
+    rawmask=self.get_RawMask()
     
     self.debugmsg('requesting scientific data timeline...')
     parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
@@ -702,15 +731,11 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10,nbins=1):
     save=not monitor_mode
         
     self.assign_integration_time(tinteg)
-    nsamples=self.get_nsamples()
-    chunksize=self.get_chunksize()
     self.assign_obsdate()
 
     # for noise measurements, we set the feedback resistance to 100kOhm
     self.set_Rfeedback(100)
 
-    self.get_RawMask()
-    
     idx=0
     ax_timeline=None
     ax_asd=None

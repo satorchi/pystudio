@@ -90,6 +90,7 @@ def keyvals(self):
     keyvals['NSAMPLES']=self.nsamples
     keyvals['INT-TIME']=self.tinteg
     keyvals['NPIXELS'] =self.NPIXELS
+    keyvals['NPIXSAMP']=self.NPIXELS_sampled
     keyvals['ASIC']    =self.asic
     keyvals['QUBIC-IP']=self.QubicStudio_ip
     keyvals['NCYCLES'] =self.nbiascycles
@@ -277,7 +278,9 @@ def read_fits(self,filename):
     if 'FLL_D' in h[0].header.keys():
         self.FLL_D=h[0].header['FLL_D']
                 
-
+    if 'NPIXSAMP' in h[0].header.keys():
+        self.NPIXELS_sampled=h[0].header['NPIXSAMP']
+    
     self.debugmsg('Finished reading the primary header.')
     
     self.tdata=[]

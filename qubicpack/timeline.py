@@ -127,7 +127,10 @@ def sample_period(self):
     2MHz is the sampling rate of the ASIC
     '''
     if self.nsamples==None:return None
-    period = 1.0 / (2e6 / self.NPIXELS / self.nsamples)
+    
+    npixels=self.NPIXELS_sampled
+    if npixels is None:npixels=self.NPIXELS
+    period = 1.0 / (2e6 / npixels / self.nsamples)
     return period
 
 def timeline_npts(self):

@@ -32,6 +32,8 @@ def assign_defaults(self):
     self.QubicStudio_ip='134.158.186.233'
     self.OxfordInstruments_ip='134.158.186.162'
     self.NPIXELS=128
+    self.NPIXELS_requested=False # this is a hack to help with the hangup problem
+    self.NPIXELS_sampled=None
     self.detector_name='undefined'
     #self.DAC2V=2.627e-4    # email from Michel Piat 2018/02/09 17:14 CET
     self.DAC2V=9.404/2**15 # measured Tue 13 Feb 2018 15:25:11 CET
@@ -83,10 +85,11 @@ def assign_defaults(self):
     self.fitsblurbs['TELESCOP']='Telescope used for the observation'
     self.fitsblurbs['OBSERVER']='name of the observer'
     self.fitsblurbs['DATE-OBS']='date of the observation in UTC'
-    self.fitsblurbs['END-OBS']='end time of the observation in UTC'
+    self.fitsblurbs['END-OBS'] ='end time of the observation in UTC'
     self.fitsblurbs['NSAMPLES']='number of samples per integration time'
     self.fitsblurbs['INT-TIME']='integration time in seconds'
     self.fitsblurbs['NPIXELS'] ='number of TES detectors in the array'
+    self.fitsblurbs['NPIXSAMP']='number of pixels sampled'
     self.fitsblurbs['ASIC']    ='ASIC id (one quarter of the full QUBIC array)'
     self.fitsblurbs['QUBIC-IP']='address of the QUBIC Local Control Computer'
     self.fitsblurbs['NCYCLES'] ='number of cycles of the Bias voltage'

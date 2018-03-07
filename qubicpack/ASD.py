@@ -88,6 +88,11 @@ def plot_ASD(self,TES=None,
     bin_npts=timeline_npts//nbins
     result['bin_npts']=bin_npts
 
+    if 'NPIXSAMP' in self.tdata[timeline_index].keys():
+        npixsampled=self.tdata[timeline_index]['NPIXSAMP']
+    else:
+        npixsampled=self.NPIXELS
+        
     sample_period=self.sample_period()
     time_axis=sample_period*np.arange(timeline_npts)
     
@@ -118,8 +123,8 @@ def plot_ASD(self,TES=None,
 
     time_txt=obsdate.strftime('%Y-%m-%m %H:%M:%S UTC')
     time_label='%s Tbath=%.1fmK' % (time_txt,Tbath*1000)
-    full_label='%s\nTbath=%.1fmK\nsample period=%.3fmsec\nintegration time=%.1fsec\nnbins=%i\nmin bias=%.2fV\nmax bias=%.2fV'\
-                % (time_txt,1000*Tbath,1000*sample_period,tinteg,nbins,min_bias,max_bias)
+    full_label='%s\nTbath=%.1fmK\nsample period=%.3fmsec\nintegration time=%.1fsec\nnbins=%i\nmin bias=%.2fV\nmax bias=%.2fV\nNpix sampled=%i'\
+                % (time_txt,1000*Tbath,1000*sample_period,tinteg,nbins,min_bias,max_bias,npixsampled)
     
     # sampling frequency
     fs = 1.0/self.sample_period()
