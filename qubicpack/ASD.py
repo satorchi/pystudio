@@ -78,6 +78,9 @@ def plot_ASD(self,TES=None,
     if max_bias is None:max_bias=self.max_bias
     result['max_bias']=max_bias
 
+    n_masked=self.n_masked()
+    result['n_masked']=n_masked
+
     current=self.ADU2I(timeline) # uA
     timeline_npts=len(timeline)
     result['timeline_npts']=timeline_npts
