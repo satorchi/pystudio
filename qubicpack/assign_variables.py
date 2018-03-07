@@ -103,6 +103,7 @@ def assign_defaults(self):
     self.fitsblurbs['FLL_D']   ='Flux Lock Loop D level'
     self.fitsblurbs['DET_NAME']='ID of the detector array'
     self.fitsblurbs['R_FEEDBK']='Feedback resistance in Flux Lock Loop'
+    self.fitsblurbs['CHUNK']='data chunk size delivered by QubicStudio'
     return
 
 def assign_observer(self,observer='APC LaboMM'):
@@ -253,7 +254,7 @@ def assign_datadir(self,d=None):
         # try the fall back directory
         datadir=fallback_dir.replace('/',os.sep)
         try:
-            if not os.path.exists(fallback_dir): os.system('mkdir --parents %s' % fallback_dir)
+            if not os.path.exists(fallback_dir): os.system('mkdir -p %s' % fallback_dir)
             tmpfile_full=datadir+os.sep+tmpfile
             h=open(tmpfile_full,'w')
             h.write('check if we have write permission\n')
