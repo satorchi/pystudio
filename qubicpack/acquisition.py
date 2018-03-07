@@ -509,8 +509,13 @@ def integrate_scientific_data(self,save=True):
         self.debugmsg('got data chunk.')
         istart += chunk_size
     req.abort()
-    req.abort() # maybe we need this twice?
     tdata['TIMELINE']=timeline
+
+    if not self.AVOID_HANGUP:
+        for count in range(10):
+            req.abort() # maybe we need this more than once?
+        del(req) # maybe we need to obliterate this?
+        
     if save:self.tdata.append(tdata)
     return timeline
 
