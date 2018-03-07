@@ -79,7 +79,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     nrows=asic1_obj.pix_grid.shape[0]
     ncols=asic1_obj.pix_grid.shape[1]
 
-    if temperature is not None: temperature_str='.0fmK' % 1000*temperature
+    if not temperature is None: temperature_str='%.0fmK' % (1000*temperature)
 
     if xwin: plt.ion()
     else: plt.ioff()
