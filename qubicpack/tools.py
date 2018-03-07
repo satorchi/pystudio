@@ -44,7 +44,7 @@ def data_subdir(self):
     fullpath='%s%s%s' % (self.datadir,os.sep,subdir)
     # make the subdirectory if necessary
     if not os.path.exists(fullpath):
-        cmd='mkdir --parents %s' % fullpath
+        cmd='mkdir -p %s' % fullpath
         proc=subprocess.Popen(cmd,stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out,err=proc.communicate()
 
@@ -106,6 +106,7 @@ def keyvals(self):
     keyvals['FLL_D']   =self.FLL_D
     keyvals['DET_NAME']=self.detector_name
     keyvals['R_FEEDBK']=self.Rfeedback
+    keyvals['CHUNK']=self.chunk_size
     return keyvals
     
 
