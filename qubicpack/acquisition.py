@@ -709,7 +709,7 @@ def get_ASD(self,TES=1,tinteg=None,ntimelines=10,nbins=1):
     # for noise measurements, we set the feedback resistance to 100kOhm
     self.set_Rfeedback(100)
 
-
+    self.get_RawMask()
     
     idx=0
     ax_timeline=None
