@@ -199,4 +199,6 @@ f=d2.filter_iv_all(bias_margin=-3,rel_amplitude_limit=1e-6,abs_amplitude_limit=1
 result=d2.plot_iv_physical_layout()
 
 # and now we can use the results from both ASICs to plot the full focal plane
-plot_physical_layout(d1,d2)
+if jupyter:figsize=(9,9)
+else: figsize=(16,16)
+plot_physical_layout(d1,d2,figsize=figsize)
