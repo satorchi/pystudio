@@ -59,7 +59,7 @@ from qubicpack.plot_physical_layout import *
 
 # create the qubicpack object and read the data
 d0=qp()
-if jupyter: d0.figsize=10,5
+if jupyter: d0.figsize=9,5
 # the first data file contains measurements at high temperature
 # these are used to correct the Normal Resistance
 d0.read_fits('QUBIC_timeline_20180301T184953UTC.fits')
@@ -94,6 +94,7 @@ R1adjust=d0.R1()
 
 # create a new qubicpack object, and read the data
 d1=qp()
+if jupyter: d1.figsize=9,5
 d1.read_fits('QUBIC_timeline_20180301T212734UTC.fits')
 
 # have a look a the summary
@@ -168,8 +169,9 @@ texfile=d1.make_iv_report()
 
 # create a new qubicpack object, read the data, and print a summary list
 d2=qp()
+if jupyter: d2.figsize=9,5
 d2.read_fits('QUBIC_timeline_20180227T223359UTC.fits')
-print_datlist(d3)
+print_datlist(d2)
 
 # We will first of all get the adjustment for normal resistance.
 # We do this with the data at Tbath=428mK which is at timeline_index=20
@@ -193,7 +195,7 @@ f=d2.filter_iv(TES,bias_margin=-3,rel_amplitude_limit=1e-6,abs_amplitude_limit=1
 # The model fit to the I-V curve now has an adjusted Normal Resistance
 
 # Finally, we apply the adjustment to all the TES of the ASIC, and plot the result
-f=d2.filter_iv_all(bias_margin=-3,rel_amplitude_limit=1e-6,abs_amplitude_limit=1e-6,R1adjust=d3_Radjust)
+f=d2.filter_iv_all(bias_margin=-3,rel_amplitude_limit=1e-6,abs_amplitude_limit=1e-6,R1adjust=d2_Radjust)
 result=d2.plot_iv_physical_layout()
 
 # and now we can use the results from both ASICs to plot the full focal plane
