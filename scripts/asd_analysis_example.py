@@ -38,7 +38,12 @@ QUBIC_timeline_20180301T142554UTC.fits
 '''
 
 # import necessary  stuff
-import os
+import os,sys
+if sys.argv[0].find('ipykernel')>=0:jupyter=True
+
+if jupyter:        
+    %matplotlib notebook
+
 import matplotlib.pyplot as plt
 from qubicpack import qubicpack as qp
 from qubicpack.temperature_analysis import *
@@ -48,6 +53,7 @@ import datetime as dt
 
 # create the qubicpack object and read the data
 d0=qp()
+if jupyter:d0.figsize=10,5
 result=d0.read_fits('QUBIC_timeline_20180301T142554UTC.fits')
 
 # The data contains multiple timelines at different temperatures
