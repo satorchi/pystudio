@@ -45,6 +45,7 @@ QUBIC_timeline_20180227T223359UTC.fits
 
 # import necessary  stuff
 import os,sys
+jupyter=False
 if sys.argv[0].find('ipykernel')>=0:jupyter=True
 
 if jupyter:        
