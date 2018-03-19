@@ -256,7 +256,7 @@ def compute_offsets(self,count=10,consigne=0.0):
         k=0.5 # and subsequent steps are smaller
     return True
 
-def feedback_offsets(self,count=10,consigne=0.0):
+def feedback_offsets(self,count=10,consigne=0.0,Rfb=10,I=10,k=1.0): #MP
     '''
     measure the feedback offsets and upload them to the table for future use
     '''
@@ -266,8 +266,8 @@ def feedback_offsets(self,count=10,consigne=0.0):
     ## switch off the feedback loop
     client.sendActivatePID(self.QS_asic_index,0)
 
-    # make sure relay=10kOhm
-    self.set_Rfeedback(10)
+    # make sure relay=Rfb #MP
+    self.set_Rfeedback(Rfb)
 
     # set sampling frequency 10Hz
     freq=10.
@@ -285,7 +285,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
     self.wait_a_bit(1.0)
 
     ## switch on the feedback loop
-    self.configure_PID(P=0,I=10,D=0)
+    self.configure_PID(P=0,I=I,D=0) #MP
     self.wait_a_bit(5.0)
     self.assign_pausetime(0.5)
 
@@ -297,7 +297,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
         correction_direction =  1
     
 
-    k=1.0 # the first step is big
+    # k=1.0 # the first step is big #MP
     for counter in range(count):
 
         self.debugmsg('count %i/%i: integrating...' % (counter+1,count))
@@ -312,7 +312,7 @@ def feedback_offsets(self,count=10,consigne=0.0):
         self.wait_a_bit()
 
         self.debugmsg('count %i/%i: data for TES 37: %.5e' % (counter+1,count,this_data_avg[36]))
-        k=0.2 # and subsequent steps are smaller
+        k=k/5.0 # 0.2 # and subsequent steps are smaller #MP
     
     return True
 
