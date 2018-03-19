@@ -30,7 +30,8 @@ def plot_ASD(self,TES=None,
              xwin=True,
              amin=None,amax=None,
              imin=None,imax=None,
-             nbins=None):
+             nbins=None,
+             indmin=None,indmax=None): #MP
     '''
     plot the Amplitude Spectral Density
     '''
@@ -85,7 +86,11 @@ def plot_ASD(self,TES=None,
     timeline_npts=len(timeline)
     result['timeline_npts']=timeline_npts
 
-    bin_npts=timeline_npts//nbins
+    if indmin is None:indmin=0 #MP
+    if indmax is None:indmax=timeline_npts-1 #MP
+
+#    bin_npts=timeline_npts//nbins #MP
+    bin_npts=(indmax-indmin+1)//nbins #MP
     result['bin_npts']=bin_npts
 
     if 'NPIXSAMP' in self.tdata[timeline_index].keys():
@@ -129,7 +134,7 @@ def plot_ASD(self,TES=None,
     # sampling frequency
     fs = 1.0/self.sample_period()
     
-    PSD, freqs = mlab.psd(current,
+    PSD, freqs = mlab.psd(current[indmin:indmax],
                           Fs = fs,
                           NFFT = bin_npts,
                           window=mlab.window_hanning,
@@ -137,7 +142,7 @@ def plot_ASD(self,TES=None,
 
         
     ax_timeline.cla()
-    ax_timeline.plot(time_axis,current)
+    ax_timeline.plot(time_axis[indmin:indmax],current[indmin:indmax])
     ax_timeline.text(txt_x,txt_y,time_label,transform=ax_timeline.transAxes)
     ax_timeline.set_xlabel('time  /  seconds')
     ax_timeline.set_ylabel('Current  /  $\mu$A')
