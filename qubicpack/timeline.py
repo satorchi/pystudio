@@ -175,11 +175,20 @@ def determine_bias_modulation(self,TES,timeline_index=None):
         peak1_range_end=timeline_npts-1
     peak1_range=(skip+bias_period_npts,peak1_range_end)
 
-    ipeak0=np.argmax(timeline[peak0_range[0]:peak0_range[1]])
-    ipeak0+=peak0_range[0]
+
+    # try to find the peaks, otherwise return ipeak0=0, ipeak1=timeline_npts-1
+    try:
+        ipeak0=np.argmax(timeline[peak0_range[0]:peak0_range[1]])
+        ipeak0+=peak0_range[0]
+    except:
+        ipeak0=0
     peak0=time_axis[ipeak0]
-    ipeak1=np.argmax(timeline[peak1_range[0]:peak1_range[1]])
-    ipeak1+=peak1_range[0]
+
+    try:
+        ipeak1=np.argmax(timeline[peak1_range[0]:peak1_range[1]])
+        ipeak1+=peak1_range[0]
+    except:
+        ipeak1=timeline_npts-1
     peak1=time_axis[ipeak1]
     return (ipeak0,ipeak1)
 
