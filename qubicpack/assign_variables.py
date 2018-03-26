@@ -276,7 +276,7 @@ def assign_datadir(self,d=None):
     cmd='df %s' % self.datadir
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out,err=proc.communicate()
-    gigs_available=eval(out.split('\n')[1].split()[3])/float(1024**2)
+    gigs_available=eval(str(out).split('\n')[1].split()[3])/float(1024**2)
     if gigs_available<1:
         print('WARNING! running out of disk space.  Only %.1f GiB space left on disk' % gigs_available)
         
