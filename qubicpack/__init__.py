@@ -93,6 +93,7 @@ class qubicpack:
         adjusted_iv,\
         oplot_iv,\
         plot_iv,\
+        plot_responsivity,\
         plot_pv,\
         plot_rp,\
         make_Vbias,\
@@ -207,8 +208,8 @@ class qubicpack:
         self.assign_defaults()
         return
 
-    def debugmsg(self,msg):
-        if self.debuglevel>0:
+    def debugmsg(self,msg,level=1):
+        if self.debuglevel>=level:
             if self.logfile is None:
                 print('DEBUG %s : %s' % (dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),msg))
             else:
