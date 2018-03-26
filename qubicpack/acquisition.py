@@ -533,9 +533,9 @@ def integrate_scientific_data(self,save=True):
     istart = 0
     for i in range(int(np.ceil(timeline_size / chunk_size))):
         delta = min(chunk_size, timeline_size - istart)
-        self.debugmsg('getting next data chunk...')
+        self.debugmsg('getting next data chunk...',level=2)
         timeline[:, istart:istart+delta] = req.next()[:, :delta]
-        self.debugmsg('got data chunk.')
+        self.debugmsg('got data chunk.',level=2)
         istart += chunk_size
     req.abort()
     tdata['TIMELINE']=timeline
