@@ -1082,7 +1082,144 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     else: plt.close('all')
     return fig
 
+def plot_responsivity(self,TES,xwin=True):
+    '''
+    plot the responsivity of the TES
+
+    The formula is:
+      Si = -1/2V * (Z0-R0)/(Z0+RL)
+
+      with
+        Z0 = dV/dI = the slope of the curve at the point (V,I)
+        R0 =  V/I (at the point (V,I)
+        RL = Rshunt + Rparasitic - self.Rshunt + (approx) 10e-3 Ohm
+
+
+    in the super region,
+        V = C1/(I-C0)
+        dV/dI = -C1/(I-C0)**2
+    
+    in the overlap region
+        I = C0 + C1*V + C2*V**2 + C3*V**3
+        dV/dI = 1 / (C1 + 2*C2*V + 3*C3*V**2)
+
+
+     in the normal region
+        V = (I-C0)/C1
+        dV/dI = 1/C1
+
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo is None:return None
+
+    if not filterinfo['fit']['fitfunction']=='COMBINED':
+        print("I need to have the COMBINED model.  Please rerun the filter and select COMBINED for the fitfunction.")
+        return None
+
+    RL = self.Rshunt + 10e-3
+
+    
+    fitparms=filterinfo['fit']['fitinfo'][0]
+    Vsuper =filterinfo['fit']['Vsuper']
+    Vnormal=filterinfo['fit']['Vnormal']
+    
+    # take 500 points in each region: super,combined,normal
+    responsivity=[]
+    bias=[]
+
+    # super region
+    range_min=self.bias_factor*self.min_bias
+    range_max=self.bias_factor*Vsuper
+    dV=0.002*(range_max-range_min)
+    vbias=np.arange(range_min,range_max,dV)
+    V=range_min
+    C0=fitparms[2]
+    C1=fitparms[3]
+    for V in vbias:
+        I=self.model_iv_super(V,C0,C1)
+        Vtes=self.Rshunt*(V/self.Rbias-I*1e-6)
+        R0 = 1e6*Vtes/I
+        Z0 = -1e6*(self.Rshunt/self.Rbias)*C1/(I-C0)**2
+        Si = -0.5/Vtes * (Z0-R0)/(Z0+RL)
+        responsivity.append(Si)
+        bias.append(V)
+
+    # mixed region
+    range_min=self.bias_factor*Vsuper
+    range_max=self.bias_factor*Vnormal
+    dV=0.002*(range_max-range_min)
+    V=range_min
+    vbias=np.arange(range_min,range_max,dV)
+    C0=fitparms[4]
+    C1=fitparms[5]
+    C2=fitparms[6]
+    C3=fitparms[7]
+    for V in vbias:
+        I=self.model_iv_mixed(V,C0,C1,C2,C3)
+        Vtes=self.Rshunt*(V/self.Rbias-I*1e-6)
+        R0 = 1e6*Vtes/I
+        Z0 = 1e6*(self.Rshunt/self.Rbias) / (C1 + 2*C2*V + 3*C3*V**2)
+        Si = -0.5/Vtes * (Z0-R0)/(Z0+RL)
+        responsivity.append(Si)
+        bias.append(V)
+
+    # normal region
+    range_min=self.bias_factor*Vnormal
+    range_max=self.bias_factor*self.max_bias
+    dV=0.002*(range_max-range_min)
+    V=range_min
+    vbias=np.arange(range_min,range_max,dV)
+    C0=fitparms[8]
+    C1=fitparms[9]
+    for V in vbias:
+        I=self.model_iv_normal(V,C0,C1)
+        Vtes=self.Rshunt*(V/self.Rbias-I*1e-6)
+        R0 = 1e6*Vtes/I
+        Z0 = 1e6*(self.Rshunt/self.Rbias)/C1
+        Si = -0.5/Vtes * (Z0-R0)/(Z0+RL)
+        responsivity.append(Si)
+        bias.append(V)
+    
+        
+    
+    ttl=str('QUBIC Responsivity curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+    if self.temperature is None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.0f mK' % (1000*self.temperature))
+    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
+    if xwin: plt.ion()
+    else: plt.ioff()
+    fig,ax=plt.subplots(1,1,figsize=self.figsize)
+    fig.canvas.set_window_title('plt: '+ttl) 
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    ax.set_xlabel('Bias Voltage  /  V')
+    ax.set_ylabel('S$_\mathrm{i}$  /  A/W')
+    ax.set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
+
+    top=max(responsivity)
+    bot=min(responsivity)
+    # draw vertical lines showing the three regions
+    ax.plot([Vsuper,Vsuper],[bot,top],linestyle='dashed',color='cyan')
+    plt.text(Vsuper,top,'Superconducting  \nregion  ',ha='right',va='top',fontsize=12)
+    ax.plot([Vnormal,Vnormal],[bot,top],linestyle='dashed',color='cyan')
+    plt.text(Vnormal,top,'  Normal\n  region',ha='left',va='top',fontsize=12)
+
+    ax.plot(bias,responsivity)
+    Vtes=self.Vtes(TES)
+    ax.plot(self.vbias,1.0/Vtes)
+    
+    pngname=str('TES%03i_responsivity_Array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
+    return fig,ax
+
 def plot_pv(self,TES,xwin=True):
+    '''
+    plot the power vs voltage curve for the TES
+    '''
     ttl=str('QUBIC P-V curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
     if self.temperature is None:
         tempstr='unknown'
