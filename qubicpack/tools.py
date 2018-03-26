@@ -379,7 +379,6 @@ def read_bins(self,filename):
             
     print('reading binary file: %s, I suppose this is a timeline' % filename)
 
-    self.tdata=[]
     data=[]
     with open(filename, "rb") as f:
         b = f.read(14)
@@ -388,7 +387,7 @@ def read_bins(self,filename):
         
     data=np.asarray(zip(*data))
     self.NPIXELS=128
-    npts=data.size/128.
+    npts=int(data.size/128.)
 
     timeline_array=[]
     timeline_tes=np.empty((npts))
