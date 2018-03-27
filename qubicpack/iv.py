@@ -1873,7 +1873,7 @@ def filterinfo(self,TES=None):
         for TES_index in range(self.NPIXELS):
             f=self.filtersummary[TES_index]
             if f is None: f=self.filter_iv(TES_index+1)
-            return self.filtersummary
+        return self.filtersummary
 
     # if not a valid TES, return None
     if not isinstance(TES,int) or TES<1 or TES>self.NPIXELS:
@@ -1955,10 +1955,10 @@ def offset(self,TES=None):
         
     if TES is None:
         filtersummary=filterinfo
-        turnover=[]
+        offset=[]
         for finfo in filtersummary:
-            turnover.append(finfo['fit']['offset'])
-        return turnover
+            offset.append(finfo['fit']['offset'])
+        return offset
     return filterinfo['fit']['offset']
 
 def R1adjust(self,TES=None):
@@ -2000,10 +2000,10 @@ def R1(self,TES=None):
     if filterinfo is None:return None
     if TES is None:
         filtersummary=filterinfo
-        turnover=[]
+        R1=[]
         for finfo in filtersummary:
-            turnover.append(finfo['fit']['R1'])
-        return turnover
+            R1.append(finfo['fit']['R1'])
+        return R1
     return filterinfo['fit']['R1']
 
 def Rn(self,TES=None):
