@@ -672,7 +672,7 @@ def get_iv_data(self,replay=False,TES=None,monitor=False):
     return adu
 
 
-def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
+def get_iv_timeline(self,vmin=None,vmax=None,frequency=None,shape=0):
     '''
     get timeline data with Bias set to sinusoid shape and then extract the I-V data
 
@@ -701,7 +701,7 @@ def get_iv_timeline(self,vmin=None,vmax=None,frequency=None):
     self.bias_frequency=frequency
     #amplitude=2*amplitude # BUG CHECK: is this peak-to-peak or amplitude?
     self.debugmsg('amplitude=%.2f, offset=%.2f, frequency=%.2f' % (amplitude,offset,frequency))
-    if self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=0) is None:return None
+    if self.set_VoffsetTES(offset, amplitude, frequency=frequency, shape=shape) is None:return None
 
     timeline=self.integrate_scientific_data()
     if not isinstance(timeline,np.ndarray):
