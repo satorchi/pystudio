@@ -192,7 +192,7 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     peak1=time_axis[ipeak1]
     return (ipeak0,ipeak1)
 
-def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None,xwin=True):
+def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None,plot_sine=True,xwin=True):
     '''
     plot the timeline
     '''
@@ -246,28 +246,34 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     if fit:
         fitparms=self.fit_timeline(TES,timeline_index,ipeak0,ipeak1)
 
-    if self.timeline_conversion==None:
-        self.timeline2adu(TES=TES,timeline_index=timeline_index)
-
-    ipeak0=self.timeline_conversion['ipeak0']
-    ipeak1=self.timeline_conversion['ipeak1']
-    shift=self.timeline_conversion['shift']
+    ipeak0=0
+    ipeak1=timeline_npts-1
+    if plot_sine and self.timeline_conversion==None:
+        try:
+            self.timeline2adu(TES=TES,timeline_index=timeline_index)
+            ipeak0=self.timeline_conversion['ipeak0']
+            ipeak1=self.timeline_conversion['ipeak1']
+            shift=self.timeline_conversion['shift']
+        except:
+            plot_sine=False
+            
     peak0=time_axis[ipeak0]
     peak1=time_axis[ipeak1]
 
-    if fitparms is None:
-        bias_period=peak1-peak0
-        amplitude=0.5*(self.max_bias-self.min_bias)
-        offset=self.min_bias+amplitude
-        sinelabel='sine curve period=%.2f seconds\npeaks determined from TES %i' % (bias_period,self.timeline_conversion['TES'])
-        ysine=offset+amplitude*np.sin((time_axis-peak0)*2*np.pi/bias_period + 0.5*np.pi + shift*2*np.pi)
-    else:
-        bias_period=fitparms['period']
-        amplitude=fitparms['amplitude']
-        offset=fitparms['offset']
-        shift=fitparms['phaseshift']
-        sinelabel='best fit sine curve: period=%.2f seconds, amplitude=%.2f $\mu$A' % (bias_period,amplitude)
-        ysine=self.model_timeline(time_axis,bias_period,shift,offset,amplitude)
+    if plot_sine:
+        if fitparms is None:
+            bias_period=peak1-peak0
+            amplitude=0.5*(self.max_bias-self.min_bias)
+            offset=self.min_bias+amplitude
+            sinelabel='sine curve period=%.2f seconds\npeaks determined from TES %i' % (bias_period,self.timeline_conversion['TES'])
+            ysine=offset+amplitude*np.sin((time_axis-peak0)*2*np.pi/bias_period + 0.5*np.pi + shift*2*np.pi)
+        else:
+            bias_period=fitparms['period']
+            amplitude=fitparms['amplitude']
+            offset=fitparms['offset']
+            shift=fitparms['phaseshift']
+            sinelabel='best fit sine curve: period=%.2f seconds, amplitude=%.2f $\mu$A' % (bias_period,amplitude)
+            ysine=self.model_timeline(time_axis,bias_period,shift,offset,amplitude)
         
 
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
@@ -283,16 +289,19 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     ax.plot([peak1,peak1],yminmax,color='red')
     ax.set_ylim(yminmax)
 
-    if fitparms is None:
-        ax_bias = ax.twinx()
-        ax_bias.set_ylabel('Bias / V',rotation=270,va='bottom')
-        ax_bias.set_ylim([self.min_bias,self.max_bias])
-        curve2_ax=ax_bias
+    if plot_sine:
+        if fitparms is None:
+            ax_bias = ax.twinx()
+            ax_bias.set_ylabel('Bias / V',rotation=270,va='bottom')
+            ax_bias.set_ylim([self.min_bias,self.max_bias])
+            curve2_ax=ax_bias
+        else:
+            curve2_ax=ax        
+        curve2=curve2_ax.plot(time_axis,ysine,label=sinelabel,color='green')
+        curves = curve1+curve2
     else:
-        curve2_ax=ax        
-    curve2=curve2_ax.plot(time_axis,ysine,label=sinelabel,color='green')
-
-    curves = curve1+curve2
+        curves = curve1
+        
     labs = [l.get_label() for l in curves]
     ax.legend(curves, labs, loc=0)
 
