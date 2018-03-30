@@ -56,6 +56,7 @@ go.max_permitted_bias=10.0
 min_bias=None
 max_possible_bias=go.DAC2V * 2**15
 max_bias=None
+shape=None
 
 # temperature start, end, and stepsize
 start_temp=None
@@ -148,6 +149,10 @@ for arg in argv:
     if arg.upper().find('--NO-CYCLE')==0:
         cycle_temp=False
         continue
+
+    if arg.upper().find('--shape=')==0:
+        shape=eval(arg.split('=')[1])
+        continue
     
 
 '''
@@ -184,6 +189,12 @@ if not meastype=='RT' and max_bias is None:
     max_bias=go.get_from_keyboard('maximum bias voltage ',max_possible_bias)
     if max_bias is None:quit()
 go.max_bias=max_bias
+
+if shape is None:shape=0 # default to sinusoid without asking
+if not shape in [0,1,2]:
+    shape=go.get_from_keyboard('enter bias modulation shape:  0) sinusoid 1) triangular 2) continuous',0)
+    go.bias_mode=shape
+    
 
 # setup temperature range
 
@@ -239,6 +250,7 @@ params_IV['frequency']=99
 params_IV['PID_I']=20
 params_IV['min_bias']=min_bias
 params_IV['max_bias']=max_bias
+params_IV['shape']=0
 
 params_RT={}
 params_RT['meastype']='RT'
@@ -247,7 +259,7 @@ params_RT['frequency']=10.0
 params_RT['PID_I']=50
 params_RT['min_bias']=-0.5
 params_RT['max_bias']= 0.5
-
+params_RT['shape']=0
 
 # check if we need a second qubicpack object
 if meastype is None:
@@ -355,7 +367,10 @@ for T in Tbath_target:
         go.assign_integration_time(params['timeline_period']) 
         go.writelog('minimum bias=%.2f V' % params['min_bias'])
         go.writelog('maximum bias=%.2f V' % params['max_bias'])
-        do_measurement=go.get_iv_timeline(vmin=params['min_bias'],vmax=params['max_bias'],frequency=params['frequency'])
+        do_measurement=go.get_iv_timeline(vmin=params['min_bias'],
+                                          vmax=params['max_bias'],
+                                          frequency=params['frequency'],
+                                          shape=params['shape'])
         if do_measurement is None:
             go.writelog('ERROR! Did not successfully acquire a timeline!')
         else:
