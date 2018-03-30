@@ -447,6 +447,7 @@ def polynomial_fit_parameters(self,fit):
         a2=fit['fitinfo'][0][6]
         a3=fit['fitinfo'][0][7]
 
+
     # find turning where polynomial tangent is zero (i.e. first derivative is zero)
     t1=-a2/(3*a3)
     discriminant=a2**2 - 3*a1*a3
@@ -456,27 +457,24 @@ def polynomial_fit_parameters(self,fit):
         fit['turnover']=None
         fit['Iturnover']=None
         fit['inflection']=None
-        # the following two can be set to something more appropriate
-        fit['offset']=0.0
-        fit['R1']=None
-        self.debugmsg('polynomial_fit_parameters (1): setting R1 to None')
-        return fit
 
-    t2=np.sqrt(discriminant)/(3*a3)
-    x0_0=t1+t2
-    x0_1=t1-t2
-    fit['turning']=[x0_0,x0_1]
+    else:
+        t2=np.sqrt(discriminant)/(3*a3)
+        x0_0=t1+t2
+        x0_1=t1-t2
+        fit['turning']=[x0_0,x0_1]
 
-    # check the concavity of the turning: up or down (+ve is up)
-    fit['concavity']=[2*a2 + 6*a3*x0_0, 2*a2 + 6*a3*x0_1]
+        # check the concavity of the turning: up or down (+ve is up)
+        fit['concavity']=[2*a2 + 6*a3*x0_0, 2*a2 + 6*a3*x0_1]
 
+        
     # check if we have a valid turnover point within the range
     found_turnover=False
     idx=0
     for V0 in fit['turning']:
         concavity=fit['concavity'][idx]
-        if (not V0 is None):
-            if concavity>0:
+        if not V0 is None:
+            if (not concavity is None) and concavity>0:
                 found_turnover=True
                 fit['turnover']=V0
         idx+=1
@@ -494,7 +492,6 @@ def polynomial_fit_parameters(self,fit):
     # find the inflection point between the turning points
     inflection_V=-a2/(3*a3)
     fit['inflection']=inflection_V
-
 
     # if we're using the combined fit, then we can exit now
     if fit['fitfunction']=='COMBINED':return fit
@@ -544,6 +541,12 @@ def polynomial_fit_parameters(self,fit):
         fit['R1']=R1
         self.debugmsg('polynomial_fit_parameters (2): setting R1 to %.3f' % R1)
         fit['offset']=offset
+
+        # get the current, according to the model, at the region transitions: Vsuper, Vnormal
+        Vsuper=fit['Vsuper']
+        fit['Isuper']=a0 + a1*Vsuper + a2*Vsuper**2 + a3*Vsuper**3 + offset
+        Vnormal=fit['Vnormal']
+        fit['Inormal']=a0 + a1*Vnormal + a2*Vnormal**2 + a3*Vnormal**3 + offset
 
         if found_turnover:
             V0=fit['turnover']
@@ -634,6 +637,11 @@ def combined_fit_parameters(self,fit):
     else:
         fit['Iturnover']=None
         self.debugmsg('combined_fit_parameters: setting Iturnover to None')
+
+    # get the current, according to the model, at the region transitions: Vsuper, Vnormal
+    fit['Isuper'] =self.model_iv_mixed(Vsuper ,b0,b1,b2,b3) + offset
+    fit['Inormal']=self.model_iv_mixed(Vnormal,b0,b1,b2,b3) + offset
+        
     return fit
 
 
