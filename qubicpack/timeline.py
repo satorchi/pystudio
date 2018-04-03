@@ -248,14 +248,20 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
 
     ipeak0=0
     ipeak1=timeline_npts-1
-    if plot_sine and self.timeline_conversion==None:
-        try:
-            self.timeline2adu(TES=TES,timeline_index=timeline_index)
+    if plot_sine:
+        if self.timeline_conversion==None:
+            try:
+                self.timeline2adu(TES=TES,timeline_index=timeline_index)
+                ipeak0=self.timeline_conversion['ipeak0']
+                ipeak1=self.timeline_conversion['ipeak1']
+                shift=self.timeline_conversion['shift']
+            except:
+                plot_sine=False
+        else:
             ipeak0=self.timeline_conversion['ipeak0']
             ipeak1=self.timeline_conversion['ipeak1']
             shift=self.timeline_conversion['shift']
-        except:
-            plot_sine=False
+
             
     peak0=time_axis[ipeak0]
     peak1=time_axis[ipeak1]
