@@ -1076,8 +1076,6 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     if not is_good:txt+=str('\nFlagged as BAD:  %s' % comment)
 
     # write out the comments
-    #text_x=self.bias_factor*(self.min_bias + 0.95*(self.max_bias-self.min_bias))
-    #text_y=Ibot
     text_x=0.98
     text_y=0.02
     boxprops = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
@@ -1299,9 +1297,10 @@ def plot_rp(self,TES,xwin=True):
     ax.set_xlim([plot_Pmin,plot_Pmax])
     ax.set_ylim([plot_Rmin,plot_Rmax])
 
-    text_x=plot_Pmax-0.3*Pspan
-    text_y=plot_Rmin+0.5*Rspan
-    ax.text(text_x,text_y,lbl)
+    text_x=0.98
+    text_y=0.02
+    boxprops = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(text_x,text_y,lbl,va='bottom',ha='right',fontsize=10,transform = ax.transAxes,bbox=boxprops)
     
     pngname=str('TES%03i_RP_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
