@@ -705,7 +705,7 @@ def do_combinedfit(self,TES,bias,curve,Vsuper=None,Vnormal=None):
     # calculate a performance measure
     npts=len(bias)
     Vfit=self.model_iv_combined(bias,Vsuper,Vnormal,a0,a1,b0,b1,b2,b3,c0,c1)
-    sigma2=(curve-Vfit)**2
+    sigma2=((curve-Vfit)/Vfit)**2
     residual = np.sqrt( np.sum(sigma2) )/npts
     fit['residual']=residual
 
