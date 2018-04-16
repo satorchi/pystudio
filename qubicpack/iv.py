@@ -319,18 +319,20 @@ def draw_tangent(self,TES):
     
     # tangent is determined by the fit
     slope=1/R1
-    
-    Iinfinity=self.Vinfinity
 
+    Iinfinity=self.Vinfinity
     # The line is described by: y=slope*x + I0 + offset
     I0=Iinfinity - slope*self.Vinfinity - offset
 
-    V2=self.bias_factor*self.min_bias
+    V1=self.bias_factor*self.max_bias
+    I1=slope*V1 + I0 + offset
+
+    #V2=self.bias_factor*self.min_bias
     V2=0.0
     I2=slope*V2 + I0 + offset
 
-    xpts=[V2,self.Vinfinity]
-    ypts=[I2,Iinfinity]
+    xpts=[V2,V1]
+    ypts=[I2,I1]
     plt.plot(xpts,ypts,linestyle='dashed',color='green',label='model normal region')
     
     return I0
