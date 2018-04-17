@@ -91,9 +91,13 @@ class qubicpack:
         draw_iv,\
         setup_plot_iv,\
         adjusted_iv,\
+        Vbias2Vtes,\
         oplot_iv,\
         plot_iv,\
+        responsivity_func,\
+        conductance_func,\
         plot_responsivity,\
+        plot_ip,\
         plot_pv,\
         plot_rp,\
         make_Vbias,\
@@ -107,6 +111,7 @@ class qubicpack:
         good_index,\
         ngood,\
         turnover,\
+        Iturnover,\
         offset,\
         R1adjust,\
         R1,\
