@@ -1090,139 +1090,6 @@ def plot_iv(self,TES=None,multi=False,xwin=True):
     else: plt.close('all')
     return fig
 
-def plot_responsivity(self,TES,xwin=True):
-    '''
-    plot the responsivity of the TES
-
-    The formula is:
-      Si = -1/2V * (Z0-R0)/(Z0+RL)
-
-      with
-        Z0 = dV/dI = the slope of the curve at the point (V,I)
-        R0 =  V/I (at the point (V,I)
-        RL = Rshunt + Rparasitic - self.Rshunt + (approx) 10e-3 Ohm
-
-
-    in the super region,
-        V = C1/(I-C0)
-        dV/dI = -C1/(I-C0)**2
-    
-    in the overlap region
-        I = C0 + C1*V + C2*V**2 + C3*V**3
-        dV/dI = 1 / (C1 + 2*C2*V + 3*C3*V**2)
-
-
-     in the normal region
-        V = (I-C0)/C1
-        dV/dI = 1/C1
-
-    '''
-    filterinfo=self.filterinfo(TES)
-    if filterinfo is None:return None
-
-    if not filterinfo['fit']['fitfunction']=='COMBINED':
-        print("I need to have the COMBINED model.  Please rerun the filter and select COMBINED for the fitfunction.")
-        return None
-
-    RL = self.Rshunt + 10e-3
-
-    
-    fitparms=filterinfo['fit']['fitinfo'][0]
-    Vsuper =filterinfo['fit']['Vsuper']
-    Vnormal=filterinfo['fit']['Vnormal']
-    
-    # take 500 points in each region: super,combined,normal
-    responsivity=[]
-    bias=[]
-
-    # super region
-    range_min=self.bias_factor*self.min_bias
-    range_max=self.bias_factor*Vsuper
-    dV=0.002*(range_max-range_min)
-    vbias=np.arange(range_min,range_max,dV)
-    V=range_min
-    C0=fitparms[2]
-    C1=fitparms[3]
-    for V in vbias:
-        I=self.model_iv_super(V,C0,C1)
-        Vtes=self.Rshunt*(V/self.Rbias-I*1e-6)
-        R0 = 1e6*Vtes/I
-        Z0 = -1e6*(self.Rshunt/self.Rbias)*C1/(I-C0)**2
-        Si = -0.5/Vtes * (Z0-R0)/(Z0+RL)
-        responsivity.append(Si)
-        bias.append(V)
-
-    # mixed region
-    range_min=self.bias_factor*Vsuper
-    range_max=self.bias_factor*Vnormal
-    dV=0.002*(range_max-range_min)
-    V=range_min
-    vbias=np.arange(range_min,range_max,dV)
-    C0=fitparms[4]
-    C1=fitparms[5]
-    C2=fitparms[6]
-    C3=fitparms[7]
-    for V in vbias:
-        I=self.model_iv_mixed(V,C0,C1,C2,C3)
-        Vtes=self.Rshunt*(V/self.Rbias-I*1e-6)
-        R0 = 1e6*Vtes/I
-        Z0 = 1e6*(self.Rshunt/self.Rbias) / (C1 + 2*C2*V + 3*C3*V**2)
-        Si = -0.5/Vtes * (Z0-R0)/(Z0+RL)
-        responsivity.append(Si)
-        bias.append(V)
-
-    # normal region
-    range_min=self.bias_factor*Vnormal
-    range_max=self.bias_factor*self.max_bias
-    dV=0.002*(range_max-range_min)
-    V=range_min
-    vbias=np.arange(range_min,range_max,dV)
-    C0=fitparms[8]
-    C1=fitparms[9]
-    for V in vbias:
-        I=self.model_iv_normal(V,C0,C1)
-        Vtes=self.Rshunt*(V/self.Rbias-I*1e-6)
-        R0 = 1e6*Vtes/I
-        Z0 = 1e6*(self.Rshunt/self.Rbias)/C1
-        Si = -0.5/Vtes * (Z0-R0)/(Z0+RL)
-        responsivity.append(Si)
-        bias.append(V)
-    
-        
-    
-    ttl=str('QUBIC Responsivity curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
-    if self.temperature is None:
-        tempstr='unknown'
-    else:
-        tempstr=str('%.0f mK' % (1000*self.temperature))
-    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
-    if xwin: plt.ion()
-    else: plt.ioff()
-    fig,ax=plt.subplots(1,1,figsize=self.figsize)
-    fig.canvas.set_window_title('plt: '+ttl) 
-    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
-    ax.set_xlabel('Bias Voltage  /  V')
-    ax.set_ylabel('S$_\mathrm{i}$  /  A/W')
-    ax.set_xlim([self.bias_factor*self.min_bias,self.bias_factor*self.max_bias])
-
-    top=max(responsivity)
-    bot=min(responsivity)
-    # draw vertical lines showing the three regions
-    ax.plot([Vsuper,Vsuper],[bot,top],linestyle='dashed',color='cyan')
-    plt.text(Vsuper,top,'Superconducting  \nregion  ',ha='right',va='top',fontsize=12)
-    ax.plot([Vnormal,Vnormal],[bot,top],linestyle='dashed',color='cyan')
-    plt.text(Vnormal,top,'  Normal\n  region',ha='left',va='top',fontsize=12)
-
-    ax.plot(bias,responsivity)
-    Vtes=self.Vtes(TES)
-    ax.plot(self.vbias,1.0/Vtes)
-    
-    pngname=str('TES%03i_responsivity_Array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
-    pngname_fullpath=self.output_filename(pngname)
-    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
-    if xwin: plt.show()
-    else: plt.close('all')
-    return fig,ax
 
 def plot_pv(self,TES,xwin=True):
     '''
@@ -1311,6 +1178,415 @@ def plot_rp(self,TES,xwin=True):
     else: plt.close('all')
     return fig,ax
 
+
+def Vbias2Vtes(self,V,Ites):
+    '''
+    return the Vtes for a given bias voltage.
+    the current must also be given
+    '''
+    Vtes=self.Rshunt*(V/self.Rbias-Ites)
+    return Vtes
+
+def responsivity_func(self,Vtes,I,f_prime):
+    '''
+    the responsivity is dI/dP
+
+    f_prime is the derivative of the model I=f(Vbias), dI/dVbias = f'(Vbias) at the point I,Vbias
+    for more details see plot_responsivity() below
+    '''
+    responsivity = 1.0/( I*self.Rshunt * (1.0/(self.Rbias*f_prime) - 1) + Vtes )
+    return responsivity
+
+def conductance_func(self,f_prime):
+    '''
+    the conducance G0
+
+    f_prime is the derivative of the model I=f(Vbias), dI/dVbias = f'(Vbias) at the point I,Vbias
+    for more details see plot_responsivity() below
+    '''
+    G0=1.0/( self.Rshunt*(1.0/(self.Rbias*f_prime) - 1) )
+    return G0
+
+def plot_responsivity(self,TES,xwin=True,npts_region=500,window_size=51,filter_sigma=10,
+                      plot_model=True,rmax=None,rmin=None):
+    '''
+    plot the responsivity of the TES
+
+    The formula is:
+      Si = -1/2Vbias * (Z0-R0)/(Z0+RL)                       [Eq.1]
+
+      with
+        Z0 = dVtes/dI = the slope of the curve at the point (Vtes,I)
+        R0 = Vtes/I (at the point (Vtes,I)
+        RL = Rshunt + Rparasitic = Rshunt + (approx) 10e-3 Ohm
+
+        Vtes = Rshunt * (Vbias/Rbias-I)                      [Eq.2]
+        dVtes/dP = Rshunt * ( (dVbias/dP)/Rbias - dI/dP )    [Eq.3]
+        dVtes/dI = Rshunt * ( (dVbias/dI)/Rbias - 1 )        [Eq.4]
+
+    # NOTE: at turnover, dV/dI becomes infinite (slope zero in the I-V curve)
+    We can rewrite the formula in terms of Conductance (G0) rather than Resistance (Z0)
+
+    Si = -1/2Vbias * (1-R0*G0)/(1-RL*G0)                     [Eq.5]
+
+    with
+       G0 = dI/dVtes = the slope of the curve at the point (Vtes,I)
+
+
+
+    Is the above formula correct?
+    Shih-Fu Lee et al (1998) give the definition:
+    
+    Si = dI/dP
+    I  = P/Vtes
+    dI/dP = 1/Vtes * ( 1 - (P/Vtes) dVtes/dP )               [Eq.6]
+
+    and then substituting [Eq.3]
+
+    dI/dP = 1/(Vtes-1) * (1 - I * Rshunt * (dVbias/dP)/Rbias) [Eq.7]
+
+
+    in each region, we have 
+      I=f(Vbias)
+    so
+      dI/dP = dVbias/dP f'(Vbias)
+
+    and substituting into [Eq.7] and rearranging gives:
+
+      dI/dP = [ IRshunt (1/Rbias f'(Vbias) - 1) + Vtes ]^-1    [Eq.8]
+      
+
+    # NOTE: the modelling gives the current in uA (crap programming, sorry)
+    in the super region,
+        I = f(Vbias)  = C0 + C1/Vbias
+            f'(Vbias) = -C1/Vbias**2
+
+        C0 has units of A
+        C1 has units of V * uA
+    
+    in the overlap region
+        I = f(Vbias)  = C0 + C1*Vbias + C2*Vbias**2 + C3*Vbias**3
+            f'(Vbias) = C1 + 2*C2*Vbias + 3*C3*Vbias**2
+
+        C0 has units of A
+        C1 has units of A/V
+        C2 has units of A/V^2
+        C3 has units of A/V^3
+
+     in the normal region
+        I = f(Vbias)  = C0 + C1Vbias
+            f'(Vbias) = C1
+
+        C0 has units of A
+        C1 has units of A/V
+
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo is None:return None
+
+    if not filterinfo['fit']['fitfunction']=='COMBINED':
+        print("I need to have the COMBINED model.  Please rerun the filter and select COMBINED for the fitfunction.")
+        return None
+
+    RL = self.Rshunt + 10e-3
+
+
+    # some parameters
+    fitparms=filterinfo['fit']['fitinfo'][0]
+    turnover_bias=self.turnover(TES)
+    Iturnover_TES=filterinfo['fit']['Iturnover']
+    if not Iturnover_TES is None:
+        Iturnover_TES*=1e-6
+        Vturnover_TES=self.Vbias2Vtes(turnover_bias,Iturnover_TES)
+    else:
+        Vturnover_TES=None
+        
+    Ioffset_TES=1e-6*self.offset(TES)
+    Vsuper =filterinfo['fit']['Vsuper']
+    Vnormal=filterinfo['fit']['Vnormal']
+
+    # take npts_region points in each region: super,combined,normal
+    dVscale=1./npts_region
+    responsivity=[]
+    voltage=[]
+    Z0_model=[]
+    G0_model=[]
+    Imodel=[]
+
+    # super region
+    range_min=self.bias_factor*self.min_bias
+    range_max=self.bias_factor*Vsuper
+    dV=dVscale*(range_max-range_min)
+    vbias=np.arange(range_min,range_max,dV)
+    V=range_min
+    C0=fitparms[2] * 1e-6 # units of Amps
+    C1=fitparms[3] * 1e-6 # units of Amps * Volt
+    Isuper_TES=self.model_iv_super(Vsuper,C0,C1) + Ioffset_TES
+    Vsuper_TES=self.Vbias2Vtes(Vsuper,Isuper_TES)
+    for V in vbias:
+        Ites=self.model_iv_super(V,C0,C1) + Ioffset_TES
+        Imodel.append(Ites)
+        Vtes=self.Vbias2Vtes(V,Ites)
+        f_prime=-C1/V**2
+        R0 = Vtes/Ites
+        G0 = self.conductance_func(f_prime)
+        Si = self.responsivity_func(Vtes,Ites,f_prime)
+        responsivity.append(Si)
+        voltage.append(Vtes)
+        G0_model.append(G0)
+
+    # mixed region
+    range_min=self.bias_factor*Vsuper
+    range_max=self.bias_factor*Vnormal
+    dV=dVscale*(range_max-range_min)
+    V=range_min
+    vbias=np.arange(range_min,range_max,dV)
+    C0=fitparms[4] * 1e-6 # units of Amps
+    C1=fitparms[5] * 1e-6 # units of Amps/Volt
+    C2=fitparms[6] * 1e-6 # units of Amps/Volt^2
+    C3=fitparms[7] * 1e-6 # units of Amps/Volt^3
+    Inormal_TES=self.model_iv_mixed(V,C0,C1,C2,C3) + Ioffset_TES
+    Vnormal_TES=self.Vbias2Vtes(Vnormal,Inormal_TES)
+    for V in vbias:
+        Ites=self.model_iv_mixed(V,C0,C1,C2,C3) + Ioffset_TES
+        Imodel.append(Ites)
+        Vtes=self.Vbias2Vtes(V,Ites)
+        f_prime = C1 + 2*C2*V + 3*C3*V**2
+        R0 = Vtes/Ites
+        G0 = self.conductance_func(f_prime)
+        Si = self.responsivity_func(Vtes,Ites,f_prime)
+        responsivity.append(Si)
+        voltage.append(Vtes)
+        G0_model.append(G0)
+        
+    # normal region
+    range_min=self.bias_factor*Vnormal
+    range_max=self.bias_factor*self.max_bias
+    dV=dVscale*(range_max-range_min)
+    V=range_min
+    vbias=np.arange(range_min,range_max,dV)
+    C0=fitparms[8] * 1e-6 # units of Amps
+    C1=fitparms[9] * 1e-6 # units of Amps/Volt
+    for V in vbias:
+        Ites=self.model_iv_normal(V,C0,C1) + Ioffset_TES
+        Imodel.append(Ites)
+        Vtes=self.Vbias2Vtes(V,Ites)
+        f_prime = C1
+        Si = self.responsivity_func(Vtes,Ites,f_prime)
+        R0 = Vtes/Ites
+        G0 = self.conductance_func(f_prime)
+        Si = self.responsivity_func(Vtes,Ites,f_prime)
+        responsivity.append(Si)
+        voltage.append(Vtes)
+        G0_model.append(G0)
+
+    # convert to numpy arrays
+    responsivity=np.array(responsivity)
+    
+
+    # Now make the calculation based on the smoothed measurement, instead of using the model
+    istart,iend=self.selected_iv_curve(TES)
+    I=self.Ites(TES)[istart:iend]
+    V=self.Vtes(TES)[istart:iend]
+    Vbias=self.vbias[istart:iend]
+    P=I*V
+    
+    # make sure window_size is an odd number
+    if window_size % 2 == 0:window_size+=1
+    window=np.hanning(window_size)
+    Ismooth=np.convolve(window/window.sum(),I,mode='valid')
+    Vsmooth=V[window_size//2:-window_size//2]
+    if Vsmooth.size != Ismooth.size:
+        npts_diff=Vsmooth.size-Ismooth.size
+        self.debugmsg('applying correction for unequal windows: npts_diff=%i' % npts_diff)
+        Vsmooth=V[npts_diff+window_size//2:-window_size//2]
+    npts_smooth=Vsmooth.size
+    G0 = np.gradient(Ismooth,Vsmooth)
+    R0 = Vsmooth/Ismooth
+    Psmooth = Ismooth*Vsmooth
+    meas_responsivity = np.gradient(Ismooth,Psmooth)
+    
+    self.debugmsg('min(G0_model),max(G0_model)=%.4e,%.4e' % (min(G0_model),max(G0_model)))
+    bias,Imodel_intrinsic=self.fitted_iv_curve(TES)
+    Imodel_intrinsic*=1.0e-6
+    Pmodel=Imodel_intrinsic*V
+    
+    ttl=str('QUBIC Responsivity curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+    if self.temperature is None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.0f mK' % (1000*self.temperature))
+    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
+    if xwin: plt.ion()
+    else: plt.ioff()
+    fig,ax=plt.subplots(1,1,figsize=self.figsize)
+    fig.canvas.set_window_title('plt: '+ttl) 
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    ax.set_xlabel('TES Voltage  /  $\mu$V')
+    ax.set_ylabel('S$_\mathrm{i}$  /  A$\cdot\mathrm{W}^{-1}$')
+
+    # rescale V axis to uV
+    voltage=1e6*np.array(voltage)
+    Vsuper_TES*=1.0e6
+    Vnormal_TES*=1.0e6
+    plot_xrange=max(voltage)-min(voltage)
+    ax.set_xlim([min(voltage)-0.1*plot_xrange,max(voltage)+0.1*plot_xrange])
+
+    # filter out the noisy first part
+    resp_middle=meas_responsivity[npts_smooth//5:-npts_smooth//5]
+    std_dev=resp_middle.std()
+    start_idx=0
+    for idx,val in enumerate(meas_responsivity[:-npts_smooth//5]):
+        if abs(val/std_dev) > filter_sigma:start_idx=idx
+    ax.plot(1e6*Vsmooth[start_idx:],meas_responsivity[start_idx:],label='responsivity from data')
+    
+    # y axis limits
+    top=max(meas_responsivity[start_idx:])
+    bot=min(meas_responsivity[start_idx:])
+    if not rmin is None:bot=rmin
+    if not rmax is None:top=rmax
+    plot_yrange=top-bot
+    ax.set_ylim([bot-0.1*plot_yrange,top+0.1*plot_yrange])
+
+    # draw vertical lines showing the three regions
+    ax.plot([Vsuper_TES,Vsuper_TES],[bot,top],linestyle='dashed',color='green')
+    plt.text(Vsuper_TES,top,'Superconducting  \nregion  ',ha='right',va='top',fontsize=12,color='green')
+    ax.plot([Vnormal_TES,Vnormal_TES],[bot,top],linestyle='dashed',color='green')
+    plt.text(Vnormal_TES,top,'  Normal\n  region',ha='left',va='top',fontsize=12,color='green')
+
+
+    if plot_model:
+        ax.plot(voltage,responsivity,label='responsivity from model')
+
+    self.debugmsg('len(Vsmooth)=%i' % len(Vsmooth))
+    self.debugmsg('len(Ismooth)=%i' % len(Ismooth))
+    self.debugmsg('window_size=%i' % window_size)
+
+    ax.plot(Vbias,0.5/V,label='$\dfrac{1}{2\mathrm{V}_\mathrm{TES}}$',color='red')
+
+    # draw a vertical line at the turnover
+    if not Vturnover_TES is None:
+        Vturnover=1e6*Vturnover_TES
+        turnover_label='V$_\mathrm{turnover}$=%.3f $\mu$V' % Vturnover
+        ax.plot([Vturnover,Vturnover],[bot,top],linestyle='dashed',color='blue',label=turnover_label)
+
+    ax.legend()
+
+    
+    pngname=str('TES%03i_responsivity_Array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
+
+    retval={}
+    retval['responsivity']=responsivity
+    retval['meas_responsivity']=meas_responsivity
+    
+    return retval
+
+
+
+def plot_ip(self,TES,xwin=True):
+    '''
+    plot Current vs Power for the TES
+    '''
+
+    if not self.exist_iv_data():return None
+    filterinfo=self.filterinfo(TES)
+    if filterinfo is None:return None    
+    
+    istart,iend=self.selected_iv_curve(TES)
+
+    # data
+    Ites=1e6*self.Ites(TES)[istart:iend] # uA
+    Ptes=self.Ptes(TES)[istart:iend] # pW
+
+    # model
+    bias,Imodel=self.fitted_iv_curve(TES)
+    Imodel=1.0e-6*Imodel[istart:iend]
+    Vmodel=self.Vbias2Vtes(bias[istart:iend],Imodel)
+    Pmodel=Imodel*Vmodel*1e12 # pW
+    Imodel*=1e6 # uA
+
+    # turnover
+    Pturnover=None
+    Vturnover=self.turnover(TES)
+    Iturnover=self.Iturnover(TES)
+    if not Vturnover is None and not Iturnover is None:
+        Vturnover_TES=self.Vbias2Vtes(Vturnover,Iturnover*1e-6)
+        Pturnover=Iturnover*Vturnover_TES*1e6 # pW
+
+    # bias voltage at boundary between super region and overlap region
+    Vsuper = filterinfo['fit']['Vsuper']
+    Isuper = filterinfo['fit']['Isuper']
+    Psuper=None
+    if not Vsuper is None and not Isuper is None:
+        Vsuper_TES=self.Vbias2Vtes(Vsuper,Isuper*1e-6)
+        Psuper=Isuper*Vsuper_TES*1e6 # pW
+
+    # bias voltage at boundary between overlap region and normal region
+    Vnormal=filterinfo['fit']['Vnormal']
+    Inormal = filterinfo['fit']['Inormal']
+    Pnormal=None
+    if not Vnormal is None and not Inormal is None:
+        Vnormal_TES=self.Vbias2Vtes(Vnormal,Inormal*1e-6)
+        Pnormal=Inormal*Vnormal_TES*1e6 # pW
+
+    
+    Imin=min(Ites)
+    Imax=max(Ites)
+    Ispan=Imax-Imin
+    plot_Imin=Imin-0.2*Ispan
+    plot_Imax=Imax+0.2*Ispan
+    
+    Pmin=min(Ptes)
+    Pmax=max(Ptes)
+    Pspan=Pmax-Pmin
+    plot_Pmin=Pmin-0.05*Pspan
+    plot_Pmax=Pmax+0.2*Pspan
+    
+    ttl=str('QUBIC I-P curve for TES#%3i (%s)' % (TES,self.obsdate.strftime('%Y-%b-%d %H:%M UTC')))
+    if self.temperature is None:
+        tempstr='unknown'
+    else:
+        tempstr=str('%.0f mK' % (1000*self.temperature))
+    subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
+    if xwin: plt.ion()
+    else: plt.ioff()
+    fig,ax=plt.subplots(1,1,figsize=self.figsize)
+    fig.canvas.set_window_title('plt: '+ttl) 
+    fig.suptitle(ttl+'\n'+subttl,fontsize=16)
+    ax.set_xlabel('P$_\mathrm{TES}$  /  pW')
+    ax.set_ylabel('I$_\mathrm{TES}$  /  $\mu$A')
+
+    ax.plot(Ptes,Ites,label='data')
+    ax.plot(Pmodel,Imodel,label='model')
+
+    # show turnover
+    if not Pturnover is None:
+        turnover_label='I$_\mathrm{turnover}$=%.3f$\mu$A, P$_\mathrm{turnover}$=%.3fpW' % (Iturnover,Pturnover)
+        ax.plot([Pturnover,Pturnover],[plot_Imin,Iturnover],linestyle='dashed',color='red',label=turnover_label)
+        ax.plot([plot_Pmin,Pturnover],[Iturnover,Iturnover],linestyle='dashed',color='red')
+
+    # show boundaries
+    if not Psuper is None:
+        ax.plot([Psuper,Psuper],[plot_Imin,plot_Imax],linestyle='dashed',color='green')
+        plt.text(Psuper,plot_Imax,'Superconducting  \nregion  ',ha='right',va='top',fontsize=10,color='green')
+    if not Pnormal is None:
+        ax.plot([Pnormal,Pnormal],[plot_Imin,plot_Imax],linestyle='dashed',color='green')
+        plt.text(Pnormal,plot_Imax,'  Normal\n  region',ha='left',va='top',fontsize=10,color='green')
+        
+    ax.set_xlim([plot_Pmin,plot_Pmax])
+    ax.set_ylim([plot_Imin,plot_Imax])
+    ax.legend()
+    
+    pngname=str('TES%03i_IP_array-%s_ASIC%i_%s.png' % (TES,self.detector_name,self.asic,self.obsdate.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname_fullpath=self.output_filename(pngname)
+    if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
+    if xwin: plt.show()
+    else: plt.close('all')
+    return fig,ax
 
                 
 def make_Vbias(self,cycle=True,ncycles=2,vmin=0.5,vmax=3.0,dv=0.002,lowhigh=True):
@@ -1954,6 +2230,18 @@ def turnover(self,TES=None):
         return turnover
     return filterinfo['fit']['turnover']
 
+def Iturnover(self,TES=None):
+    '''
+    return the current at turnover (operation) voltage for the TES
+    '''
+    filterinfo=self.filterinfo(TES)
+    if filterinfo is None:return None
+        
+    if TES is None:return None
+    if 'Iturnover' in filterinfo['fit'].keys():                                  
+        return filterinfo['fit']['Iturnover']
+    return None
+
 def offset(self,TES=None):
     '''
     return the offset current for the TES
@@ -2056,7 +2344,7 @@ def Vtes(self,TES):
     Ites=self.Ites(TES)
     if not isinstance(Ites,np.ndarray):return None
     
-    Vtes=self.Rshunt*((self.vbias*self.bias_factor)/self.Rbias-Ites)
+    Vtes=self.Vbias2Vtes(self.vbias*self.bias_factor,Ites)
     return Vtes
 
 def Ptes(self,TES):
