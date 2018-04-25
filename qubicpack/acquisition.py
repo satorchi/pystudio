@@ -203,10 +203,10 @@ def set_Rfeedback(self,Rfeedback):
 
     # by default, we set it to 10kOhm.
     if Rfeedback<100:
-        client.sendSetRelay(self.QS_asic_index,1)
+        client.sendSetFeedbackRelay(self.QS_asic_index,1)
         self.Rfeedback=10e3
     else:
-        client.sendSetRelay(self.QS_asic_index,0)
+        client.sendSetFeedbackRelay(self.QS_asic_index,0)
         self.Rfeedback=100e3
 
     return self.Rfeedback

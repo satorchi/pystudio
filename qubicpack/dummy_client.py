@@ -39,7 +39,7 @@ class dummy_client:
     def sendConfigurePID(self,asic_index, P,I,D):
         return True
     
-    def sendSetRelay(self, asic_index,stat):
+    def sendSetFeedbackRelay(self, asic_index,stat):
         return True
 
     def sendSetOffsetTable(self, asic_index, offsets):

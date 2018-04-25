@@ -81,7 +81,7 @@ public :
     virtual void resetDecommutationParameters(quint8 subsytemId) = 0;
     virtual void resetToDefaultValues() = 0;
     virtual void setSessionName(QString sessionName) = 0;
-    void reloadTF();
+    virtual void reloadTF() = 0;
     QString stringValue(quint32 parameterId);
     int setStringValue(quint32 parameterId, const char* string);
     QByteArray byteArrayValue(quint32 parameterId);

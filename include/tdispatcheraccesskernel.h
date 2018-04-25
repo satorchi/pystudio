@@ -191,7 +191,6 @@ public :
 
     bool disableOneRequestedParameters(quint8 reqNum);
     bool disableAllRequestedParameters();
-    bool sendReloadTF();
 
     QString lastError();
     bool isConnected();

@@ -31,7 +31,7 @@ consigne=0
 client.sendActivatePID(go.QS_asic_index,0)
 
 # make sure relay=10kOhm  val=1 -> 10kOhm, val=0 -> 100kOhm
-client.sendSetRelay(go.QS_asic_index,1)
+client.sendSetFeedbackRelay(go.QS_asic_index,1)
 
 # set sampling frequency 400Hz
 freq=400.

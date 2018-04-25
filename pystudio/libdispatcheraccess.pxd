@@ -107,7 +107,7 @@ cdef extern from "tdispatcheraccess.h":
         bool sendSetTESDAC(quint32, quint8, quint8, quint16, quint16)
         bool sendConfigurePID(quint32, quint16, quint16, quint16)
         bool sendActivatePID(quint32, quint16)
-        bool sendSetRelay(quint32, quint8)
+        bool sendSetFeedbackRelay(quint32, quint8)
         bool sendResetVOffset(quint32)
         bool sendSetVOffset(quint32, quint8, float)
         bool sendSetVOffsets(quint32, float*)
