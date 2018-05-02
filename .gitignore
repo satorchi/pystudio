@@ -1,4 +1,6 @@
 /build
+build.log
+error.log
 /dist
 /pystudio.egg-info
 /test
