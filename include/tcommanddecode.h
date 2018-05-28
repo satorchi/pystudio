@@ -12,10 +12,8 @@
 #define 		CALIBSOURCES_CONFIGUREHIGHFREQUENCYSOURCE_ID 2
 #define 		CALIBSOURCES_CUSTOMCALIBSOURCESCOMMAND_ID 1
 #define 		HWP_HWPCOMMAND_ID 1
-#define 		IMACRT4_TOIMARCTR4_ID 0
-#define 		IMACRT3_TOIMARCTR3_ID 0
-#define 		IMACRT2_TOIMARCTR2_ID 0
-#define 		IMACRT1_TOIMARCTR1_ID 0
+#define 		MGC3_TOMGC3_ID 0
+#define 		MMR3_TOMMR3_ID 0
 #define 		CFIBERS_CONFIGURECFIBERS_ID 1
 #define 		SWITCHES_SWITCHESMSG_ID 0
 #define 		MULTINETQUICMANAGER_SETHEATERRELAY_ID 62
@@ -404,9 +402,9 @@ void decodeSetASICSerialLinkFrequency(quint8* pbTC , /*@out@*/quint8 *serialFreq
  * \@param [out] shape TBWTBWTBWTBWTBWTBWTBW
  * \@param [out] frequency TBWTBWTBWTBWTBWTBWTBW
  * \@param [out] amplitude TBWTBWTBWTBWTBWTBWTBW
- * \@param [out] offset TBWTBWTBWTBWTBWTBWTBW
+ * \@param [out] offsetADU TBWTBWTBWTBWTBWTBWTBW
  */
-void decodeSetTESDAC(quint8* pbTC , /*@out@*/quint32 *asicNum , /*@out@*/quint8 *shape , /*@out@*/quint8 *frequency , /*@out@*/quint16 *amplitude , /*@out@*/quint16 *offset);
+void decodeSetTESDAC(quint8* pbTC , /*@out@*/quint32 *asicNum , /*@out@*/quint8 *shape , /*@out@*/quint8 *frequency , /*@out@*/quint16 *amplitude , /*@out@*/quint16 *offsetADU);
 
 /** \@brief Decode the SetFeedbackDAC command's fields.
  * 
@@ -416,9 +414,9 @@ void decodeSetTESDAC(quint8* pbTC , /*@out@*/quint32 *asicNum , /*@out@*/quint8 
  * \@param [out] shape TBWTBWTBWTBWTBWTBWTBW
  * \@param [out] frequency TBWTBWTBWTBWTBWTBWTBW
  * \@param [out] amplitude TBWTBWTBWTBWTBWTBWTBW
- * \@param [out] offset TBWTBWTBWTBWTBWTBWTBW
+ * \@param [out] offsetADU TBWTBWTBWTBWTBWTBWTBW
  */
-void decodeSetFeedbackDAC(quint8* pbTC , /*@out@*/quint32 *asicNum , /*@out@*/quint8 *shape , /*@out@*/quint8 *frequency , /*@out@*/quint16 *amplitude , /*@out@*/quint16 *offset);
+void decodeSetFeedbackDAC(quint8* pbTC , /*@out@*/quint32 *asicNum , /*@out@*/quint8 *shape , /*@out@*/quint8 *frequency , /*@out@*/quint16 *amplitude , /*@out@*/quint16 *offsetADU);
 
 /** \@brief Decode the ConfigurePID command's fields.
  * 

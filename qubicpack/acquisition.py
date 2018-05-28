@@ -371,11 +371,9 @@ def get_nsamples(self):
     #q=client.abort_requests()
     
     self.debugmsg('getting nsamples...')
-    nsamples = client.fetch('QUBIC_Nsample')
+    nsamples_all = client.fetch('QUBIC_Nsamples')
+    nsamples=nsamples_all[self.asic_index()]
     self.debugmsg('got nsamples.')
-    # QubicStudio returns an array of integer of length 1.
-    # convert this to a simple integer
-    nsamples = int(nsamples)
     self.debugmsg('nsamples=%i' % nsamples)
     self.nsamples=nsamples
     return nsamples
@@ -419,7 +417,8 @@ def get_RawMask(self):
     # flush the request queue just in case
     #q=client.abort_requests()
 
-    rawmask=client.fetch('QUBIC_RawMask')
+    rawmasks=client.fetch('QUBIC_RawMasks')
+    rawmask=rawmasks[self.asic_index(),:]
     self.rawmask=rawmask
     return rawmask
     
@@ -437,12 +436,12 @@ def get_bias(self):
         # HACK! if we already have these values, don't ask again
         # still searching for the cause of the hangups
         self.debugmsg('getting bias offset')
-        DACoffset_all=client.fetch('QUBIC_CalibOffset')
+        DACoffset_all=client.fetch('QUBIC_TESDACOffset')
         DACoffset=DACoffset_all[self.QS_asic_index]
         bias_offset=DACoffset*self.DAC2V
 
         self.debugmsg('getting bias amplitude')
-        DACamplitude_all=client.fetch('QUBIC_CalibAmplitude')
+        DACamplitude_all=client.fetch('QUBIC_TESDACAmplitude')
         DACamplitude=DACamplitude_all[self.QS_asic_index]
         bias_amplitude=DACamplitude*self.DAC2V
 
@@ -454,12 +453,12 @@ def get_bias(self):
 
     if not self.AVOID_HANGUP or self.bias_mode is None:
         self.debugmsg('getting bias mode')
-        mode_all=client.fetch('QUBIC_CalibMode')
+        mode_all=client.fetch('QUBIC_TESDACShape')
         self.bias_mode=mode_all[self.QS_asic_index]
 
     if not self.AVOID_HANGUP or self.bias_frequency is None:
         self.debugmsg('getting bias frequency')
-        modulation_all=client.fetch('QUBIC_CalibFreq')
+        modulation_all=client.fetch('QUBIC_TESDACFreq')
         self.bias_frequency=modulation_all[self.QS_asic_index]
 
     self.debugmsg('returning bias info')

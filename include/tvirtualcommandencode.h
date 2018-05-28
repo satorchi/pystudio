@@ -2,32 +2,28 @@
 #ifndef _TVIRTUALCOMMANDENCODE_H_
 #define _TVIRTUALCOMMANDENCODE_H_
 
-#define 		GPS_CUSTOMGPSCOMMAND_CMD_NUMBER 44
+#define 		GPS_CUSTOMGPSCOMMAND_CMD_NUMBER 42
 #define 		GPS_CUSTOMGPSCOMMAND_ID 1
-#define 		PLATFORMMOTORS_CONFIGUREMOTORS_CMD_NUMBER 43
+#define 		PLATFORMMOTORS_CONFIGUREMOTORS_CMD_NUMBER 41
 #define 		PLATFORMMOTORS_CONFIGUREMOTORS_ID 2
-#define 		PLATFORMMOTORS_CONFIGUREELMOTOR_CMD_NUMBER 42
+#define 		PLATFORMMOTORS_CONFIGUREELMOTOR_CMD_NUMBER 40
 #define 		PLATFORMMOTORS_CONFIGUREELMOTOR_ID 1
-#define 		PLATFORMMOTORS_CONFIGUREAZMOTOR_CMD_NUMBER 41
+#define 		PLATFORMMOTORS_CONFIGUREAZMOTOR_CMD_NUMBER 39
 #define 		PLATFORMMOTORS_CONFIGUREAZMOTOR_ID 0
-#define 		PLATFORMCONTROLER_CUSTOMCONTROLERMC405COMMAND_CMD_NUMBER 40
+#define 		PLATFORMCONTROLER_CUSTOMCONTROLERMC405COMMAND_CMD_NUMBER 38
 #define 		PLATFORMCONTROLER_CUSTOMCONTROLERMC405COMMAND_ID 1
-#define 		CALIBSOURCES_CONFIGURELOWFREQUENCYSOURCE_CMD_NUMBER 39
+#define 		CALIBSOURCES_CONFIGURELOWFREQUENCYSOURCE_CMD_NUMBER 37
 #define 		CALIBSOURCES_CONFIGURELOWFREQUENCYSOURCE_ID 3
-#define 		CALIBSOURCES_CONFIGUREHIGHFREQUENCYSOURCE_CMD_NUMBER 38
+#define 		CALIBSOURCES_CONFIGUREHIGHFREQUENCYSOURCE_CMD_NUMBER 36
 #define 		CALIBSOURCES_CONFIGUREHIGHFREQUENCYSOURCE_ID 2
-#define 		CALIBSOURCES_CUSTOMCALIBSOURCESCOMMAND_CMD_NUMBER 37
+#define 		CALIBSOURCES_CUSTOMCALIBSOURCESCOMMAND_CMD_NUMBER 35
 #define 		CALIBSOURCES_CUSTOMCALIBSOURCESCOMMAND_ID 1
-#define 		HWP_HWPCOMMAND_CMD_NUMBER 36
+#define 		HWP_HWPCOMMAND_CMD_NUMBER 34
 #define 		HWP_HWPCOMMAND_ID 1
-#define 		IMACRT4_TOIMARCTR4_CMD_NUMBER 35
-#define 		IMACRT4_TOIMARCTR4_ID 0
-#define 		IMACRT3_TOIMARCTR3_CMD_NUMBER 34
-#define 		IMACRT3_TOIMARCTR3_ID 0
-#define 		IMACRT2_TOIMARCTR2_CMD_NUMBER 33
-#define 		IMACRT2_TOIMARCTR2_ID 0
-#define 		IMACRT1_TOIMARCTR1_CMD_NUMBER 32
-#define 		IMACRT1_TOIMARCTR1_ID 0
+#define 		MGC3_TOMGC3_CMD_NUMBER 33
+#define 		MGC3_TOMGC3_ID 0
+#define 		MMR3_TOMMR3_CMD_NUMBER 32
+#define 		MMR3_TOMMR3_ID 0
 #define 		CFIBERS_CONFIGURECFIBERS_CMD_NUMBER 31
 #define 		CFIBERS_CONFIGURECFIBERS_ID 1
 #define 		SWITCHES_SWITCHESMSG_CMD_NUMBER 30
@@ -458,9 +454,9 @@ bool sendSetASICSerialLinkFrequency(quint8 serialFreq);
  * \@param [in] shape TBWTBWTBWTBWTBWTBWTBW
  * \@param [in] frequency TBWTBWTBWTBWTBWTBWTBW
  * \@param [in] amplitude TBWTBWTBWTBWTBWTBWTBW
- * \@param [in] offset TBWTBWTBWTBWTBWTBWTBW
+ * \@param [in] offsetADU TBWTBWTBWTBWTBWTBWTBW
  */
-bool sendSetTESDAC(quint32 asicNum , quint8 shape , quint8 frequency , quint16 amplitude , quint16 offset);
+bool sendSetTESDAC(quint32 asicNum , quint8 shape , quint8 frequency , quint16 amplitude , quint16 offsetADU);
 
 /** \@brief Encodes the SetFeedbackDAC command and sends it.
  * 
@@ -469,9 +465,9 @@ bool sendSetTESDAC(quint32 asicNum , quint8 shape , quint8 frequency , quint16 a
  * \@param [in] shape TBWTBWTBWTBWTBWTBWTBW
  * \@param [in] frequency TBWTBWTBWTBWTBWTBWTBW
  * \@param [in] amplitude TBWTBWTBWTBWTBWTBWTBW
- * \@param [in] offset TBWTBWTBWTBWTBWTBWTBW
+ * \@param [in] offsetADU TBWTBWTBWTBWTBWTBWTBW
  */
-bool sendSetFeedbackDAC(quint32 asicNum , quint8 shape , quint8 frequency , quint16 amplitude , quint16 offset);
+bool sendSetFeedbackDAC(quint32 asicNum , quint8 shape , quint8 frequency , quint16 amplitude , quint16 offsetADU);
 
 /** \@brief Encodes the ConfigurePID command and sends it.
  * 
@@ -536,33 +532,19 @@ bool sendSwitchesMsg(QString txtMsg);
  */
 bool sendConfigureCFibers(quint16 periode , quint8 broche3State , quint8 broche4State , quint8 broche5State , quint16 ampFiber1 , quint16 offsetFiber1 , quint16 durationFiber1 , quint16 ampFiber2 , quint16 offsetFiber2 , quint16 durationFiber2 , quint16 ampFiber3 , quint16 offsetFiber3 , quint16 durationFiber3 , quint16 ampFiber4 , quint16 offsetFiber4 , quint16 durationFiber4);
 
-/** \@brief Encodes the ToIMARCTR1 command and sends it.
+/** \@brief Encodes the ToMMR3 command and sends it.
  * 
- * Builds the ToIMARCTR1 command with the given parameters.Sends it.
+ * Builds the ToMMR3 command with the given parameters.Sends it.
  * \@param [in] txtMsg TBWTBWTBWTBWTBWTBWTBW
  */
-bool sendToIMARCTR1(QString txtMsg);
+bool sendToMMR3(QString txtMsg);
 
-/** \@brief Encodes the ToIMARCTR2 command and sends it.
+/** \@brief Encodes the ToMGC3 command and sends it.
  * 
- * Builds the ToIMARCTR2 command with the given parameters.Sends it.
+ * Builds the ToMGC3 command with the given parameters.Sends it.
  * \@param [in] txtMsg TBWTBWTBWTBWTBWTBWTBW
  */
-bool sendToIMARCTR2(QString txtMsg);
-
-/** \@brief Encodes the ToIMARCTR3 command and sends it.
- * 
- * Builds the ToIMARCTR3 command with the given parameters.Sends it.
- * \@param [in] txtMsg TBWTBWTBWTBWTBWTBWTBW
- */
-bool sendToIMARCTR3(QString txtMsg);
-
-/** \@brief Encodes the ToIMARCTR4 command and sends it.
- * 
- * Builds the ToIMARCTR4 command with the given parameters.Sends it.
- * \@param [in] txtMsg TBWTBWTBWTBWTBWTBWTBW
- */
-bool sendToIMARCTR4(QString txtMsg);
+bool sendToMGC3(QString txtMsg);
 
 /** \@brief Encodes the HWPCommand command and sends it.
  * 

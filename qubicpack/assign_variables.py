@@ -20,7 +20,7 @@ from glob import glob
 
 def assign_defaults(self):
     self.debuglevel=0
-    self.AVOID_HANGUP=True # this is to avoid the hangup of communication with QubicStudio.  See acquisition.py
+    self.AVOID_HANGUP=False # this is to avoid the hangup of communication with QubicStudio.  See acquisition.py
     self.logfile=None
     # on 6 Feb 2018, we reversed the wires for the ASICs
     # so now QubicStudio and the dilution fridge use the same ASIC designation

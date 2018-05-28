@@ -13,7 +13,7 @@
 
 /** \def NB_SUB_SYSTEMS
   *  @brief Number of sub systems to manage. */
-#define NB_SUB_SYSTEMS 12
+#define NB_SUB_SYSTEMS 10
 
 /** \def DISPATCHER_RAWEMITTER_PORT
   *  @brief Dispatcher TCP/IP raw emitter port.  Default 9946*/
@@ -47,27 +47,23 @@
 #define SWITCHES_ID 3
 #define INDEX_OF_CFIBERS 2
 #define CFIBERS_ID 8
-#define INDEX_OF_IMACRT1 3
-#define IMACRT1_ID 4
-#define INDEX_OF_IMACRT2 4
-#define IMACRT2_ID 5
-#define INDEX_OF_IMACRT3 5
-#define IMACRT3_ID 6
-#define INDEX_OF_IMACRT4 6
-#define IMACRT4_ID 7
-#define INDEX_OF_HWP 7
+#define INDEX_OF_MMR3 3
+#define MMR3_ID 4
+#define INDEX_OF_MGC3 4
+#define MGC3_ID 5
+#define INDEX_OF_HWP 5
 #define HWP_ID 9
-#define INDEX_OF_CALIBSOURCES 8
+#define INDEX_OF_CALIBSOURCES 6
 #define CALIBSOURCES_ID 10
-#define INDEX_OF_PLATFORMCONTROLER 9
+#define INDEX_OF_PLATFORMCONTROLER 7
 #define PLATFORMCONTROLER_ID 11
-#define INDEX_OF_PLATFORMMOTORS 10
+#define INDEX_OF_PLATFORMMOTORS 8
 #define PLATFORMMOTORS_ID 12
-#define INDEX_OF_GPS 11
+#define INDEX_OF_GPS 9
 #define GPS_ID 13
-const unsigned char subsystemIds[NB_SUB_SYSTEMS] = {MULTINETQUICMANAGER_ID ,SWITCHES_ID ,CFIBERS_ID ,IMACRT1_ID ,IMACRT2_ID ,IMACRT3_ID ,IMACRT4_ID ,HWP_ID ,CALIBSOURCES_ID ,PLATFORMCONTROLER_ID ,PLATFORMMOTORS_ID ,GPS_ID };
-#define SUBSYSTEM_NAMES_STR  QString("MultiNetQuicManager,Switches,CFibers,IMACRT1,IMACRT2,IMACRT3,IMACRT4,HWP,CalibSources,PlatformControler,PlatformMotors,GPS")
-#define SUBSYSTEM_NAME_BY_ID(id) (id == MULTINETQUICMANAGER_ID)?QString("MultiNetQuicManager"):(id == SWITCHES_ID)?QString("Switches"):(id == CFIBERS_ID)?QString("CFibers"):(id == IMACRT1_ID)?QString("IMACRT1"):(id == IMACRT2_ID)?QString("IMACRT2"):(id == IMACRT3_ID)?QString("IMACRT3"):(id == IMACRT4_ID)?QString("IMACRT4"):(id == HWP_ID)?QString("HWP"):(id == CALIBSOURCES_ID)?QString("CalibSources"):(id == PLATFORMCONTROLER_ID)?QString("PlatformControler"):(id == PLATFORMMOTORS_ID)?QString("PlatformMotors"):(id == GPS_ID)?QString("GPS"):QString("unknown subsytem")
+const unsigned char subsystemIds[NB_SUB_SYSTEMS] = {MULTINETQUICMANAGER_ID ,SWITCHES_ID ,CFIBERS_ID ,MMR3_ID ,MGC3_ID ,HWP_ID ,CALIBSOURCES_ID ,PLATFORMCONTROLER_ID ,PLATFORMMOTORS_ID ,GPS_ID };
+#define SUBSYSTEM_NAMES_STR  QString("MultiNetQuicManager,Switches,CFibers,MMR3,MGC3,HWP,CalibSources,PlatformControler,PlatformMotors,GPS")
+#define SUBSYSTEM_NAME_BY_ID(id) (id == MULTINETQUICMANAGER_ID)?QString("MultiNetQuicManager"):(id == SWITCHES_ID)?QString("Switches"):(id == CFIBERS_ID)?QString("CFibers"):(id == MMR3_ID)?QString("MMR3"):(id == MGC3_ID)?QString("MGC3"):(id == HWP_ID)?QString("HWP"):(id == CALIBSOURCES_ID)?QString("CalibSources"):(id == PLATFORMCONTROLER_ID)?QString("PlatformControler"):(id == PLATFORMMOTORS_ID)?QString("PlatformMotors"):(id == GPS_ID)?QString("GPS"):QString("unknown subsytem")
 // stop includes dispatcher Wizard DON'T TOUCH
 
 #define NUM_CLIENT_CONNECT 15
