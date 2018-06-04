@@ -15,10 +15,16 @@ from __future__ import division, print_function
 import serial,time
 
 
-def init_hp33120a(self,port='/dev/ttyS0'):
+def init_hp33120a(self,port='/dev/hp33120a'):
     '''
     establish connection to the HP33120A waveform generator
     It should be connected by RS232 cable (serial port, usually /dev/ttyS0)
+
+    We can use port=/dev/hp33120a
+
+    put the following in /etc/udev/rules.d/hp33120a.rules
+
+    SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", OWNER="qubic", GROUP="users", MODE="0666", SYMLINK+="hp33120a"
     '''
 
     s=serial.Serial(port=port,
@@ -46,7 +52,7 @@ def init_hp33120a(self,port='/dev/ttyS0'):
     self.modulator=s
     return s
 
-def modulator_frequency(self,frequency=100.0,shape='SIN',amplitude=0.1):
+def modulator_frequency(self,frequency=100.0,shape='SIN',amplitude=0.1,offset=0.0):
     '''
     set the modulation frequency on the HP33120A waveform generator
 
@@ -59,7 +65,7 @@ def modulator_frequency(self,frequency=100.0,shape='SIN',amplitude=0.1):
         if s is None:return False
         
     
-    cmd='APPL:%s %.5E, %.2f\n' % (shape.upper(),frequency,amplitude)
+    cmd='APPL:%s %.5E, %.2f, %.2f\n' % (shape.upper(),frequency,amplitude,offset)
     self.modulator.write(cmd)
     return True
 
