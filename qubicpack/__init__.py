@@ -179,6 +179,10 @@ class qubicpack:
         modulator_read_frequency,\
         modulator_read_shape
 
+    from .arduino import\
+        arduino_acquire,\
+        arduino_sin_curve,\
+        arduino_fit_signal
     
     if with_pystudio:
         '''
@@ -205,6 +209,8 @@ class qubicpack:
             get_iv_timeline,\
             get_ASD
 
+        from .arduino import\
+            arduino_acquire_timeline
 
         from .squids import\
             squid_test
