@@ -18,7 +18,6 @@ import numpy as np
 from scipy.optimize import curve_fit
 import datetime as dt
 from satorchipy.datefunctions import *
-from qubicpack import qubicpack as qp
 
 def arduino_acquire(self,arduino_t,arduino_a):
     '''
