@@ -175,9 +175,9 @@ class qubicpack:
 
     from .modulator import\
         init_hp33120a,\
+        modulator_configure,\
         modulator_frequency,\
-        modulator_read_frequency,\
-        modulator_read_shape
+        modulator_shape
 
     from .arduino import\
         arduino_acquire,\

@@ -12,7 +12,7 @@ send commands to the HP33120A wave form generator
 This is used to modulate the calibration source
 '''
 from __future__ import division, print_function
-import serial,time
+import serial,time,os
 
 
 def init_hp33120a(self,port='/dev/hp33120a'):
@@ -27,6 +27,11 @@ def init_hp33120a(self,port='/dev/hp33120a'):
     SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", OWNER="qubic", GROUP="users", MODE="0666", SYMLINK+="hp33120a"
     '''
 
+    # check of the requested device exists
+    if not os.path.exists(port):
+        print('ERROR! Cannot connect to device.  Device does not exist: %s' % port)
+        return None
+    
     s=serial.Serial(port=port,
                     baudrate=9600,
                     bytesize=8,
@@ -52,24 +57,67 @@ def init_hp33120a(self,port='/dev/hp33120a'):
     self.modulator=s
     return s
 
-def modulator_frequency(self,frequency=100.0,shape='SIN',amplitude=0.1,offset=0.0):
+def modulator_configure(self,frequency=None,shape=None,amplitude=None,offset=None,port='/dev/hp33120a'):
     '''
-    set the modulation frequency on the HP33120A waveform generator
+    configure the HP33120A waveform generator
 
     Frequency is given in Hz
     The wave form can be: SIN, SQU, TRI,     
     '''
 
     if self.modulator is None:
-        s=self.init_hp33120a()
+        s=self.init_hp33120a(port=port)
         if s is None:return False
+
+    # default values
+    if frequency is None and shape is None and amplitude is None and offset is None:
+        frequency=1.0
+        shape='SQU'
+        amplitude=5.0
+        offset=2.5
         
+    # read the current values for the default values if necessary
+    settings=self.modulator_settings()
+    if frequency is None:
+        frequency=settings['frequency']
+    if shape is None:
+        shape=settings['shape']
+    if amplitude is None:
+        amplitude=settings['amplitude']
+    if offset is None:
+        offset=settings['offset']
+
+    # fix a common error in the shape.  I sometimes write "sqr" instead of "squ"
+    if shape.upper().find('SQ') >= 0: shape='SQU'
+
     
     cmd='APPL:%s %.5E, %.2f, %.2f\n' % (shape.upper(),frequency,amplitude,offset)
     self.modulator.write(cmd)
     return True
 
-def modulator_read_frequency(self):
+def modulator_settings(self,print=True):
+    '''
+    read the current settings of the HP33120a waveform generator
+    '''
+    if self.modulator is None:
+        s=self.init_hp33120a()
+        if s is None:return None
+
+    self.modulator.write('APPL?\n')
+    ans=self.modulator.readline()
+    vals=ans.strip().replace('"','').split()
+    settings={}
+    settings['shape']=vals[0]
+    val=vals.split(',')
+    settings['frequency']=eval(val[0])
+    settings['amplitude']=eval(val[1])
+    settings['offset']   =eval(val[2])
+    if print:
+        print('SHAPE: %s\nFREQUENCY: %.2f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V' % \
+              (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset']))
+    return settings
+        
+def modulator_frequency(self):
     '''
     read the current frequency setting of the HP33120A waveform generator
     '''
@@ -85,7 +133,7 @@ def modulator_read_frequency(self):
     print('HP33120A is set to %.2f Hz' % freq)
     return freq
 
-def modulator_read_shape(self):
+def modulator_shape(self):
     '''
     read the current modulation shape setting of the HP33120A waveform generator
     '''
