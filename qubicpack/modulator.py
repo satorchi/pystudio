@@ -77,7 +77,7 @@ def modulator_configure(self,frequency=None,shape=None,amplitude=None,offset=Non
         offset=2.5
         
     # read the current values for the default values if necessary
-    settings=self.modulator_settings()
+    settings=self.modulator_settings(show=False)
     if frequency is None:
         frequency=settings['frequency']
     if shape is None:
