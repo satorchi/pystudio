@@ -95,10 +95,11 @@ def modulator_configure(self,frequency=None,shape=None,amplitude=None,offset=Non
     self.modulator.write(cmd)
     return True
 
-def modulator_settings(self,print=True):
+def modulator_settings(self,show=True):
     '''
     read the current settings of the HP33120a waveform generator
     '''
+
     if self.modulator is None:
         s=self.init_hp33120a()
         if s is None:return None
@@ -112,7 +113,7 @@ def modulator_settings(self,print=True):
     settings['frequency']=eval(val[0])
     settings['amplitude']=eval(val[1])
     settings['offset']   =eval(val[2])
-    if print:
+    if show:
         print('SHAPE: %s\nFREQUENCY: %.2f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V' % \
               (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset']))
     return settings
