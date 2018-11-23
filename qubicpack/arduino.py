@@ -33,7 +33,7 @@ def arduino_acquire(self,arduino_t,arduino_a):
         return None
 
     duration=self.tinteg
-    if duration==None:
+    if duration is None:
         dt_duration=dt.timedelta(minutes=5)
     else:
         dt_duration=dt.timedelta(seconds=duration)
