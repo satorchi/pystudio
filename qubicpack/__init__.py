@@ -136,6 +136,7 @@ class qubicpack:
         bias_offset2DAC,\
         sample_period,\
         timeline_npts,\
+        timeline_timeaxis,\
         determine_bias_modulation,\
         timeline2adu,\
         plot_timeline,\

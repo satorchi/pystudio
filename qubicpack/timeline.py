@@ -143,6 +143,20 @@ def timeline_npts(self):
     timeline_size = int(np.ceil(self.tinteg / sample_period))
     return timeline_size
 
+def timeline_timeaxis(self):
+    '''
+    the timeline time axis.  
+    This is determined from the sample period and the number of points
+    or, possibly given as a list of datetime
+    '''
+    
+    sample_period=self.sample_period()
+    if isinstance(timeline_date,list) and isinstance(timeline_date[0],dt.datetime):
+        time_axis=timeline_date
+    else:
+        time_axis=sample_period*np.arange(timeline_npts)
+    return time_axis
+
 def determine_bias_modulation(self,TES,timeline_index=None):
     '''
     determine the modulation of the bias voltage
@@ -160,7 +174,7 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     timeline_npts=len(timeline)
 
     sample_period=self.sample_period()
-    time_axis=sample_period*np.arange(timeline_npts)
+    time_axis=self.timeline_timeaxis()
 
     # the so-called frequency of the bias modulation is, in fact, the period
     bias_period_npts=int(self.bias_frequency/sample_period)
@@ -213,8 +227,13 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
         timeline_date=self.tdata[timeline_index]['DATE-OBS']
     else:
         timeline_date=self.obsdate
-    
-    ttl=str('QUBIC Timeline curve for TES#%3i (%s)' % (TES,timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
+
+    if 'BEG-OBS' in self.tdata[timeline_index].keys():
+        timeline_start=self.tdata[timeline_index]['BEG-OBS']
+    else:
+        timeline_start=timeline_date
+        
+    ttl=str('QUBIC Timeline curve for TES#%3i (%s)' % (TES,timeline_start.strftime('%Y-%b-%d %H:%M UTC')))
 
     if 'TES_TEMP' in self.tdata[timeline_index].keys():
         tempstr='%.0f mK' % (1000*self.tdata[timeline_index]['TES_TEMP'])
@@ -240,7 +259,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     timeline_npts=len(timeline)
 
     sample_period=self.sample_period()
-    time_axis=sample_period*np.arange(timeline_npts)
+    time_axis=self.timeline_timeaxis()
 
     fitparms=None
     if fit:
@@ -311,7 +330,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     labs = [l.get_label() for l in curves]
     ax.legend(curves, labs, loc=0)
 
-    pngname=str('TES%03i_array-%s_ASIC%i_timeline_%s.png' % (TES,self.detector_name,self.asic,timeline_date.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('TES%03i_array-%s_ASIC%i_timeline_%s.png' % (TES,self.detector_name,self.asic,timeline_start.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if isinstance(pngname_fullpath,str): plt.savefig(pngname_fullpath,format='png',dpi=100,bbox_inches='tight')
     if xwin:plt.show()
@@ -453,7 +472,7 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0,shift=0.
     if sample_period==None:
         print('ERROR! Could not determine sample period.  Missing nsamples?')
         return None
-    time_axis=sample_period*np.arange(timeline_npts)
+    time_axis=self.timeline_timeaxis()
     peak0=time_axis[ipeak0]
     peak1=time_axis[ipeak1]
     bias_period=peak1-peak0
@@ -520,7 +539,7 @@ def fit_timeline(self,TES,timeline_index=None,ipeak0=None,ipeak1=None):
     timeline_npts=len(timeline)
 
     sample_period=self.sample_period()
-    time_axis=sample_period*np.arange(timeline_npts)
+    time_axis=self.timeline_timeaxis()
 
     # first guess;  use the peak search algorithm
     i0,i1=self.determine_bias_modulation(TES,timeline_index)
