@@ -25,7 +25,7 @@ class entropy_hk :
         '''
 
         self.MAX_MSGLEN=4096
-        self.MECH_CLOSED=160000 # position of switch closed
+        self.MECH_CLOSED=180000 # position of switch closed
         self.MECH_OPEN=0 # position of switch full open
         self.mech_idx=None
         self.verbosity=0
@@ -38,8 +38,36 @@ class entropy_hk :
         self.init_socket()
         self.get_device_list()
         self.get_startTime()
+        self.assign_labels()
         return None
 
+    def assign_labels(self):
+        '''label for each channel
+        copied Tue 04 Dec 2018 10:36:26 CET
+        '''
+        label={}
+        label['AVS47_1']=[]
+        label['AVS47_2']=[]
+        
+        label['AVS47_1'].append('Touch')
+        label['AVS47_1'].append('1K stage')
+        label['AVS47_1'].append('RIRT 300mK stage')
+        label['AVS47_1'].append('M1')
+        label['AVS47_1'].append('Cold head 1K')
+        label['AVS47_1'].append('Film breaker')
+        label['AVS47_1'].append('Cold head 300mK')
+        label['AVS47_1'].append('M2')
+        label['AVS47_2'].append('1K link')
+        label['AVS47_2'].append('PT2 cold head')
+        label['AVS47_2'].append('Fridge assembly right')
+        label['AVS47_2'].append('Mech HS support')
+        label['AVS47_2'].append('Fridge assembly left')
+        label['AVS47_2'].append('UNUSED')
+        label['AVS47_2'].append('UNUSED')
+        label['AVS47_2'].append('UNUSED')
+        self.label=label
+        return label
+    
     def debugmsg(self,msg):
         '''print a message to screen for debugging
         '''
@@ -113,13 +141,13 @@ class entropy_hk :
         try:
             T=float(cols[0])
         except:
-            self.debugmsg("Couldn't read temperature: %s" % cols[0])
+            self.debugmsg("Couldn't read temperature: %s" % cols)
             T=None
 
         try:
             tstamp=int(cols[1])
         except:
-            self.debugmsg("Couldn't read timestamp: %s" % cols[1])
+            self.debugmsg("Couldn't read timestamp: %s" % cols)
             tstamp=-1
 
         return (tstamp,T)
@@ -127,6 +155,7 @@ class entropy_hk :
 
     def mech_get_position(self,ch=None):
         '''get the current position of one of the heat switches
+        Note: no timestamp is returned!
         '''
 
         if self.mech_idx is None:
@@ -146,14 +175,10 @@ class entropy_hk :
         try:
             pos=int(cols[0])
         except:
+            self.debugmsg("Couldn't read position: %s" % cols)
             pos=None
 
-        try:
-            tstamp=int(cols[1])
-        except:
-            tstamp=-1
-
-        return (tstamp,pos)
+        return pos
         
     def mech_command(self,ch=None,steps=None,command=None):
         '''open/close/stop a mechanical heat switch by some steps
