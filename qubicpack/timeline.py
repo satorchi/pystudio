@@ -469,7 +469,7 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0,shift=0.
     
     timeline_npts=self.timeline_npts()
     sample_period=self.sample_period()
-    if sample_period==None:
+    if sample_period is None:
         print('ERROR! Could not determine sample period.  Missing nsamples?')
         return None
     time_axis=self.timeline_timeaxis()
