@@ -14,8 +14,7 @@ AVS47 temperatures
 Mechanical heat switches
 '''
 from __future__ import division, print_function
-import socket
-import re
+import time,socket,re
 
 from satorchipy.datefunctions import *
 
