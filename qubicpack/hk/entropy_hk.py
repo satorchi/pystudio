@@ -246,7 +246,7 @@ class entropy_hk :
         '''
         tolerance=1000
         now=dt.datetime.now()
-        endtime=now+dt.datetime.timedelta(seconds=timeout)
+        endtime=now+dt.timedelta(seconds=timeout)
         delta=100000
 
         while delta>tolerance and now<endtime:
