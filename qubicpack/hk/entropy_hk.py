@@ -241,4 +241,22 @@ class entropy_hk :
         return logtime
     
         
+    def wait_for_position(self,ch,position,timeout=300):
+        '''wait for the mechanism to reach its position
+        '''
+        tolerance=1000
+        now=dt.datetime.now()
+        endtime=now+dt.datetime.timedelta(seconds=timeout)
+        delta=100000
+
+        while delta>tolerance and now<endtime:
+            current_position=self.mech_get_position(ch)
+            delta=abs(current_position - position)
+            if delta>tolerance:
+                time.sleep(1)
+            now=dt.datetime.now()
+
+        return
     
+        
+
