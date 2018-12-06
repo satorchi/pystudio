@@ -80,6 +80,13 @@ class hk_broadcast :
                 fmts.append('f8')
                 record_zero.append(0.0)
 
+        # the pressure sensor
+        for idx in range(8):
+            pressure_sensor='PRESSURE%i' % (idx+1)
+            names.append('%s' % pressure_sensor)
+            fmts.append('f8')
+            record_zero.append(0.0)
+
         ########### we don't send the labels themselves ###########
         # names=['LABELS']+names
         # names_line=','.join(names)
@@ -87,6 +94,8 @@ class hk_broadcast :
         # fmts_line=','.join(fmts)
         # record_zero=[names_line]+record_zero
 
+        names_line=','.join(names)
+        fmts_line=','.join(fmts)
         record=np.recarray(names=names_line,formats=fmts_line,shape=(1))
         for idx,val in enumerate(record_zero):
             record[0][idx]=val
