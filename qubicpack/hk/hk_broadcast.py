@@ -51,8 +51,10 @@ class hk_broadcast :
 
         # the current date (milliseconds since 1970-1-1)
         names.append('DATE')
-        fmts.append('i16')
-        record_zero.append(0)
+        fmts.append('i8')
+        now=dt.datetime.now()
+        msec=now.strftime('%f')[0:3]
+        record_zero.append(int('%s%s' % (now.strftime('%s'),msec)))
 
         # temperatures from the two AVS47 controllers
         for idx in range(2):
@@ -78,11 +80,13 @@ class hk_broadcast :
                 fmts.append('f8')
                 record_zero.append(0.0)
 
+        ########### we don't send the labels themselves ###########
+        # names=['LABELS']+names
+        # names_line=','.join(names)
+        # fmts=['a%i' % len(names_line)]+fmts
+        # fmts_line=','.join(fmts)
+        # record_zero=[names_line]+record_zero
 
-        names=['LABELS']+names
-        names_line=','.join(names)
-        fmts=['a%i' % len(names_line)]+fmts
-        fmts_line=','.join(fmts)
         record=np.recarray(names=names_line,formats=fmts_line,shape=(1))
         for idx,val in enumerate(record_zero):
             record[0][idx]=val
