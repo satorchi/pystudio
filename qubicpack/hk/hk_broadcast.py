@@ -23,6 +23,9 @@ from qubicpack.hk.entropy_hk import entropy_hk
 class hk_broadcast :
 
     def __init__(self):
+        self.BROADCAST_PORT=4004
+        self.RECEIVER='<broadcast>'
+        self.RECEIVER='134.158.187.21'
         return None
     
 
@@ -42,11 +45,11 @@ class hk_broadcast :
 
         # identifiers
         names.append('STX')
-        fmts.append('i2')
+        fmts.append('i1')
         record_zero.append(STX)
 
         names.append('QUBIC_ID')
-        fmts.append('i2')
+        fmts.append('i1')
         record_zero.append(ID)
 
         # the current date (milliseconds since 1970-1-1)
@@ -117,7 +120,7 @@ class hk_broadcast :
     def hk_client(self):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client.bind(("", 37020))
+        client.bind(("", self.BROADCAST_SOCKET))
 
         nskips=0
         local_counter=0
@@ -164,7 +167,7 @@ class hk_broadcast :
 
             msg=record
             
-            s.sendto(msg, ('<broadcast>', 37020))
+            s.sendto(msg, (self.RECEIVER, self.BROADCAST_SOCKET))
 
             time.sleep(1.0)
             now=dt.datetime.now()
