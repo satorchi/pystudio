@@ -44,27 +44,28 @@ tstamp,T=hk.get_temperature(dev=dev,ch=ch)
 
 # We'll start with an immediate open/close
 Tnext=T+0.1
-
 while now < stoptime and T>40.0:
 
     now=dt.datetime.now()
     tstamp,T=hk.get_temperature(dev=dev,ch=ch)
-    if T<Tnext:
-        print('Opening/Closing Mechanical Heat Switches')
-        print('%s %.3fK' % (now.strftime('%Y-%m-%d %H:%M:%S.%f'),T))
+    if T is not None:
+        print('Current temperature: %.1fK.  Next target temperature: %.1fK' % (T,Tnext))
+    if T is not None and T<Tnext:
+        now=dt.datetime.now()
+        print('%s | Opening Mechanical Heat Switches' % now.strftime('%Y-%m-%d %H:%M:%S.%f'))
         hk.mech_open(1)
         hk.wait_for_position(1,hk.MECH_OPEN)
         hk.mech_open(2)
         hk.wait_for_position(1,hk.MECH_OPEN)
         
-
+        now=dt.datetime.now()            
+        print('%s | Closing Mechanical Heat Switches' % now.strftime('%Y-%m-%d %H:%M:%S.%f'))
         hk.mech_close(1)
         hk.wait_for_position(1,hk.MECH_CLOSED)
         hk.mech_close(2)
         hk.wait_for_position(1,hk.MECH_CLOSED)
 
         Tnext=T-20
-        print('Next target temperature: %.1fK' % Tnext)
 
     time.sleep(1)
     
