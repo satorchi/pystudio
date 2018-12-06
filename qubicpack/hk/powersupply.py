@@ -311,6 +311,8 @@ def parseargs_PowerSupply(argv):
     command={}
     command['ONOFF']=None
     command['supplyname']=None
+    command['label']=None
+    command['serialno']=None
     command['subsupply']=None
     command['V']=None
     command['quit']=False
@@ -318,6 +320,10 @@ def parseargs_PowerSupply(argv):
     command['status']=False
     
     supplylist=list(known_supplies.supplyname)
+    supplylabels=list(known_supplies.label)
+    supplylabels_left=list(known_supplies.label_left)
+    supplylabels_right=list(known_supplies.label_right)
+    
     for arg in argv:
         arg=arg.strip()
         a=arg.upper()
@@ -337,12 +343,34 @@ def parseargs_PowerSupply(argv):
             command['ONOFF']=0
             continue
             
-        if a=='LEFT' or a=='RIGHT':
+        if arg in supplylabels_left:
+            idx=supplylabels_left.index(arg)
+            command['subsupply']='LEFT'
+            command['label']=supplylabels[idx]
+            command['serialno']=serialnos[idx]
+            continue
+
+        if arg in supplylabels_right:
+            idx=supplylabels_right.index(arg)
+            command['subsupply']='RIGHT'
+            command['label']=supplylabels[idx]
+            command['serialno']=serialnos[idx]
+            continue
+
+        if arg in supplylabels:
+            idx=supplylabels.index(arg)
+            command['label']=arg
+            command['serialno']=serialnos[idx]
+            continue
+
+        if a in ['LEFT','RIGHT']:
             command['subsupply']=a
             continue
 
         if arg in supplylist:
-            command['supplyname']=a
+            idx=supplylist.index(arg)
+            command['supplyname']=arg
+            command['serialno']=serialnos[idx]
             continue
 
         if a=='QUIT' or a=='Q':
@@ -383,10 +411,50 @@ def help_PowerSupply():
 fmts_headings=['serial_number','id_number','supplyname','id_string','nsupplies','label','label_left','label_right']
 fmts=['a8','a6','a16','a60','i1','a20','a20','a20']
 known_supplies=np.recarray(formats=fmts,names=fmts_headings,shape=(5))
-known_supplies[0]=('D5E588EA','426040','PL303QMD-P','THURLBY THANDAR, PL303QMD-P,  426040, 3.02 - 3.13',2,'PL303QMD-P','Heater L','Heater R')
-known_supplies[1]=('D5E586A0','423393','PLH120-P','THURLBY THANDAR, PLH120-P,  423393, 1.01 - 3.13',1,'PLH120-P','','Undefined Heater Location')
-known_supplies[2]=('435297','435297','PL303-P','THURLBY THANDAR, PL303-P, 435297, 3.02-4.01',1,'PL303-P','None','Right')
-known_supplies[3]=('ftCYWB2W','','Agilent 34401A','',0,'','','')
+known_supplies[0]=('D5E588EA',
+                   '426040',
+                   'PL303QMD-P',
+                   'THURLBY THANDAR, PL303QMD-P,  426040, 3.02 - 3.13',
+                   2,
+                   'PL303QMD-P_1',
+                   'Heater L',
+                   'Heater R')
+
+known_supplies[1]=('D5E586A0',
+                   '423393',
+                   'PLH120-P',
+                   'THURLBY THANDAR, PLH120-P,  423393, 1.01 - 3.13',
+                   1,
+                   'PLH120-P',
+                   '',
+                   'Undefined Heater Location')
+
+known_supplies[2]=('435297',
+                   '435297',
+                   'PL303-P',
+                   'THURLBY THANDAR, PL303-P, 435297, 3.02-4.01',
+                   1,
+                   'PL303-P',
+                   'None',
+                   'Right')
+
+known_supplies[3]=('504183',
+                   '504183',
+                   'PL303QMD-P',
+                   'THURLBY THANDAR, PL303QMD-P, 504183, 3.05-4.06',
+                   2,
+                   'PL303QMD-P_2',
+                   'Heater L',
+                   'Heater R')
+
+known_supplies[4]=('ftCYWB2W',
+                   '',
+                   'Agilent 34401A',
+                   '',
+                   0,
+                   'Voltmeter',
+                   '',
+                   '')
                 
 if __name__=='__main__':
 
@@ -396,6 +464,10 @@ if __name__=='__main__':
     nsupplies=len(available_supplies)
     supply=[]
     available_models=[]
+    labels=[]
+    serialnos=[]
+    known_serialnos=list(known_supplies.serial_number)
+    
     command=parseargs_PowerSupply(sys.argv)
 
     for info in available_supplies:
@@ -404,14 +476,20 @@ if __name__=='__main__':
         p=PowerSupply(dev)
         supply.append(p)
         available_models.append(info['supplyname'])
+        serialnos.append(info['serialno'])
 
     keep_going=not command['quit']
-    while keep_going:        
-        if command['supplyname'] in available_models:
-            print('applying commands on supply %s' % command['supplyname'])
-            idx=available_models.index(command['supplyname'])
+    while keep_going:
+        if command['serialno'] in serialnos:
+            idx=serialnos.index(command['serialno'])
+            label=''
+            if command['serialno'] in known_serialnos:
+                known_idx=known_serialnos.index(command['serialno'])
+                label=list(known_supplies.label)[known_idx]
+            print('applying commands on supply %s: %s' % (available_models[idx],label))
             p=supply[idx]
             p.runCommands(command)
+        
 
         for p in supply:
             p.Status()
@@ -421,10 +499,6 @@ if __name__=='__main__':
             print('Available Power Supplies')
             for model in available_models:
                 print('%s' % model)
-
-        
-
-
 
         ans=raw_input('Enter command ("help" for list): ')
         command=parseargs_PowerSupply(ans.split())
