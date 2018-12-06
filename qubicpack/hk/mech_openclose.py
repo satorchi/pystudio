@@ -49,7 +49,7 @@ while now < stoptime and T>40.0:
     now=dt.datetime.now()
     tstamp,T=hk.get_temperature(dev=dev,ch=ch)
     if T is not None:
-        print('Current temperature: %.1fK.  Next target temperature: %.1fK' % (T,Tnext))
+        print('%s | Current temperature: %.1fK.  Next target temperature: %.1fK' % (now.strftime('%Y-%m-%d %H:%M:%S.%f'),T,Tnext))
     if T is not None and T<Tnext:
         now=dt.datetime.now()
         print('%s | Opening Mechanical Heat Switches' % now.strftime('%Y-%m-%d %H:%M:%S.%f'))
