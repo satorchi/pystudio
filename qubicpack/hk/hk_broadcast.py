@@ -83,7 +83,7 @@ class hk_broadcast :
         names_line=','.join(names)
         fmts=['a%i' % len(names_line)]+fmts
         fmts_line=','.join(fmts)
-        record=np.recarray(names=names_line,formats=','.fmts_line,shape=(1))
+        record=np.recarray(names=names_line,formats=fmts_line,shape=(1))
         for idx,val in enumerate(record_zero):
             record[0][idx]=val
         return record
