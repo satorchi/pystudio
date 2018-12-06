@@ -24,7 +24,7 @@ class entropy_hk :
         '''
 
         self.MAX_MSGLEN=4096
-        self.MECH_CLOSED=180000 # position of switch closed
+        self.MECH_CLOSED=190000 # position of switch closed
         self.MECH_OPEN=0 # position of switch full open
         self.mech_idx=None
         self.verbosity=0
@@ -84,12 +84,26 @@ class entropy_hk :
         self.debugmsg(a)
         return None
 
+    def sendreceive(self,cmd):
+        '''send a command and receive the answer
+        '''
+        self.socket.send(cmd)
+        try:
+            a=self.socket.recv(self.MAX_MSGLEN)
+        except:
+            print("ERROR!  Communication error.  Trying to re-initialize socket.  I'll only do this once.")
+            self.socket.close()
+            self.init_socket()
+            a=None
+        return a
+
     def get_startTime(self):
         '''get the start time for logging temperatures
         all temperature times are given as an offset from this time
         '''
-        self.socket.send('dateTime AppStart\n')
-        a=self.socket.recv(self.MAX_MSGLEN)
+        a=self.sendreceive('dateTime AppStart\n')
+        if a is None:return None
+        
         self.startTime=str2dt(a)
         print('Logging start time: %s' % self.startTime.strftime('%Y-%m-%d %H:%M:%S.%f'))
         return self.startTime
@@ -97,8 +111,8 @@ class entropy_hk :
     def get_device_list(self):
         '''get the valid device names
         '''
-        self.socket.send('deviceList\n')
-        devlist_txt=self.socket.recv(self.MAX_MSGLEN)
+        devlist_txt=self.sendreceive('deviceList\n')
+        if devlist_txt is None:return None
         lines=devlist_txt.split('\n')
         devlist=[]
         idx=0
@@ -134,8 +148,9 @@ class entropy_hk :
 
         if ch is None:ch=0
         cmd='device %s temperature? %i\n' % (dev,ch)
-        self.socket.send(cmd)
-        a=self.socket.recv(self.MAX_MSGLEN)
+        a=self.sendreceive(cmd)
+        if a is None:return None,None
+
         cols=a.strip().replace(',','').split()
         try:
             T=float(cols[0])
@@ -166,8 +181,9 @@ class entropy_hk :
             return None
 
         cmd='device %s absolute? %i\n' % (self.devlist[self.mech_idx],ch)
-        self.socket.send(cmd)
-        a=self.socket.recv(self.MAX_MSGLEN)
+        a=self.sendreceive(cmd)
+        if a is None:return None
+
         self.debugmsg(a)
         cols=a.strip().replace(',','').split()
         
