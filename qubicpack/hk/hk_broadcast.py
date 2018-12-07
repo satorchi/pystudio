@@ -19,13 +19,17 @@ import datetime as dt
 from qubicpack.hk.powersupply import *
 from qubicpack.hk.entropy_hk import entropy_hk
 
-
 class hk_broadcast :
 
     def __init__(self):
         self.BROADCAST_PORT=4004
         self.RECEIVER='<broadcast>'
         self.RECEIVER='134.158.187.21'
+        self.nTEMPERATURE=8
+        self.nMECH=2
+        self.nHEATER=6
+        self.nPRESSURE=0
+        self.record=self.define_hk_record()
         return None
     
 
@@ -36,7 +40,6 @@ class hk_broadcast :
         # packet identifiers
         STX=0xAA
         ID=2
-
 
         # make the data record
         names=[]
@@ -109,13 +112,45 @@ class hk_broadcast :
         '''
 
         hk=entropy_hk()
-        record=self.define_hk_record()
+        record=self.record
+
+        # temperatures from the two AVS47 controllers
+        for idx in range(2):
+            avs='AVS47_%i' % (idx+1)
+            for ch in range(self.nTEMPERATURE):
+                recname='%s_ch%i' % (avs,ch)
+                tstamp,dat=hk.get_temperature(dev=avs,ch=ch)
+                record[recname][0]=dat
+                self.hk_log(recname,tstamp,dat)
+                
+
+        # the Mechanical Heat Switch positions
+        for idx in range(self.nMECH):
+            ch=idx+1
+            recname='MHS%i' % ch
+            tstamp,dat=hk.mech_get_position(ch)
+            record[recname][0]=dat
+            self.hk_log(recname,tstamp,dat)
+
+        # the power supplies (heaters)
+        for idx in range(self.nHEATER):
+            heater='HEATER%i' % (idx+1)
+            argv='%s readings' % heater
+            
+            for meastype in ['Volt','Amp']:
+                recname='%s_%s' % (heater,meastype)
+                #self.hk_log(recname,tstamp,dat)
+    
+                
+
+        hk.close()
+        
         now=dt.datetime.now()
         msec=now.strftime('%f')[0:3]
         record[0].DATE=int('%s%s' % (now.strftime('%s'),msec))
-        
-        
-        return
+            
+        return record
+    
 
     def hk_client(self):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -138,7 +173,7 @@ class hk_broadcast :
         return
 
 
-    def hk_server(self):
+    def hk_server(self,test=False):
         '''broadcast all housekeeping info
         '''
         
@@ -151,11 +186,14 @@ class hk_broadcast :
             if line.find('inet ')>0: break
         hostname=line.split()[1]
         print('hostname=%s' % hostname)
-        hostname='localhost' # for testing
-        print('hostname=%s for testing' % hostname)
-
         now=dt.datetime.now()
-        stoptime=now+dt.timedelta(seconds=30)
+        stoptime=now+dt.timedelta(days=1000)
+
+        if test:
+            hostname='localhost' # for testing
+            print('hostname=%s for testing' % hostname)
+            stoptime=now+dt.timedelta(minutes=60)
+
 
         s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -165,7 +203,7 @@ class hk_broadcast :
         counter=0
         while now < stoptime:
 
-            msg=record
+            msg=self.get_all_hk()
             
             s.sendto(msg, (self.RECEIVER, self.BROADCAST_SOCKET))
 
@@ -177,11 +215,12 @@ class hk_broadcast :
         return
 
 
-    def log(self,filename,data):
+    def hk_log(self,filename,tstamp,data):
         '''add data to log file
         '''
         h=open(filename,'a')
-        h.write(data)
+        line='%i %e' % (tstamp,data)
+        h.write(line)
         h.close()
         return
 
