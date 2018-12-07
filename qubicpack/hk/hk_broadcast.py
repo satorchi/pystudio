@@ -44,7 +44,8 @@ class hk_broadcast :
     def define_hk_record(self):
         '''define a housekeeping data record
         '''
-    
+        dummy_val=1000
+        
         # packet identifiers
         STX=0xAA
         ID=1
@@ -75,14 +76,16 @@ class hk_broadcast :
                 recname='%s_ch%i' % (avs,ch)
                 names.append(recname)
                 fmts.append('f8')
-                record_zero.append(0.0)
+                record_zero.append(dummy_val)
+                dummy_val+=1
 
         # the Mechanical Heat Switch positions
         for idx in range(2):
             mhs='MHS%i' % (idx+1)
             names.append(mhs)
             fmts.append('i4')
-            record_zero.append(0)
+            record_zero.append(dummy_val)
+            dummy_val+=1
 
         # the power supplies (heaters)
         for idx in range(8):
@@ -90,14 +93,16 @@ class hk_broadcast :
             for meastype in ['Volt','Amp']:
                 names.append('%s_%s' % (heater,meastype))
                 fmts.append('f8')
-                record_zero.append(0.0)
+                record_zero.append(dummy_val)
+                dummy_val+=1
 
         # the pressure sensor
         for idx in range(8):
             pressure_sensor='PRESSURE%i' % (idx+1)
             names.append('%s' % pressure_sensor)
             fmts.append('f8')
-            record_zero.append(0.0)
+            record_zero.append(dummy_val)
+            dummy_val+=1
 
         ########### we don't send the labels themselves ###########
         # names=['LABELS']+names
