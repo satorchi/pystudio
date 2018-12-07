@@ -88,9 +88,9 @@ class hk_broadcast :
             dummy_val+=1
 
         # the power supplies (heaters)
-        for idx in range(8):
-            heater='HEATER%i' % (idx+1)
-            for meastype in ['Volt','Amp']:
+        for meastype in ['Volt','Amp']:
+            for idx in range(8):
+                heater='HEATER%i' % (idx+1)
                 names.append('%s_%s' % (heater,meastype))
                 fmts.append('f8')
                 record_zero.append(dummy_val)
@@ -100,6 +100,14 @@ class hk_broadcast :
         for idx in range(8):
             pressure_sensor='PRESSURE%i' % (idx+1)
             names.append('%s' % pressure_sensor)
+            fmts.append('f8')
+            record_zero.append(dummy_val)
+            dummy_val+=1
+
+        # the temperature diodes
+        for idx in range(18): # THIS MUST CHANGE TO 21 AFTER WILFRIED CHANGES QUBICSTUDIO
+            Tname='TEMPERATURE%0i' % (idx+1)
+            names.append('%s' % Tname)
             fmts.append('f8')
             record_zero.append(dummy_val)
             dummy_val+=1
