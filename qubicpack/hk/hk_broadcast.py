@@ -160,7 +160,7 @@ class hk_broadcast :
     def hk_client(self):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client.bind(("", self.BROADCAST_SOCKET))
+        client.bind(("", self.BROADCAST_PORT))
 
         nskips=0
         local_counter=0
@@ -210,7 +210,7 @@ class hk_broadcast :
 
             msg=self.get_all_hk()
             
-            s.sendto(msg, (self.RECEIVER, self.BROADCAST_SOCKET))
+            s.sendto(msg, (self.RECEIVER, self.BROADCAST_PORT))
 
             time.sleep(1.0)
             now=dt.datetime.now()
