@@ -256,14 +256,20 @@ class PowerSupply :
             Ileft=self.get_CurrentOutput('left')
             StatusLeft=self.OutputStatus('left')
             print(subttl_left)
-            print('   Voltage: %f V\n   Current: %f mA\n   Output: %s\n' % (Vleft,Ileft,StatusLeft))
-            
+            try:
+                print('   Voltage: %f V\n   Current: %f mA\n   Output: %s\n' % (Vleft,Ileft,StatusLeft))
+            except:
+                print('   Voltage: %s V\n   Current: %s mA\n   Output: %s\n' % (Vleft,Ileft,StatusLeft))
+                
         print(subttl_right+'\n')
         Vright=self.get_VoltageSetting('right')
         Iright=self.get_CurrentOutput('right')
         StatusRight=self.OutputStatus('right')
-        print('   Voltage: %f V\n   Current: %f mA\n   Output: %s\n' % (Vright,Iright,StatusRight))
-        
+        try:
+            print('   Voltage: %f V\n   Current: %f mA\n   Output: %s\n' % (Vright,Iright,StatusRight))
+        except:
+            print('   Voltage: %s V\n   Current: %s mA\n   Output: %s\n' % (Vright,Iright,StatusRight))
+            
         return
 
 
