@@ -105,6 +105,7 @@ class PowerSupply :
 
         self.s.write('*IDN?\n')
         a=self.read_reply()
+        print(a)
         a_list=a.split(',')
         #self.supplyname='%s %s' % (a_list[0],a_list[1])
         self.supplyname=a_list[1].strip()
