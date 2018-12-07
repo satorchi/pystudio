@@ -528,8 +528,8 @@ if __name__=='__main__':
         if command['help']:
             ps.help_PowerSupply()
             print('Available Power Supplies')
-            for model in ps.available_models:
-                print('%s' % model)
+            for info in ps.infolist:
+                print('%s' % info['supplyname'])
 
         ans=raw_input('Enter command ("help" for list): ')
         command=ps.parseargs(ans.split())
