@@ -167,6 +167,14 @@ class PowerSupply :
             return val
         return result
 
+    def getReadings(self,supply='left'):
+        '''get the Voltage and Current readings given a label
+        '''
+        V=self.get_VoltageSetting(supply)
+        I=self.get_CurrentOutput(supply)
+        
+        return V,I
+
     def OutputOn(self,supply='left'):
         '''enable the output
         '''
@@ -196,7 +204,8 @@ class PowerSupply :
             if val==1:status='ON'
             return status
         return status
-        
+
+
 
     def Status(self):
         '''print out all the parameters of both power supplies
@@ -256,8 +265,12 @@ class PowerSupply :
                 elif ONOFF==0:
                     self.OutputOff(subsupply)
 
+            if parms['readings']:
+                return self.getReadings(subsupply)
+            
         return self.Status()
 # end of Class definition PowerSupply()
+
 
 
 def find_PowerSupply():
@@ -318,6 +331,7 @@ def parseargs_PowerSupply(argv):
     command['quit']=False
     command['help']=False
     command['status']=False
+    command['readings']=False
     
     supplylist=list(known_supplies.supplyname)
     supplylabels=list(known_supplies.label)
@@ -384,6 +398,9 @@ def parseargs_PowerSupply(argv):
         if a.find('STATUS')>=0:
             commmand['status']=True
             continue
+        if a.find('READINGS')>=0:
+            command['readings']=True
+            continue
 
         if a=='--TEST':
             command['test']=True
@@ -417,8 +434,8 @@ known_supplies[0]=('D5E588EA',
                    'THURLBY THANDAR, PL303QMD-P,  426040, 3.02 - 3.13',
                    2,
                    'PL303QMD-P_1',
-                   'Heater L',
-                   'Heater R')
+                   'HEATER1',
+                   'HEATER2')
 
 known_supplies[1]=('D5E586A0',
                    '423393',
@@ -427,7 +444,7 @@ known_supplies[1]=('D5E586A0',
                    1,
                    'PLH120-P',
                    '',
-                   'Undefined Heater Location')
+                   'HEATER3')
 
 known_supplies[2]=('435297',
                    '435297',
@@ -436,7 +453,7 @@ known_supplies[2]=('435297',
                    1,
                    'PL303-P',
                    'None',
-                   'Right')
+                   'HEATER4')
 
 known_supplies[3]=('504183',
                    '504183',
@@ -444,8 +461,8 @@ known_supplies[3]=('504183',
                    'THURLBY THANDAR, PL303QMD-P, 504183, 3.05-4.06',
                    2,
                    'PL303QMD-P_2',
-                   'Heater L',
-                   'Heater R')
+                   'HEATER5',
+                   'HEATER6')
 
 known_supplies[4]=('ftCYWB2W',
                    '',
@@ -455,7 +472,9 @@ known_supplies[4]=('ftCYWB2W',
                    'Voltmeter',
                    '',
                    '')
-                
+
+
+
 if __name__=='__main__':
 
     available_supplies=find_PowerSupply()
