@@ -22,7 +22,7 @@ from qubicpack.hk.entropy_hk import entropy_hk
 class hk_broadcast :
 
     def __init__(self):
-        self.BROADCAST_PORT=4004
+        self.BROADCAST_PORT=4005
         self.RECEIVER='<broadcast>'
         self.RECEIVER='134.158.187.21'
         self.nTEMPERATURE=8
@@ -30,6 +30,7 @@ class hk_broadcast :
         self.nHEATER=6
         self.nPRESSURE=0
         self.record=self.define_hk_record()
+        self.hk=None
         return None
 
     def millisecond_timestamp(self):
@@ -116,16 +117,16 @@ class hk_broadcast :
         '''sample all the housekeeping from the various sensors
         '''
 
-        hk=entropy_hk()
-        record=self.record
+        if self.hk is None:
+            self.hk=entropy_hk()
 
         # temperatures from the two AVS47 controllers
         for idx in range(2):
             avs='AVS47_%i' % (idx+1)
             for ch in range(self.nTEMPERATURE):
                 recname='%s_ch%i' % (avs,ch)
-                tstamp,dat=hk.get_temperature(dev=avs,ch=ch)
-                record[recname][0]=dat
+                tstamp,dat=self.hk.get_temperature(dev=avs,ch=ch)
+                self.record[recname][0]=dat
                 self.hk_log(recname,tstamp,dat)
                 
 
@@ -133,9 +134,9 @@ class hk_broadcast :
         for idx in range(self.nMECH):
             ch=idx+1
             recname='MHS%i' % ch
-            dat=hk.mech_get_position(ch)
+            dat=self.hk.mech_get_position(ch)
             tstamp=self.millisecond_timestamp()
-            record[recname][0]=dat
+            self.record[recname][0]=dat
             self.hk_log(recname,tstamp,dat)
 
         # the power supplies (heaters)
@@ -148,13 +149,10 @@ class hk_broadcast :
                 tstamp=self.millisecond_timestamp()
                 #self.hk_log(recname,tstamp,dat)
     
-                
-
-        hk.close()
         
-        record[0].DATE=self.millisecond_timestamp()
+        self.record[0].DATE=self.millisecond_timestamp()
             
-        return record
+        return self.record
     
 
     def hk_client(self):
@@ -204,6 +202,7 @@ class hk_broadcast :
         s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         s.settimeout(0.2)
         s.bind((hostname,15000))
+        
 
         counter=0
         while now < stoptime:
