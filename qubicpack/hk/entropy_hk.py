@@ -273,5 +273,9 @@ class entropy_hk :
 
         return
     
-        
-
+    def close(self):
+        ''' close the socket
+        '''
+        self.socket.close()
+        return
+    
