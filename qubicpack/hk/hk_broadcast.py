@@ -16,7 +16,7 @@ import sys,os,subprocess,time,socket
 import numpy as np
 import datetime as dt
 
-from qubicpack.hk.powersupply import *
+from qubicpack.hk.powersupply import PowerSupply, parseargs_PowerSupply find_PowerSupply identify_PowerSupply known_supplies
 from qubicpack.hk.entropy_hk import entropy_hk
 
 class hk_broadcast :
@@ -39,7 +39,7 @@ class hk_broadcast :
     
         # packet identifiers
         STX=0xAA
-        ID=2
+        ID=1
 
         # make the data record
         names=[]
@@ -218,12 +218,17 @@ class hk_broadcast :
     def hk_log(self,filename,tstamp,data):
         '''add data to log file
         '''
+
+        # if no data, return quietly
+        if tstamp is None or data is None:return False
+        
         h=open(filename,'a')
         line='%i %e' % (tstamp,data)
         h.write(line)
         h.close()
-        return
+        return True
 
+### end of hk_broadcast class definition
 
 
 
