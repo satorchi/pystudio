@@ -316,8 +316,8 @@ class PowerSupplies :
         '''find devices
         '''
         devs1=glob('/dev/ttyACM*')
-        devs2=glob('/dev/ttyUSB*')
-        devs=devs1+devs2
+        devs2=glob('/dev/ttyUSB*') # these are not TTi power supplies
+        devs=devs1
         if not devs:
             print('No power supplies found!')
             return None
