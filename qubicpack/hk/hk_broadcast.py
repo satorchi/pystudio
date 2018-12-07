@@ -220,15 +220,15 @@ class hk_broadcast :
         return
 
 
-    def hk_log(self,filename,tstamp,data):
+    def hk_log(self,rootname,tstamp,data):
         '''add data to log file
         '''
 
         # if no data, return quietly
         if tstamp is None or data is None:return False
-        
+        filename='%s.txt' % rootname
         h=open(filename,'a')
-        line='%i %e' % (tstamp,data)
+        line='%i %e\n' % (tstamp,data)
         h.write(line)
         h.close()
         return True
