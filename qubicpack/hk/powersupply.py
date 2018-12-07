@@ -521,7 +521,7 @@ if __name__=='__main__':
     while keep_going:
         ps.runCommands(command)
 
-        for p in ps.supply:
+        for p in ps.supplylist:
             p.Status()
         
         if command['help']:
