@@ -109,7 +109,7 @@ class PowerSupply :
         #self.supplyname='%s %s' % (a_list[0],a_list[1])
         self.supplyname=a_list[1].strip()
         nsupplies=self.get_nsupplies()
-        info=identify_PowerSupply(port)
+        info=self.identify_PowerSupply(port)
         self.serialno=info['serialno']
         #print('%8s: %s' % (self.serialno,self.supplyname))
         return a
