@@ -100,13 +100,13 @@ class PowerSupply :
             return None
         self.port=port
 
-        s=serial.Serial(port=port)
+        s=serial.Serial(port=port,timeout=5)
         self.s=s
 
         self.s.write('*IDN?\n')
         a=self.read_reply()
         print(a)
-        a_list=a.split(',')
+        a_list=a.strip().split(',')
         #self.supplyname='%s %s' % (a_list[0],a_list[1])
         self.supplyname=a_list[1].strip()
         nsupplies=self.get_nsupplies()
