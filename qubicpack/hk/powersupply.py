@@ -32,17 +32,44 @@ class PowerSupply :
         '''initialize an instance of PowerSupply
         '''
         self.port=None
-        self.available_supplies=None
         self.nsupplies=0
+        self.info=None
 
         if port is None:
-            available_supplies=find_PowerSupply()
-            print('\nNOTE: Please choose a supply, and run init_TTIPowerSupply(dev)')
+            print('\nNOTE: Please give a device (e.g. port="/dev/ttyACM0"')
             return None
 
         self.init_TTiPowerSupply(port=port)
         return None
 
+    def identify_PowerSupply(self):
+        '''identify the power supply
+        '''
+
+        if self.port is None:
+            print('ERROR! Please give a device to identify (e.g. /dev/ttyACM0)')
+            return  None
+        
+        # find out which power supply it is, and whether it has one or two supplies
+        cmd='/sbin/udevadm info -a %s|grep serial|head -1' % port
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        out,err=proc.communicate()
+        serialno=out.split('==')[1].replace('"','').strip()
+
+        s=serial.Serial(port=port)
+        s.write('*IDN?\n')
+        a=s.readline()
+        a_list=a.split(',')
+        supplyname=a_list[1].strip()
+
+        info={}
+        info['port']=port
+        info['serialno']=serialno
+        info['id_string']=a.strip()
+        info['supplyname']=supplyname
+        info['nsupplies']=self.get_nsupplies()
+        self.info=info
+        return info
 
     def get_nsupplies(self):
         '''get the number of supplies
@@ -272,156 +299,166 @@ class PowerSupply :
 # end of Class definition PowerSupply()
 
 
-
-def find_PowerSupply():
-    '''find devices
+class PowerSupplies :
+    '''a class to manage multiple power supplies
     '''
-    available_supplies=[]
-    devs1=glob('/dev/ttyACM*')
-    devs2=glob(' /dev/ttyUSB*')
-    devs=devs1+devs2
-    if not devs:
-        print('No power supplies found!')
+
+    def __init__(self):
+        self.supplylist=None
+        self.infolist=None
+        self.serialno_list=None
+        self.nsupplies=None
+        self.find_PowerSupply()
         return None
-
-    available_supplies=[]
-    for dev in devs:
-        info=identify_PowerSupply(dev)
-        available_supplies.append(info)
     
-    return available_supplies        
+    def find_PowerSupply(self):
+        '''find devices
+        '''
+        devs1=glob('/dev/ttyACM*')
+        devs2=glob('/dev/ttyUSB*')
+        devs=devs1+devs2
+        if not devs:
+            print('No power supplies found!')
+            return None
 
-def identify_PowerSupply(port=None):
-    '''identify the power supply
-    '''
+        supplylist=[]
+        infolist=[]
+        serialno_list=[]
+        for dev in devs:
+            p=PowerSupply(dev)
+            supplylist.append(p)
+            infolist.append(p.info)
+            serialno_list.append(p.info['serialno'])
 
-    if port is None:
-        print('ERROR! Please give a device to identify (e.g. /dev/ttyACM0)')
-        return  None
+        self.nsupplies=len(supplylist)
+        self.infolist=infolist
+        self.serialno_list=serialno_list
+        self.supplylist=supplylist
+        return 
+
+    def parseargs(self,argv):
+        '''parse the command line arguments 
+        and return a dictionary with the interpreted commands
+        '''
+        command={}
+        command['ONOFF']=None
+        command['supplyname']=None
+        command['label']=None
+        command['serialno']=None
+        command['subsupply']=None
+        command['V']=None
+        command['quit']=False
+        command['help']=False
+        command['status']=False
+        command['readings']=False
+    
+        supplylist=list(known_supplies.supplyname)
+        supplylabels=list(known_supplies.label)
+        supplylabels_left=list(known_supplies.label_left)
+        supplylabels_right=list(known_supplies.label_right)
+    
+        for arg in argv:
+            arg=arg.strip()
+            a=arg.upper()
+            if a.find('V=')==0:
+                try:
+                    V=eval(a.split('=')[1])
+                    command['V']=V
+                except:
+                    print('Could not read voltage value: %s' % arg)
+                continue
         
-    # find out which power supply it is, and whether it has one or two supplies
-    cmd='/sbin/udevadm info -a %s|grep serial|head -1' % port
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    out,err=proc.communicate()
-    serialno=out.split('==')[1].replace('"','').strip()
+            if a=='ON':
+                command['ONOFF']=1
+                continue
 
-    s=serial.Serial(port=port)
-    s.write('*IDN?\n')
-    a=s.readline()
-    a_list=a.split(',')
-    supplyname=a_list[1].strip()
-
-    info={}
-    info['port']=port
-    info['serialno']=serialno
-    info['id_string']=a.strip()
-    info['supplyname']=supplyname
-    return info
-
-def parseargs_PowerSupply(argv):
-    '''parse the command line arguments
-    '''
-    command={}
-    command['ONOFF']=None
-    command['supplyname']=None
-    command['label']=None
-    command['serialno']=None
-    command['subsupply']=None
-    command['V']=None
-    command['quit']=False
-    command['help']=False
-    command['status']=False
-    command['readings']=False
-    
-    supplylist=list(known_supplies.supplyname)
-    supplylabels=list(known_supplies.label)
-    supplylabels_left=list(known_supplies.label_left)
-    supplylabels_right=list(known_supplies.label_right)
-    
-    for arg in argv:
-        arg=arg.strip()
-        a=arg.upper()
-        if a.find('V=')==0:
-            try:
-                V=eval(a.split('=')[1])
-                command['V']=V
-            except:
-                print('Could not read voltage value: %s' % arg)
-            continue
-        
-        if a=='ON':
-            command['ONOFF']=1
-            continue
-
-        if a=='OFF':
-            command['ONOFF']=0
-            continue
+            if a=='OFF':
+                command['ONOFF']=0
+                continue
             
-        if arg in supplylabels_left:
-            idx=supplylabels_left.index(arg)
-            command['subsupply']='LEFT'
-            command['label']=supplylabels[idx]
-            command['serialno']=serialnos[idx]
-            continue
+            if arg in supplylabels_left:
+                idx=supplylabels_left.index(arg)
+                command['subsupply']='LEFT'
+                command['label']=supplylabels[idx]
+                command['serialno']=serialnos[idx]
+                continue
 
-        if arg in supplylabels_right:
-            idx=supplylabels_right.index(arg)
-            command['subsupply']='RIGHT'
-            command['label']=supplylabels[idx]
-            command['serialno']=serialnos[idx]
-            continue
+            if arg in supplylabels_right:
+                idx=supplylabels_right.index(arg)
+                command['subsupply']='RIGHT'
+                command['label']=supplylabels[idx]
+                command['serialno']=serialnos[idx]
+                continue
 
-        if arg in supplylabels:
-            idx=supplylabels.index(arg)
-            command['label']=arg
-            command['serialno']=serialnos[idx]
-            continue
+            if arg in supplylabels:
+                idx=supplylabels.index(arg)
+                command['label']=arg
+                command['serialno']=serialnos[idx]
+                continue
 
-        if a in ['LEFT','RIGHT']:
-            command['subsupply']=a
-            continue
+            if a in ['LEFT','RIGHT']:
+                command['subsupply']=a
+                continue
 
-        if arg in supplylist:
-            idx=supplylist.index(arg)
-            command['supplyname']=arg
-            command['serialno']=serialnos[idx]
-            continue
+            if arg in supplylist:
+                idx=supplylist.index(arg)
+                command['supplyname']=arg
+                command['serialno']=serialnos[idx]
+                continue
 
-        if a=='QUIT' or a=='Q':
-            command['quit']=True
-            continue
+            if a=='QUIT' or a=='Q':
+                command['quit']=True
+                continue
 
-        if a.find('HELP')>=0:
-            command['help']=True
-            continue
+            if a.find('HELP')>=0:
+                command['help']=True
+                continue
 
-        if a.find('STATUS')>=0:
-            commmand['status']=True
-            continue
-        if a.find('READINGS')>=0:
-            command['readings']=True
-            continue
+            if a.find('STATUS')>=0:
+                commmand['status']=True
+                continue
+            
+            if a.find('READINGS')>=0:
+                command['readings']=True
+                continue
 
-        if a=='--TEST':
-            command['test']=True
+            if a=='--TEST':
+                command['test']=True
 
-    return command
+        return command
 
-
-def help_PowerSupply():
-    '''some help text for command power supplies
-    '''
-    msg='\nPower Supply Control/Command\n'
-    msg+='\ncommands:\n'
-    msg+='\nhelp : print this message'
-    msg+='\n<return> : show status of all power supplies (default action)'
-    msg+='\n<supply name> : apply commands to this power supply'
-    msg+='\n<left|right> : for power supplies with two supplies, apply command to the left or right supply'
-    msg+='\n<label> : apply commands to the supply with this label (eg. "heater 1K")'
-    msg+='\n<on|off> : switch output on or off'
-    msg+='\nV=<num> : set voltage to <num>\n'
-    print(msg)
-    return
+    def runCommands(self,command,quiet=True):
+        '''run the commands on the requested power supply
+        the argument is a dictionary returned from parseargs()
+        '''
+        known_serialnos=list(known_supplies.serial_number)
+        serialnos=self.serialno_list
+        if command['serialno'] in serialnos:
+            idx=serialnos.index(command['serialno'])
+            label=''
+            if command['serialno'] in known_serialnos:
+                known_idx=known_serialnos.index(command['serialno'])
+                label=list(known_supplies.label)[known_idx]
+            if not quiet print('applying commands on supply %s: %s' % (self.supply[idx].supplyname,label))
+            p=self.supply[idx]
+            p.runCommands(command)
+        
+        return
+    
+    def help_PowerSupply(self):
+        '''some help text for command power supplies
+        '''
+        msg='\nPower Supply Control/Command\n'
+        msg+='\ncommands:\n'
+        msg+='\nhelp : print this message'
+        msg+='\n<return> : show status of all power supplies (default action)'
+        msg+='\n<supply name> : apply commands to this power supply'
+        msg+='\n<left|right> : for power supplies with two supplies, apply command to the left or right supply'
+        msg+='\n<label> : apply commands to the supply with this label (eg. "heater 1K")'
+        msg+='\n<on|off> : switch output on or off'
+        msg+='\nV=<num> : set voltage to <num>\n'
+        print(msg)
+        return
 
 # Known Power Supplies
 # The serial numbers of known power supplies, and how many ports they have        
@@ -477,50 +514,23 @@ known_supplies[4]=('ftCYWB2W',
 
 if __name__=='__main__':
 
-    available_supplies=find_PowerSupply()
-    if available_supplies is None:
-        available_supplies=[]
-    nsupplies=len(available_supplies)
-    supply=[]
-    available_models=[]
-    labels=[]
-    serialnos=[]
-    known_serialnos=list(known_supplies.serial_number)
-    
-    command=parseargs_PowerSupply(sys.argv)
-
-    for info in available_supplies:
-        print(info['supplyname'])
-        dev=info['port']
-        p=PowerSupply(dev)
-        supply.append(p)
-        available_models.append(info['supplyname'])
-        serialnos.append(info['serialno'])
-
+    ps=PowerSupplies()
+    command=ps.parseargs(sys.argv)
     keep_going=not command['quit']
     while keep_going:
-        if command['serialno'] in serialnos:
-            idx=serialnos.index(command['serialno'])
-            label=''
-            if command['serialno'] in known_serialnos:
-                known_idx=known_serialnos.index(command['serialno'])
-                label=list(known_supplies.label)[known_idx]
-            print('applying commands on supply %s: %s' % (available_models[idx],label))
-            p=supply[idx]
-            p.runCommands(command)
-        
+        ps.runCommands(command)
 
-        for p in supply:
+        for p in ps.supply:
             p.Status()
         
         if command['help']:
-            help_PowerSupply()
+            ps.help_PowerSupply()
             print('Available Power Supplies')
-            for model in available_models:
+            for model in ps.available_models:
                 print('%s' % model)
 
         ans=raw_input('Enter command ("help" for list): ')
-        command=parseargs_PowerSupply(ans.split())
+        command=ps.parseargs(ans.split())
         keep_going=not command['quit']
         
     
