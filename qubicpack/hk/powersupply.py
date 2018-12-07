@@ -357,6 +357,7 @@ class PowerSupplies :
         supplylabels=list(known_supplies.label)
         supplylabels_left=list(known_supplies.label_left)
         supplylabels_right=list(known_supplies.label_right)
+        serialnos=list(known_supplies.serial_number)
     
         for arg in argv:
             arg=arg.strip()
