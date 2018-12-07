@@ -51,19 +51,19 @@ class PowerSupply :
             return  None
         
         # find out which power supply it is, and whether it has one or two supplies
-        cmd='/sbin/udevadm info -a %s|grep serial|head -1' % port
+        cmd='/sbin/udevadm info -a %s|grep serial|head -1' % self.port
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out,err=proc.communicate()
         serialno=out.split('==')[1].replace('"','').strip()
 
-        s=serial.Serial(port=port)
+        s=serial.Serial(port=self.port)
         s.write('*IDN?\n')
         a=s.readline()
         a_list=a.split(',')
         supplyname=a_list[1].strip()
 
         info={}
-        info['port']=port
+        info['port']=self.port
         info['serialno']=serialno
         info['id_string']=a.strip()
         info['supplyname']=supplyname
@@ -109,7 +109,7 @@ class PowerSupply :
         #self.supplyname='%s %s' % (a_list[0],a_list[1])
         self.supplyname=a_list[1].strip()
         nsupplies=self.get_nsupplies()
-        info=self.identify_PowerSupply(port)
+        info=self.identify_PowerSupply()
         self.serialno=info['serialno']
         #print('%8s: %s' % (self.serialno,self.supplyname))
         return a
