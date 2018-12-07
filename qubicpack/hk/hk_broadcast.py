@@ -31,7 +31,14 @@ class hk_broadcast :
         self.nPRESSURE=0
         self.record=self.define_hk_record()
         return None
-    
+
+    def millisecond_timestamp(self):
+        '''return the current date in milliseconds since 1970-01-01
+        '''
+        now=dt.datetime.now()
+        msec=now.strftime('%f')[0:3]
+        tstamp=int('%s%s' % (now.strftime('%s'),msec))
+        return tstamp
 
     def define_hk_record(self):
         '''define a housekeeping data record
@@ -58,9 +65,7 @@ class hk_broadcast :
         # the current date (milliseconds since 1970-1-1)
         names.append('DATE')
         fmts.append('i8')
-        now=dt.datetime.now()
-        msec=now.strftime('%f')[0:3]
-        record_zero.append(int('%s%s' % (now.strftime('%s'),msec)))
+        record_zero.append(self.millisecond_timestamp())
 
         # temperatures from the two AVS47 controllers
         for idx in range(2):
@@ -128,7 +133,8 @@ class hk_broadcast :
         for idx in range(self.nMECH):
             ch=idx+1
             recname='MHS%i' % ch
-            tstamp,dat=hk.mech_get_position(ch)
+            dat=hk.mech_get_position(ch)
+            tstamp=self.millisecond_timestamp()
             record[recname][0]=dat
             self.hk_log(recname,tstamp,dat)
 
@@ -139,15 +145,14 @@ class hk_broadcast :
             
             for meastype in ['Volt','Amp']:
                 recname='%s_%s' % (heater,meastype)
+                tstamp=self.millisecond_timestamp()
                 #self.hk_log(recname,tstamp,dat)
     
                 
 
         hk.close()
         
-        now=dt.datetime.now()
-        msec=now.strftime('%f')[0:3]
-        record[0].DATE=int('%s%s' % (now.strftime('%s'),msec))
+        record[0].DATE=self.millisecond_timestamp()
             
         return record
     
