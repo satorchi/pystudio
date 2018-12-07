@@ -441,8 +441,8 @@ class PowerSupplies :
             if command['serialno'] in known_serialnos:
                 known_idx=known_serialnos.index(command['serialno'])
                 label=list(known_supplies.label)[known_idx]
-            if not quiet: print('applying commands on supply %s: %s' % (self.supply[idx].supplyname,label))
-            p=self.supply[idx]
+            if not quiet: print('applying commands on supply %s: %s' % (self.supplylist[idx].supplyname,label))
+            p=self.supplylist[idx]
             p.runCommands(command)
         
         return
