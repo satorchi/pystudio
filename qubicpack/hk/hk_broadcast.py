@@ -16,7 +16,7 @@ import sys,os,subprocess,time,socket
 import numpy as np
 import datetime as dt
 
-from qubicpack.hk.powersupply import PowerSupply, parseargs_PowerSupply find_PowerSupply identify_PowerSupply known_supplies
+from qubicpack.hk.powersupply import PowerSupply, parseargs_PowerSupply, find_PowerSupply, identify_PowerSupply, known_supplies
 from qubicpack.hk.entropy_hk import entropy_hk
 
 class hk_broadcast :
