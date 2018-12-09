@@ -201,7 +201,7 @@ class PowerSupply :
         V=self.get_VoltageSetting(supply)
         I=self.get_CurrentOutput(supply)
         
-        return V,I
+        return (V,I)
 
     def OutputOn(self,supply='left'):
         '''enable the output
@@ -449,9 +449,9 @@ class PowerSupplies :
                 label=list(known_supplies.label)[known_idx]
             if not quiet: print('applying commands on supply %s: %s' % (self.supplylist[idx].supplyname,label))
             p=self.supplylist[idx]
-            p.runCommands(command)
+            ret=p.runCommands(command)
         
-        return
+        return ret
     
     def help_PowerSupply(self):
         '''some help text for command power supplies
