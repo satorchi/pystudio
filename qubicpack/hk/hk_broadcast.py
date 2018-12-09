@@ -18,6 +18,7 @@ import datetime as dt
 
 from qubicpack.hk.powersupply import PowerSupply, PowerSupplies, known_supplies
 from qubicpack.hk.entropy_hk import entropy_hk
+from qubicpack.hk.temperature_hk import temperature_hk
 
 class hk_broadcast :
 
@@ -30,8 +31,9 @@ class hk_broadcast :
         self.nHEATER=6
         self.nPRESSURE=0
         self.record=self.define_hk_record()
-        self.hk=None
+        self.hk_entropy=None
         self.powersupply=None
+        self.hk_temperature=None
         return None
 
     def millisecond_timestamp(self):
@@ -130,15 +132,15 @@ class hk_broadcast :
     def get_entropy_hk(self):
         '''sample the housekeeping from the entropy (Major Tom) controller
         '''
-        if self.hk is None:
-            self.hk=entropy_hk()
+        if self.hk_entropy is None:
+            self.hk_entropy=entropy_hk()
 
         # temperatures from the two AVS47 controllers
         for idx in range(2):
             avs='AVS47_%i' % (idx+1)
             for ch in range(self.nTEMPERATURE):
                 recname='%s_ch%i' % (avs,ch)
-                tstamp,dat=self.hk.get_temperature(dev=avs,ch=ch)
+                tstamp,dat=self.hk_entropy.get_temperature(dev=avs,ch=ch)
                 self.record[recname][0]=dat
                 self.hk_log(recname,tstamp,dat)
                 
@@ -147,7 +149,7 @@ class hk_broadcast :
         for idx in range(self.nMECH):
             ch=idx+1
             recname='MHS%i' % ch
-            dat=self.hk.mech_get_position(ch)
+            dat=self.hk_entropy.mech_get_position(ch)
             tstamp=self.millisecond_timestamp()
             self.record[recname][0]=dat
             self.hk_log(recname,tstamp,dat)
@@ -168,33 +170,53 @@ class hk_broadcast :
             cmd=self.powersupply.parseargs(argv)
             dat=self.powersupply.runCommands(command)
             
-            for meastype,_idx in enumerate(['Volt','Amp']):
+            for _idx,meastype in enumerate(['Volt','Amp']):
                 recname='%s_%s' % (heater,meastype)
                 tstamp=self.millisecond_timestamp()
                 self.hk_log(recname,tstamp,dat[_idx])
 
         return self.record
+
+    def get_temperature_hk(self):
+        '''sample housekeeping data from the temperature diodes
+        '''
+        if self.hk_temperature is None:
+            self.hk_temperature=temperature_hk()
+
+        if not hk_temperature.connected:
+            return None
+
+        temperatures=hk_temperature.get_temperatures()
+        for idx,val in enumerate(temperatures):
+            recname='TEMPERATURE%02i' % idx
+            tstamp=self.millisecond_timestamp()
+            self.hk_log(recname,tstamp,val)
+            
         
+        return self.record
     
     def get_all_hk(self):
         '''sample all the housekeeping from the various sensors
         '''
         self.get_entropy_hk()
-        self.get_powersupply_hk()        
+        self.get_powersupply_hk()
+        self.get_temperature_hk()
         self.record[0].DATE=self.millisecond_timestamp()            
         return self.record
     
-
+    
     def hk_client(self):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         client.bind(("", self.BROADCAST_PORT))
 
+        nbytes=self.record.nbytes
+        
         nskips=0
         local_counter=0
         prev_counter=-1
         while True:
-            data, addr = client.recvfrom(4096)
+            data, addr = client.recvfrom(nbytes)
             now=dt.datetime.now()
 
     
@@ -209,8 +231,6 @@ class hk_broadcast :
     def hk_server(self,test=False):
         '''broadcast all housekeeping info
         '''
-        
-        record=self.define_hk_record()
 
         cmd='/sbin/ifconfig eth0'
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -225,7 +245,7 @@ class hk_broadcast :
         if test:
             hostname='localhost' # for testing
             print('hostname=%s for testing' % hostname)
-            stoptime=now+dt.timedelta(minutes=60)
+            stoptime=now+dt.timedelta(minutes=5)
 
 
         s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -237,7 +257,8 @@ class hk_broadcast :
         counter=0
         while now < stoptime:
 
-            msg=self.get_all_hk()
+
+            if not test: msg=self.get_all_hk()
             
             s.sendto(msg, (self.RECEIVER, self.BROADCAST_PORT))
 
@@ -260,6 +281,18 @@ class hk_broadcast :
         line='%i %e\n' % (tstamp,data)
         h.write(line)
         h.close()
+        return True
+
+    def log_record(self):
+        '''put the housekeeping data in log files
+        '''
+
+        # filenames take from record names.  We skip the first three: STX,QUBIC_ID,DATE
+        names=self.record.dtype.names[3:]
+        tstamp=record.DATE[0]
+        for idx,name in enumerate(names):
+            dat=record.field(idx+3)[0]
+            self.hk_log(name,tstamp,dat)
         return True
 
 ### end of hk_broadcast class definition
