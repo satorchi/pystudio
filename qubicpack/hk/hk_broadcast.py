@@ -184,9 +184,15 @@ class hk_broadcast :
             self.hk_temperature=temperature_hk()
 
         if not hk_temperature.connected:
-            return None
-
-        temperatures=hk_temperature.get_temperatures()
+            # try to reconnect
+            hk_temperature.connect()
+            
+        if not hk_temperature.connected:
+            # return bad values
+            temperatures = -np.ones(hk_temperature.nT)
+        else:
+            temperatures = hk_temperature.get_temperatures()
+            
         for idx,val in enumerate(temperatures):
             recname='TEMPERATURE%02i' % idx
             tstamp=self.millisecond_timestamp()
