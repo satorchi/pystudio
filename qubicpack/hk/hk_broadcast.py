@@ -16,7 +16,7 @@ import sys,os,subprocess,time,socket
 import numpy as np
 import datetime as dt
 
-from qubicpack.hk.powersupply import PowerSupply, parseargs_PowerSupply, find_PowerSupply, identify_PowerSupply, known_supplies
+from qubicpack.hk.powersupply import PowerSupply, PowerSupplies, known_supplies
 from qubicpack.hk.entropy_hk import entropy_hk
 
 class hk_broadcast :
@@ -31,6 +31,7 @@ class hk_broadcast :
         self.nPRESSURE=0
         self.record=self.define_hk_record()
         self.hk=None
+        self.powersupply=None
         return None
 
     def millisecond_timestamp(self):
@@ -126,10 +127,9 @@ class hk_broadcast :
             record[0][idx]=val
         return record
 
-    def get_all_hk(self):
-        '''sample all the housekeeping from the various sensors
+    def get_entropy_hk(self):
+        '''sample the housekeeping from the entropy (Major Tom) controller
         '''
-
         if self.hk is None:
             self.hk=entropy_hk()
 
@@ -152,19 +152,36 @@ class hk_broadcast :
             self.record[recname][0]=dat
             self.hk_log(recname,tstamp,dat)
 
+        return self.record
+
+    def get_powersupply_hk(self):
+        '''sample the housekeeping data from the TTi power supplies
+        '''
+
+        if self.powersupply is None:
+            self.powersupply=PowerSupplies()
+
         # the power supplies (heaters)
         for idx in range(self.nHEATER):
             heater='HEATER%i' % (idx+1)
             argv='%s readings' % heater
+            cmd=self.powersupply.parseargs(argv)
+            dat=self.powersupply.runCommands(command)
             
-            for meastype in ['Volt','Amp']:
+            for meastype,_idx in enumerate(['Volt','Amp']):
                 recname='%s_%s' % (heater,meastype)
                 tstamp=self.millisecond_timestamp()
-                #self.hk_log(recname,tstamp,dat)
-    
+                self.hk_log(recname,tstamp,dat[_idx])
+
+        return self.record
         
-        self.record[0].DATE=self.millisecond_timestamp()
-            
+    
+    def get_all_hk(self):
+        '''sample all the housekeeping from the various sensors
+        '''
+        self.get_entropy_hk()
+        self.get_powersupply_hk()        
+        self.record[0].DATE=self.millisecond_timestamp()            
         return self.record
     
 
