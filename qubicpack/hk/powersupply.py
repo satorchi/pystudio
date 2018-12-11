@@ -455,6 +455,7 @@ class PowerSupplies :
         '''
         known_serialnos=list(known_supplies.serial_number)
         serialnos=self.serialno_list
+        ret=None
         if command['serialno'] in serialnos:
             idx=serialnos.index(command['serialno'])
             label=''
