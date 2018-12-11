@@ -20,6 +20,7 @@ from __future__ import division, print_function
 import os,sys,serial,subprocess
 from glob import glob
 import numpy as np
+import datetime as dt
 
 import readline
 readline.parse_and_bind('tab: complete')
@@ -42,12 +43,23 @@ class PowerSupply :
         self.init_TTiPowerSupply(port=port)
         return None
 
+    def log(self,msg):
+        '''messages to log file and to screen
+        '''
+        now=dt.datetime.now()
+        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
+        h=open('hk_powersupply.log','a')
+        h.write(logmsg+'\n')
+        h.close()
+        print(logmsg)
+        return
+                
     def identify_PowerSupply(self):
         '''identify the power supply
         '''
 
         if self.port is None:
-            print('ERROR! Please give a device to identify (e.g. /dev/ttyACM0)')
+            self.log('ERROR! Please give a device to identify (e.g. /dev/ttyACM0)')
             return  None
         
         # find out which power supply it is, and whether it has one or two supplies
@@ -93,7 +105,7 @@ class PowerSupply :
         GROUP="users", MODE="0666", SYMLINK+="powersupply"
         '''
         if not os.path.exists(port):
-            print('ERROR! Device does not exist.')
+            self.log('ERROR! Device does not exist.')
             self.port=None
             self.nsupplies=0
             self.supplyname=None
@@ -105,14 +117,14 @@ class PowerSupply :
 
         self.s.write('*IDN?\n')
         a=self.read_reply()
-        print('port=%s\n%s' % (port,a))
+        self.log('port=%s\n%s' % (port,a))
         a_list=a.strip().split(',')
         #self.supplyname='%s %s' % (a_list[0],a_list[1])
         self.supplyname=a_list[1].strip()
         nsupplies=self.get_nsupplies()
         info=self.identify_PowerSupply()
         self.serialno=info['serialno']
-        #print('%8s: %s' % (self.serialno,self.supplyname))
+        #self.log('%8s: %s' % (self.serialno,self.supplyname))
         return a
 
     def supplyno(self,supply):
@@ -128,8 +140,8 @@ class PowerSupply :
             supplyno=supply
 
         if supplyno not in [1,2]:
-            print('ERROR! Unknown power supply: %s' % supply)
-            print('Please tell me if its "left" or "right" or "1" or "2"')
+            self.log('ERROR! Unknown power supply: %s' % supply)
+            self.log('Please tell me if its "left" or "right" or "1" or "2"')
             return None
 
         return supplyno
@@ -141,7 +153,7 @@ class PowerSupply :
         if supplyno is None:return False
 
         if supplyno>self.nsupplies:
-            print('ERROR! This power supply does not have that many supplies')
+            self.log('ERROR! This power supply does not have that many supplies')
             return False
         cmd=cmd % supplyno
         
@@ -325,7 +337,7 @@ class PowerSupplies :
         devs2=glob('/dev/ttyUSB*') # these are not TTi power supplies
         devs=devs1
         if not devs:
-            print('No power supplies found!')
+            self.log('No power supplies found!')
             return None
 
         supplylist=[]
@@ -373,7 +385,7 @@ class PowerSupplies :
                     V=eval(a.split('=')[1])
                     command['V']=V
                 except:
-                    print('Could not read voltage value: %s' % arg)
+                    self.log('Could not read voltage value: %s' % arg)
                 continue
         
             if a=='ON':
@@ -447,7 +459,7 @@ class PowerSupplies :
             if command['serialno'] in known_serialnos:
                 known_idx=known_serialnos.index(command['serialno'])
                 label=list(known_supplies.label)[known_idx]
-            if not quiet: print('applying commands on supply %s: %s' % (self.supplylist[idx].supplyname,label))
+            if not quiet: self.log('applying commands on supply %s: %s' % (self.supplylist[idx].supplyname,label))
             p=self.supplylist[idx]
             ret=p.runCommands(command)
         
