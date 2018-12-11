@@ -172,7 +172,7 @@ class entropy_hk :
         try:
             tstamp_entropy=int(cols[1])
             msec=self.startTime.strftime('%f')[0:3]
-            tstamp=int('%s%s' % (self.startTime.strftime('%s'),msec))            
+            tstamp=int('%s%s' % (self.startTime.strftime('%s'),msec)) + tstamp_entropy
         except:
             self.debugmsg("Couldn't read timestamp: %s" % cols)
             tstamp=-1
