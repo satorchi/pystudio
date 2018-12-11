@@ -40,6 +40,17 @@ class entropy_hk :
         self.assign_labels()
         return None
 
+    def log(self,msg):
+        '''messages to log file and to screen
+        '''
+        now=dt.datetime.now()
+        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
+        h=open('hk_entropy.log','a')
+        h.write(logmsg+'\n')
+        h.close()
+        print(logmsg)
+        return
+
     def assign_labels(self):
         '''label for each channel
         copied Tue 04 Dec 2018 10:36:26 CET
@@ -70,7 +81,7 @@ class entropy_hk :
     def debugmsg(self,msg):
         '''print a message to screen for debugging
         '''
-        if self.verbosity>0:print(msg)
+        if self.verbosity>0:self.log(msg)
         return None
 
     def init_socket(self):
@@ -91,7 +102,7 @@ class entropy_hk :
         try:
             a=self.socket.recv(self.MAX_MSGLEN)
         except:
-            print("ERROR!  Communication error.  Trying to re-initialize socket.  I'll only do this once.")
+            self.log("ERROR!  Communication error.  Trying to re-initialize socket.")
             self.socket.close()
             self.init_socket()
             a=None
@@ -105,7 +116,7 @@ class entropy_hk :
         if a is None:return None
         
         self.startTime=str2dt(a)
-        print('Logging start time: %s' % self.startTime.strftime('%Y-%m-%d %H:%M:%S.%f'))
+        self.log('Logging start time: %s' % self.startTime.strftime('%Y-%m-%d %H:%M:%S.%f'))
         return self.startTime
     
     def get_device_list(self):
@@ -126,7 +137,7 @@ class entropy_hk :
                     self.mech_idx=idx
                 idx+=1
         self.devlist=devlist
-        self.print_device_list()
+        self.self.log_device_list()
         return devlist
 
 
@@ -143,7 +154,7 @@ class entropy_hk :
         '''get a temperature reading
         '''
         if dev is None:
-            print('Please enter a valid device!')
+            self.log('Please enter a valid device!')
             return self.print_device_list()
 
         if ch is None:ch=0
@@ -173,11 +184,11 @@ class entropy_hk :
         '''
 
         if self.mech_idx is None:
-            print('ERROR! Could not find the mechanical heat switch device')
+            self.log('ERROR! Could not find the mechanical heat switch device')
             return None
         
         if ch is None:
-            print('Please enter which heat switch, 1 or 2')
+            self.log('Please enter which heat switch, 1 or 2')
             return None
 
         cmd='device %s absolute? %i\n' % (self.devlist[self.mech_idx],ch)
@@ -200,22 +211,22 @@ class entropy_hk :
         '''
 
         if self.mech_idx is None:
-            print('ERROR! Could not find the mechanical heat switch device')
+            self.log('ERROR! Could not find the mechanical heat switch device')
             return None
         
         if ch is None:
-            print('Please enter which heat switch, 1 or 2')
+            self.log('Please enter which heat switch, 1 or 2')
             return None
 
         if command is None:command='stop'
         command=command.lower()
         if command not in ['open','close','stop']:
-            print('ERROR! Please enter a valid command (open/close/stop)')
+            self.log('ERROR! Please enter a valid command (open/close/stop)')
             return None
 
         if command in ['open','close']:
             if steps is None:
-                print('Please enter a number of steps')
+                self.log('Please enter a number of steps')
                 return None
             cmd='device %s %s %i %i\n' % (self.devlist[self.mech_idx],command,ch,steps)
         else:
