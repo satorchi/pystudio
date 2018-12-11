@@ -28,6 +28,7 @@ class hk_broadcast :
         self.BROADCAST_PORT=4005
         self.RECEIVER='<broadcast>'
         self.RECEIVER='134.158.187.21'
+        self.RECEIVER='134.158.187.0/24'
         self.nENTROPY_TEMPERATURE=8
         self.nMECH=2
         self.nHEATER=6
