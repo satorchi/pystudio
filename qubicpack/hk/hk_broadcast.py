@@ -192,10 +192,14 @@ class hk_broadcast :
             self.hk_temperature.connect()
             
         if not self.hk_temperature.connected:
-            # return bad values
-            temperatures = -np.ones(hk_temperature.nT)
-        else:
-            temperatures = self.hk_temperature.get_temperatures()
+            self.log('ERROR! Temperature diodes not communicating')
+            return None
+
+        temperatures = self.hk_temperature.get_temperatures()
+            
+        if temperatures is None:
+            self.log('ERROR! Bad reply from Temperature diodes')
+            return None
             
         for idx,val in enumerate(temperatures):
             recname='TEMPERATURE%02i' % idx
