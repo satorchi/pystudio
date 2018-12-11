@@ -39,7 +39,9 @@ class temperature_hk :
         homedir='/home/pi'
         if 'HOME' in os.environ.keys():
             homedir=os.environ['HOME']
-        self.caldir='%s/data/log_cryo/calibration' % homedir
+        data_subdir='data/temperature/data'
+        cal_subdir='log_cryo/calibration'
+        self.caldir='%s/%s/%s' % (homedir,data_subdir,cal_subdir)
 
         # these were the headings in the temperature.dat file
         self.labels=['T01_40K_filters',
