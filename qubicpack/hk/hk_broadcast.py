@@ -170,7 +170,7 @@ class hk_broadcast :
             heater='HEATER%i' % (idx+1)
             argv='%s readings' % heater
             cmd=self.powersupply.parseargs(argv)
-            dat=self.powersupply.runCommands(command)
+            dat=self.powersupply.runCommands(cmd)
             
             for _idx,meastype in enumerate(['Volt','Amp']):
                 recname='%s_%s' % (heater,meastype)
