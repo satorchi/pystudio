@@ -112,19 +112,20 @@ class PowerSupply :
             return None
         self.port=port
 
-        s=serial.Serial(port=port,timeout=5)
+        s=serial.Serial(port=port,timeout=1)
         self.s=s
 
         self.s.write('*IDN?\n')
         a=self.read_reply()
-        self.log('port=%s\n%s' % (port,a))
+        self.log('port=%s\n%s' % (port,a.strip()))
         a_list=a.strip().split(',')
-        #self.supplyname='%s %s' % (a_list[0],a_list[1])
+        if len(a_list)<2:
+            self.log('ERROR! This does not appear to be a TTi Power Supply')
+            return None
         self.supplyname=a_list[1].strip()
         nsupplies=self.get_nsupplies()
         info=self.identify_PowerSupply()
         self.serialno=info['serialno']
-        #self.log('%8s: %s' % (self.serialno,self.supplyname))
         return a
 
     def supplyno(self,supply):
