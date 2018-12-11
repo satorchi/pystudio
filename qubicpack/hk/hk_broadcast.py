@@ -168,7 +168,8 @@ class hk_broadcast :
         # the power supplies (heaters)
         for idx in range(self.nHEATER):
             heater='HEATER%i' % (idx+1)
-            argv='%s readings' % heater
+            cmd='%s readings' % heater
+            argv=cmd.split()
             cmd=self.powersupply.parseargs(argv)
             dat=self.powersupply.runCommands(cmd)
             
