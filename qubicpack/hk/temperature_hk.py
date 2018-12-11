@@ -97,7 +97,7 @@ class temperature_hk :
         max_wait=dt.timedelta(seconds=30)
         wait_endtime=now+max_wait
         while data_length == 0 and now < wait_endtime:
-	    string0 = ser.readline()
+	    string0 = self.ser.readline()
 	    data_length = len(string0)
             now=dt.datetime.now()
 
