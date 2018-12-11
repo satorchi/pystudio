@@ -137,7 +137,7 @@ class entropy_hk :
                     self.mech_idx=idx
                 idx+=1
         self.devlist=devlist
-        self.self.log_device_list()
+        self.log(devlist)
         return devlist
 
 
