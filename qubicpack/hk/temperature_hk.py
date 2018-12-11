@@ -36,6 +36,10 @@ class temperature_hk :
         self.ser = None
         self.connected=False
         self.port=port
+        homedir='/home/pi'
+        if 'HOME' in os.environ.keys():
+            homedir=os.environ['HOME']
+        self.caldir='%s/data/log_cryo/calibration' % homedir
 
         # these were the headings in the temperature.dat file
         self.labels=['T01_40K_filters',
@@ -119,8 +123,7 @@ class temperature_hk :
         '''read the calibration tables
         '''
         if caldir is None:
-            datadir = os.getcwd() + '/data'
-            caldir=datadir+'/log_cryo/calibration'
+            caldir=self.caldir
             
         if not os.path.isdir(caldir):
             self.log('ERROR! Could not find calibration directory: %s' % caldir)
