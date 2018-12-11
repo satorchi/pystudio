@@ -206,6 +206,10 @@ class temperature_hk :
         except:
             self.log('ERROR! Bad reply from Temperature diodes')
             return None
+
+        if len(rawData)==0:
+            self.log('nothing in rawData: %s' % str(rawData))
+            return None
         
         for idx in range(self.nT):
             voltageData.append(rawData[idx+1]*self.gain[idx]+self.offset[idx])
