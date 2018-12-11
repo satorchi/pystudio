@@ -186,11 +186,11 @@ class hk_broadcast :
         if self.hk_temperature is None:
             self.hk_temperature=temperature_hk()
 
-        if not hk_temperature.connected:
+        if not self.hk_temperature.connected:
             # try to reconnect
-            hk_temperature.connect()
+            self.hk_temperature.connect()
             
-        if not hk_temperature.connected:
+        if not self.hk_temperature.connected:
             # return bad values
             temperatures = -np.ones(hk_temperature.nT)
         else:
