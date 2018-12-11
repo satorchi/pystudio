@@ -126,7 +126,7 @@ class PowerSupply :
         self.s=s
 
         info=self.identify_PowerSupply()
-        return a
+        return info
 
     def supplyno(self,supply):
         ''' convert a name given as a string to the corresponding number
