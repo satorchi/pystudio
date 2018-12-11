@@ -12,7 +12,7 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 class for broadcasting/receiving QUBIC Housekeeping data
 '''
 from __future__ import division, print_function
-import sys,os,subprocess,time,socket
+import sys,os,subprocess,time,socket,struct
 import numpy as np
 import datetime as dt
 
@@ -21,12 +21,14 @@ from qubicpack.hk.entropy_hk import entropy_hk
 from qubicpack.hk.temperature_hk import temperature_hk
 
 class hk_broadcast :
+    '''a class for broadcasting  and receiving QUBIC housekeeping data
+    '''
 
     def __init__(self):
         self.BROADCAST_PORT=4005
         self.RECEIVER='<broadcast>'
         self.RECEIVER='134.158.187.21'
-        self.nTEMPERATURE=8
+        self.nENTROPY_TEMPERATURE=8
         self.nMECH=2
         self.nHEATER=6
         self.nPRESSURE=0
@@ -109,7 +111,7 @@ class hk_broadcast :
 
         # the temperature diodes
         for idx in range(18): # THIS MUST CHANGE TO 21 AFTER WILFRIED CHANGES QUBICSTUDIO
-            Tname='TEMPERATURE%0i' % (idx+1)
+            Tname='TEMPERATURE%02i' % (idx+1)
             names.append('%s' % Tname)
             fmts.append('f8')
             record_zero.append(dummy_val)
@@ -138,7 +140,7 @@ class hk_broadcast :
         # temperatures from the two AVS47 controllers
         for idx in range(2):
             avs='AVS47_%i' % (idx+1)
-            for ch in range(self.nTEMPERATURE):
+            for ch in range(self.nENTROPY_TEMPERATURE):
                 recname='%s_ch%i' % (avs,ch)
                 tstamp,dat=self.hk_entropy.get_temperature(dev=avs,ch=ch)
                 self.record[recname][0]=dat
@@ -207,31 +209,48 @@ class hk_broadcast :
         self.get_entropy_hk()
         self.get_powersupply_hk()
         self.get_temperature_hk()
-        self.record[0].DATE=self.millisecond_timestamp()            
+        self.record[0].DATE=self.millisecond_timestamp()
         return self.record
-    
-    
+
+    def unpack_data(self,data):
+        '''unpack the received data packet
+        '''
+        fmt_translation={}
+        fmt_translation['int8']    = 'b'
+        fmt_translation['int16']   = 'h'
+        fmt_translation['int32']   = 'i'
+        fmt_translation['int64']   = 'q'
+        fmt_translation['float32'] = 'f'
+        fmt_translation['float64'] = 'd'
+
+        names=self.record.dtype.names
+        fmt='<'
+        for name in names:
+            key = str(self.record.dtype[name])
+            fmt+=fmt_translation[key]
+
+        data_tuple = struct.unpack(fmt,data)
+        self.record[0] = data_tuple
+        return self.record
+
+        
     def hk_client(self):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         client.bind(("", self.BROADCAST_PORT))
 
         nbytes=self.record.nbytes
-        
-        nskips=0
         local_counter=0
-        prev_counter=-1
         while True:
             data, addr = client.recvfrom(nbytes)
-            now=dt.datetime.now()
-
-    
-            print('data type %s of length %i' % (type(data),len(data)))
-            self.log('try.log',data)
-    
+            self.unpack_data(data)
+            self.log_record()
+            timestamp_date=dt.datetime.fromtimestamp(1e-3*self.record.DATE[0]).strftime('%Y-%m-%d %H:%M:%S')
+            msg='client %08i: received timestamp: %s' % (local_counter,timestamp_date)
+            self.log(msg)
             local_counter+=1
     
-        return
+        return local_counter
 
 
     def hk_server(self,test=False):
@@ -244,13 +263,14 @@ class hk_broadcast :
         for line in out.split('\n'):
             if line.find('inet ')>0: break
         hostname=line.split()[1]
-        print('hostname=%s' % hostname)
+        self.log('server: hostname=%s' % hostname)
         now=dt.datetime.now()
         stoptime=now+dt.timedelta(days=1000)
 
         if test:
-            hostname='localhost' # for testing
-            print('hostname=%s for testing' % hostname)
+            hostname='127.0.0.1' # for testing
+            self.RECEIVER='127.0.0.1'
+            self.log('server: hostname=%s for testing' % hostname)
             stoptime=now+dt.timedelta(minutes=5)
 
 
@@ -259,14 +279,17 @@ class hk_broadcast :
         s.settimeout(0.2)
         s.bind((hostname,15000))
         
-
+        msg=self.record
         counter=0
         while now < stoptime:
 
 
-            if not test: msg=self.get_all_hk()
-            
+            if not test:
+                msg=self.get_all_hk()
+            else:
+                msg[0].DATE=self.millisecond_timestamp()
             s.sendto(msg, (self.RECEIVER, self.BROADCAST_PORT))
+            self.log_record()
 
             time.sleep(1.0)
             now=dt.datetime.now()
@@ -295,12 +318,23 @@ class hk_broadcast :
 
         # filenames take from record names.  We skip the first three: STX,QUBIC_ID,DATE
         names=self.record.dtype.names[3:]
-        tstamp=record.DATE[0]
+        tstamp=self.record.DATE[0]
         for idx,name in enumerate(names):
-            dat=record.field(idx+3)[0]
+            dat=self.record.field(idx+3)[0]
             self.hk_log(name,tstamp,dat)
         return True
 
+    def log(self,msg):
+        '''messages to log file and to screen
+        '''
+        now=dt.datetime.now()
+        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
+        h=open('hk_broadcast.log','a')
+        h.write(logmsg+'\n')
+        h.close()
+        print(logmsg)
+        return
+    
 ### end of hk_broadcast class definition
 
 
