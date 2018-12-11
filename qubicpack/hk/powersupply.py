@@ -35,6 +35,7 @@ class PowerSupply :
         self.port=None
         self.nsupplies=0
         self.info=None
+        self.device_ok=False
 
         if port is None:
             print('\nNOTE: Please give a device (e.g. port="/dev/ttyACM0"')
@@ -60,6 +61,7 @@ class PowerSupply :
 
         if self.port is None:
             self.log('ERROR! Please give a device to identify (e.g. /dev/ttyACM0)')
+            self.device_ok=False
             return  None
         
         # find out which power supply it is, and whether it has one or two supplies
@@ -71,9 +73,13 @@ class PowerSupply :
         s=serial.Serial(port=self.port)
         s.write('*IDN?\n')
         a=s.readline()
-        a_list=a.split(',')
-        supplyname=a_list[1].strip()
+        a_list=a.strip().split(',')
+        if len(a_list)<2:
+            self.log('ERROR! This does not appear to be a TTi Power Supply')
+            self.device_ok=False
+            return None
 
+        supplyname=a_list[1].strip()
         info={}
         info['port']=self.port
         info['serialno']=serialno
@@ -81,6 +87,9 @@ class PowerSupply :
         info['supplyname']=supplyname
         info['nsupplies']=self.get_nsupplies()
         self.info=info
+        self.supplyname=supplyname
+        self.serialno=serialno
+        self.device_ok=True
         return info
 
     def get_nsupplies(self):
@@ -109,23 +118,14 @@ class PowerSupply :
             self.port=None
             self.nsupplies=0
             self.supplyname=None
+            self.device_ok=False
             return None
         self.port=port
 
         s=serial.Serial(port=port,timeout=1)
         self.s=s
 
-        self.s.write('*IDN?\n')
-        a=self.read_reply()
-        self.log('port=%s\n%s' % (port,a.strip()))
-        a_list=a.strip().split(',')
-        if len(a_list)<2:
-            self.log('ERROR! This does not appear to be a TTi Power Supply')
-            return None
-        self.supplyname=a_list[1].strip()
-        nsupplies=self.get_nsupplies()
         info=self.identify_PowerSupply()
-        self.serialno=info['serialno']
         return a
 
     def supplyno(self,supply):
@@ -346,9 +346,10 @@ class PowerSupplies :
         serialno_list=[]
         for dev in devs:
             p=PowerSupply(dev)
-            supplylist.append(p)
-            infolist.append(p.info)
-            serialno_list.append(p.info['serialno'])
+            if p.device_ok:
+                supplylist.append(p)
+                infolist.append(p.info)
+                serialno_list.append(p.info['serialno'])
 
         self.nsupplies=len(supplylist)
         self.infolist=infolist
