@@ -195,7 +195,7 @@ class hk_broadcast :
             # return bad values
             temperatures = -np.ones(hk_temperature.nT)
         else:
-            temperatures = hk_temperature.get_temperatures()
+            temperatures = self.hk_temperature.get_temperatures()
             
         for idx,val in enumerate(temperatures):
             recname='TEMPERATURE%02i' % idx
