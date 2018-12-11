@@ -11,6 +11,9 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 
 run the client for gathering QUBIC housekeeping data sent on the socket
 '''
+import matplotlib
+matplotlib.use('Agg')
+
 from qubicpack.hk.hk_broadcast import hk_broadcast
 bc=hk_broadcast()
 bc.hk_client()
