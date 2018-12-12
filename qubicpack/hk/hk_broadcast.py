@@ -310,8 +310,12 @@ class hk_broadcast :
             else:
                 msg[0].DATE=self.millisecond_timestamp()
             s.sendto(msg, (self.RECEIVER, self.BROADCAST_PORT))
-            self.log_record()
 
+            ###################################################################################
+            #### we do not log the record here.  It is done by the get_<controller>_hk() methods
+            # self.log_record()
+            ###################################################################################
+            
             time.sleep(1.0)
             now=dt.datetime.now()
             counter+=1
