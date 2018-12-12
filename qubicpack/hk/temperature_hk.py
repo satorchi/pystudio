@@ -103,7 +103,9 @@ class temperature_hk :
         max_wait=dt.timedelta(seconds=30)
         wait_endtime=now+max_wait
         while data_length == 0 and now < wait_endtime:
-	    string0 = self.ser.readline()
+	    string0 = self.device_readline()
+            if string0 is None:
+                return False
 	    data_length = len(string0)
             now=dt.datetime.now()
 
@@ -114,6 +116,21 @@ class temperature_hk :
         self.connected=True        
         return True
 
+    def device_readline(self):
+        '''read from the Temperature diodes, with error checking
+        '''
+        if not self.connected:
+            self.log("ERROR! Trying to read device, but it's not connected")
+            return None
+
+        try:
+            ans = self.ser.readline()
+        except:
+            self.log("Error! Couldn't read Temperature Diode data")
+            return None
+        return ans
+    
+            
     def disconnect(self):
         '''close the serial connection to the temperature diodes
         '''
@@ -194,7 +211,8 @@ class temperature_hk :
         voltageData = []
         temperatureData = []
 
-        a = self.ser.readline()
+        a = self.device_readline()
+        if a is None: return None
         data_length = len(a)
         if data_length == 0: return None
 

@@ -207,6 +207,8 @@ class hk_broadcast :
     def get_temperature_hk(self):
         '''sample housekeeping data from the temperature diodes
         '''
+        data_ok = True
+
         if self.hk_temperature is None:
             self.hk_temperature=temperature_hk()
 
@@ -216,11 +218,11 @@ class hk_broadcast :
             
         if not self.hk_temperature.connected:
             self.log('ERROR! Temperature diodes not communicating')
-            return None
+            data_ok = False
+            temperatures=np.ones(self.hk_temperature.nT)
+        else:
+            temperatures = self.hk_temperature.get_temperatures()
 
-        temperatures = self.hk_temperature.get_temperatures()
-
-        data_ok = True
         if temperatures is None:
             self.log('ERROR! Bad reply from Temperature diodes')
             temperatures=np.ones(self.hk_temperature.nT)
