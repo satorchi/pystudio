@@ -217,7 +217,7 @@ class hk_broadcast :
             data_ok = False
             
         for idx,val in enumerate(temperatures):
-            recname = 'TEMPERATURE%02i' % idx
+            recname = 'TEMPERATURE%02i' % (idx+1)
             tstamp = self.millisecond_timestamp()
             self.record[recname][0] = val
             if data_ok: self.hk_log(recname,tstamp,val)
