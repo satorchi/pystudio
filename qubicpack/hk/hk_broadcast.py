@@ -182,7 +182,7 @@ class hk_broadcast :
             cmd=self.powersupply.parseargs(argv)
             dat=self.powersupply.runCommands(cmd)
             if isinstance(dat,str) or len(dat)!=2 or isinstance(dat[0],str) or isinstance(dat[1],str):
-                self.log('ERROR! Strange reply from power supply: %s' % dat)
+                self.log('ERROR! Strange reply from power supply: %s' % str(dat))
                 dat = None
                 
 
