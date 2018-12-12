@@ -208,7 +208,7 @@ class temperature_hk :
             return None
 
         if len(rawData)<self.nT:
-            self.log('Insufficient data.  length=%i, rawData: %s' % (len(rawData,str(rawData))))
+            self.log('Insufficient data.  length=%i, rawData: %s' % (len(rawData),str(rawData)))
             return None
         
         for idx in range(self.nT):
