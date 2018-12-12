@@ -150,7 +150,7 @@ class hk_broadcast :
                     self.record[recname][0]=-1
                 else:
                     self.record[recname][0]=dat
-                    self.hk_log(recname,tstamp,dat)
+                    self.log_hk(recname,tstamp,dat)
                 
 
         # the Mechanical Heat Switch positions
@@ -163,7 +163,7 @@ class hk_broadcast :
                 self.record[recname][0]=-1
             else:
                 self.record[recname][0]=dat
-                self.hk_log(recname,tstamp,dat)
+                self.log_hk(recname,tstamp,dat)
 
         return self.record
 
@@ -181,7 +181,7 @@ class hk_broadcast :
             argv=cmd.split()
             cmd=self.powersupply.parseargs(argv)
             dat=self.powersupply.runCommands(cmd)
-            if isinstance(dat,str) or len(dat)!=2 or isinstance(dat[1],str):
+            if isinstance(dat,str) or len(dat)!=2 or isinstance(dat[0],str) or isinstance(dat[1],str):
                 self.log('ERROR! Strange reply from power supply: %s' % dat)
                 dat = None
                 
@@ -193,8 +193,14 @@ class hk_broadcast :
                 if dat is None:
                     self.record[recname][0] = -1
                 else:
-                    self.record[recname][0]=dat[_idx]
-                    self.hk_log(recname,tstamp,dat[_idx])
+                    try:
+                        self.record[recname][0]=dat[_idx]
+                        self.log_hk(recname,tstamp,dat[_idx])
+                    except:
+                        self.record[recname][0] = -1
+                        self.log('ERROR! Unable to interpret answer from power supply: %s' % dat)
+                        
+                    
 
         return self.record
 
@@ -224,7 +230,7 @@ class hk_broadcast :
             recname = 'TEMPERATURE%02i' % (idx+1)
             tstamp = self.millisecond_timestamp()
             self.record[recname][0] = val
-            if data_ok: self.hk_log(recname,tstamp,val)
+            if data_ok: self.log_hk(recname,tstamp,val)
                     
         return self.record
     
@@ -328,15 +334,21 @@ class hk_broadcast :
         return
 
 
-    def hk_log(self,rootname,tstamp,data):
+    def log_hk(self,rootname,tstamp,data):
         '''add data to log file
         '''
 
         # if no data, return quietly
         if tstamp is None or data is None:return False
+
+        try:
+            line='%i %e\n' % (tstamp,data)
+        except:
+            self.log('ERROR! Could not convert timestamp,data for log_hk()')
+            return False
+        
         filename='%s.txt' % rootname
         h=open(filename,'a')
-        line='%i %e\n' % (tstamp,data)
         h.write(line)
         h.close()
         return True
@@ -350,7 +362,7 @@ class hk_broadcast :
         tstamp=self.record.DATE[0]
         for idx,name in enumerate(names):
             dat=self.record.field(idx+3)[0]
-            self.hk_log(name,tstamp,dat)
+            self.log_hk(name,tstamp,dat)
         return True
 
     def log(self,msg):
