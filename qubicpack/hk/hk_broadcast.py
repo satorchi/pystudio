@@ -25,18 +25,19 @@ class hk_broadcast :
     '''
 
     def __init__(self):
-        self.BROADCAST_PORT=4005
-        self.RECEIVER='<broadcast>'
-        self.RECEIVER='134.158.187.21'
-        self.RECEIVER='134.158.187.0/24'
-        self.nENTROPY_TEMPERATURE=8
-        self.nMECH=2
-        self.nHEATER=6
-        self.nPRESSURE=0
-        self.record=self.define_hk_record()
-        self.hk_entropy=None
-        self.powersupply=None
-        self.hk_temperature=None
+        self.BROADCAST_PORT = 4005
+        self.RECEIVER = '<broadcast>'
+        self.RECEIVER = '134.158.187.21'
+        self.RECEIVER = '134.158.187.0/24'
+        self.sampling_period = 2.0
+        self.nENTROPY_TEMPERATURE = 8
+        self.nMECH = 2
+        self.nHEATER = 6
+        self.nPRESSURE = 0
+        self.record = self.define_hk_record()
+        self.hk_entropy = None
+        self.powersupply = None
+        self.hk_temperature = None
         return None
 
     def millisecond_timestamp(self):
@@ -219,13 +220,13 @@ class hk_broadcast :
         if not self.hk_temperature.connected:
             self.log('ERROR! Temperature diodes not communicating')
             data_ok = False
-            temperatures=np.ones(self.hk_temperature.nT)
+            temperatures = -np.ones(self.hk_temperature.nT)
         else:
             temperatures = self.hk_temperature.get_temperatures()
 
         if temperatures is None:
             self.log('ERROR! Bad reply from Temperature diodes')
-            temperatures=np.ones(self.hk_temperature.nT)
+            temperatures = -np.ones(self.hk_temperature.nT)
             data_ok = False
             
         for idx,val in enumerate(temperatures):
@@ -328,7 +329,7 @@ class hk_broadcast :
             # self.log_record()
             ###################################################################################
             
-            time.sleep(1.0)
+            time.sleep(self.sampling_period)
             now=dt.datetime.now()
             counter+=1
 
