@@ -144,8 +144,13 @@ class hk_broadcast :
             for ch in range(self.nENTROPY_TEMPERATURE):
                 recname='%s_ch%i' % (avs,ch)
                 tstamp,dat=self.hk_entropy.get_temperature(dev=avs,ch=ch)
-                self.record[recname][0]=dat
-                self.hk_log(recname,tstamp,dat)
+                if tstamp is None:
+                    tstamp=self.millisecond_timestamp()
+                if dat is None:
+                    self.record[recname][0]=-1
+                else:
+                    self.record[recname][0]=dat
+                    self.hk_log(recname,tstamp,dat)
                 
 
         # the Mechanical Heat Switch positions
@@ -154,8 +159,11 @@ class hk_broadcast :
             recname='MHS%i' % ch
             dat=self.hk_entropy.mech_get_position(ch)
             tstamp=self.millisecond_timestamp()
-            self.record[recname][0]=dat
-            self.hk_log(recname,tstamp,dat)
+            if dat is None:
+                self.record[recname][0]=-1
+            else:
+                self.record[recname][0]=dat
+                self.hk_log(recname,tstamp,dat)
 
         return self.record
 
@@ -173,11 +181,16 @@ class hk_broadcast :
             argv=cmd.split()
             cmd=self.powersupply.parseargs(argv)
             dat=self.powersupply.runCommands(cmd)
-            
+
+            # if no data (maybe powersupply not connected) return -1 and do not log
             for _idx,meastype in enumerate(['Volt','Amp']):
                 recname='%s_%s' % (heater,meastype)
                 tstamp=self.millisecond_timestamp()
-                self.hk_log(recname,tstamp,dat[_idx])
+                if dat is None:
+                    self.record[recname][0] = -1
+                else:
+                    self.record[recname][0]=dat[_idx]
+                    self.hk_log(recname,tstamp,dat[_idx])
 
         return self.record
 
@@ -196,17 +209,19 @@ class hk_broadcast :
             return None
 
         temperatures = self.hk_temperature.get_temperatures()
-            
+
+        data_ok = True
         if temperatures is None:
             self.log('ERROR! Bad reply from Temperature diodes')
-            return None
+            temperatures=np.ones(self.hk_temperature.nT)
+            data_ok = False
             
         for idx,val in enumerate(temperatures):
-            recname='TEMPERATURE%02i' % idx
-            tstamp=self.millisecond_timestamp()
-            self.hk_log(recname,tstamp,val)
-            
-        
+            recname = 'TEMPERATURE%02i' % idx
+            tstamp = self.millisecond_timestamp()
+            self.record[recname][0] = val
+            if data_ok: self.hk_log(recname,tstamp,val)
+                    
         return self.record
     
     def get_all_hk(self):
@@ -215,7 +230,7 @@ class hk_broadcast :
         self.get_entropy_hk()
         self.get_powersupply_hk()
         self.get_temperature_hk()
-        self.record[0].DATE=self.millisecond_timestamp()
+        self.record[0].DATE = self.millisecond_timestamp()
         return self.record
 
     def unpack_data(self,data):

@@ -199,18 +199,17 @@ class temperature_hk :
         if data_length == 0: return None
 
         datlist=a.strip().split()
-        bad_data=np.ones(self.nT)
         
         try:
             rawData = map(int,datlist)
             self.log('rawData length = %i' % len(rawData))
         except:
             self.log('ERROR! Bad reply from Temperature diodes')
-            return bad_data
+            return None
 
         if len(rawData)==0:
             self.log('nothing in rawData: %s' % str(rawData))
-            return bad_data
+            return None
         
         for idx in range(self.nT):
             voltageData.append(rawData[idx+1]*self.gain[idx]+self.offset[idx])

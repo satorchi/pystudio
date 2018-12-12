@@ -175,7 +175,7 @@ class entropy_hk :
             tstamp=int('%s%s' % (self.startTime.strftime('%s'),msec)) + tstamp_entropy
         except:
             self.debugmsg("Couldn't read timestamp: %s" % cols)
-            tstamp=-1
+            tstamp=None
 
         return (tstamp,T)
 
@@ -197,7 +197,7 @@ class entropy_hk :
         a=self.sendreceive(cmd)
         if a is None:return None
 
-        self.debugmsg(a)
+        self.debugmsg(a.strip())
         cols=a.strip().replace(',','').split()
         
         try:
