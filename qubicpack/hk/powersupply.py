@@ -154,7 +154,8 @@ class PowerSupply :
         if supplyno is None:return False
 
         if supplyno>self.nsupplies:
-            self.log('ERROR! This power supply does not have that many supplies')
+            self.log('ERROR! This power supply does not have that many supplies: %s, S# %s, on port %s'\
+                     % (self.info['supplyname'],self.info['serialno'],self.info['port']))
             return False
         cmd=cmd % supplyno
         
