@@ -181,9 +181,10 @@ class hk_broadcast :
             argv=cmd.split()
             cmd=self.powersupply.parseargs(argv)
             dat=self.powersupply.runCommands(cmd)
-            if isinstance(dat,str):
-                self.log('ERROR! Strange reply from power supply: %s' % dat.strip())
+            if isinstance(dat,str) or len(dat)!=2 or isinstance(dat[1],str):
+                self.log('ERROR! Strange reply from power supply: %s' % dat)
                 dat = None
+                
 
             # if no data (maybe powersupply not connected) return -1 and do not log
             for _idx,meastype in enumerate(['Volt','Amp']):
