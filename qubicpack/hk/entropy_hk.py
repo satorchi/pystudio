@@ -149,25 +149,39 @@ class entropy_hk :
             print('   %i) %s' % (idx,dev))
 
         return None
+
+    def get_resistance(self,ch=None,dev=None):
+        '''get a resistance reading
+        '''
+        return self.get_reading(ch,dev,'resistance')
     
     def get_temperature(self,ch=None,dev=None):
         '''get a temperature reading
+        '''
+        reading = self.get_reading(ch,dev.'temperature')
+        if reading is None:
+            # try again, to get the resistance instead
+            reading = self.get_reading(ch,dev,'resistance')
+        return reading
+    
+    def get_reading(self,ch=None,dev=None,meastype='temperature'):
+        '''get a reading (temperature or resistance)
         '''
         if dev is None:
             self.log('Please enter a valid device!')
             return self.print_device_list()
 
         if ch is None:ch=0
-        cmd='device %s temperature? %i\n' % (dev,ch)
+        cmd='device %s %s? %i\n' % (dev,meastype,ch)
         a=self.sendreceive(cmd)
         if a is None:return None,None
 
         cols=a.strip().replace(',','').split()
         try:
-            T=float(cols[0])
+            reading=float(cols[0])
         except:
-            self.debugmsg("Couldn't read temperature: %s" % cols)
-            T=None
+            self.debugmsg("Couldn't read %s: %s" % (meastype,str(cols)))
+            reading=None
 
         try:
             tstamp_entropy=int(cols[1])
@@ -177,7 +191,7 @@ class entropy_hk :
             self.debugmsg("Couldn't read timestamp: %s" % cols)
             tstamp=None
 
-        return (tstamp,T)
+        return (tstamp,reading)
 
 
     def mech_get_position(self,ch=None):
