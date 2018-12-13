@@ -29,6 +29,8 @@ class hk_broadcast :
         self.RECEIVER = '<broadcast>'
         self.RECEIVER = '134.158.187.21'
         self.RECEIVER = '134.158.187.0/24'
+        self.LISTENER = ''          # client listens on ethernet device (usually eth0)
+        self.LISTENER = '127.0.0.1' # client listens on localhost
         self.sampling_period = 2.0
         self.nENTROPY_TEMPERATURE = 8
         self.nMECH = 2
@@ -271,7 +273,7 @@ class hk_broadcast :
     def hk_client(self):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client.bind(("", self.BROADCAST_PORT))
+        client.bind((self.LISTENER, self.BROADCAST_PORT))
 
         nbytes=self.record.nbytes
         local_counter=0
