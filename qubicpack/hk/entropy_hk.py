@@ -98,7 +98,7 @@ class entropy_hk :
     def sendreceive(self,cmd):
         '''send a command and receive the answer
         '''
-        self.debugmsg('entropy command: %s' % cmd)
+        self.debugmsg('entropy command: %s' % cmd.strip())
         self.socket.send(cmd)
         try:
             a=self.socket.recv(self.MAX_MSGLEN)
@@ -178,7 +178,7 @@ class entropy_hk :
         a=self.sendreceive(cmd)
 
         if a.find('no valid reading')>=0:
-            return None
+            return None,None
         
         if a is None:return None,None
 
