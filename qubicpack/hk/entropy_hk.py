@@ -160,7 +160,7 @@ class entropy_hk :
         '''get a temperature reading
         '''
         reading = self.get_reading(ch,dev,'temperature')
-        if reading is None:
+        if reading[1] is None:
             # try again, to get the resistance instead
             reading = self.get_reading(ch,dev,'resistance')
         return reading
