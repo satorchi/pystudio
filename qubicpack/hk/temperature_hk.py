@@ -119,10 +119,6 @@ class temperature_hk :
     def device_readline(self):
         '''read from the Temperature diodes, with error checking
         '''
-        if not self.connected:
-            self.log("ERROR! Trying to read device, but it's not connected")
-            return None
-
         try:
             ans = self.ser.readline()
         except:
