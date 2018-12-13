@@ -26,9 +26,9 @@ class hk_broadcast :
 
     def __init__(self):
         self.BROADCAST_PORT = 4005
-        self.RECEIVER = '<broadcast>'
-        self.RECEIVER = '134.158.187.21'
-        self.RECEIVER = '134.158.187.0/24'
+        self.RECEIVER = '<broadcast>'      # server broadcasts
+        self.RECEIVER = '134.158.187.21'   # server sends only to QubicStudio
+        self.RECEIVER = '134.158.187.0/24' # server broadcasts to APC subnet
         self.LISTENER = ''          # client listens on ethernet device (usually eth0)
         self.LISTENER = '127.0.0.1' # client listens on localhost
         self.sampling_period = 2.0
@@ -274,7 +274,12 @@ class hk_broadcast :
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         client.bind((self.LISTENER, self.BROADCAST_PORT))
-
+        if self.LISTENER=='':
+            listener = 'all'
+        else:
+            listener = self.LISTENER
+            
+        self.log('client listening on %s' % listener)
         nbytes=self.record.nbytes
         local_counter=0
         while True:
