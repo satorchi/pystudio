@@ -28,7 +28,7 @@ class hk_broadcast :
         self.BROADCAST_PORT = 4005
         self.RECEIVER = '<broadcast>'      # server broadcasts
         self.RECEIVER = '134.158.187.21'   # server sends only to QubicStudio
-        self.RECEIVER = '134.158.187.0/24' # server broadcasts to APC subnet
+        #self.RECEIVER = '134.158.187.0/24' # server broadcasts to APC subnet (syntax no good)
         self.LISTENER = ''          # client listens on ethernet device (usually eth0)
         self.LISTENER = '127.0.0.1' # client listens on localhost
         self.sampling_period = 2.0
