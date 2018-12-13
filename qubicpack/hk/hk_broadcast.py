@@ -139,7 +139,8 @@ class hk_broadcast :
         '''sample the housekeeping from the entropy (Major Tom) controller
         '''
         if self.hk_entropy is None:
-            self.hk_entropy=entropy_hk()
+            self.hk_entropy = entropy_hk()
+            self.hk_entropy.verbosity = 1
 
         # temperatures from the two AVS47 controllers
         for idx in range(2):
