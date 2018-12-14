@@ -349,7 +349,10 @@ class hk_broadcast :
         '''
 
         # if no data, return quietly
-        if tstamp is None or data is None:return False
+        if data is None:return False
+
+        # override timestamp.  This corrects the start/stop timestamping by Entropy
+        tstamp = self.millisecond_timestamp()
 
         try:
             line='%i %e\n' % (tstamp,data)
