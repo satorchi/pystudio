@@ -47,8 +47,8 @@ class PowerSupply :
     def log(self,msg):
         '''messages to log file and to screen
         '''
-        now=dt.datetime.now()
-        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
+        now=dt.datetime.utcnow()
+        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S UT'),msg)
         h=open('hk_powersupply.log','a')
         h.write(logmsg+'\n')
         h.close()

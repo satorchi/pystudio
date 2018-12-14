@@ -71,8 +71,8 @@ class temperature_hk :
     def log(self,msg):
         '''messages to log file and to screen
         '''
-        now=dt.datetime.now()
-        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
+        now=dt.datetime.utcnow()
+        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S UT'),msg)
         h=open('hk_temperature.log','a')
         h.write(logmsg+'\n')
         h.close()
@@ -99,7 +99,7 @@ class temperature_hk :
         
         # wait for activation
         data_length = 0
-        now=dt.datetime.now()
+        now=dt.datetime.utcnow()
         max_wait=dt.timedelta(seconds=30)
         wait_endtime=now+max_wait
         while data_length == 0 and now < wait_endtime:
@@ -107,7 +107,7 @@ class temperature_hk :
             if string0 is None:
                 return False
 	    data_length = len(string0)
-            now=dt.datetime.now()
+            now=dt.datetime.utcnow()
 
             if data_length == 0:
                 self.log("ERROR! Timeout! Could not connect to cryo temperatures!")

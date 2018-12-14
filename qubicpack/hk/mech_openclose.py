@@ -32,7 +32,7 @@ print('hostname=%s' % hostname)
 
 
 # don't go forever
-now=dt.datetime.now()
+now=dt.datetime.utcnow()
 stoptime=now+dt.timedelta(days=7)
 
 # we watch the Mechanical Heat Switch support
@@ -46,20 +46,20 @@ tstamp,T=hk.get_temperature(dev=dev,ch=ch)
 Tnext=T+0.1
 while now < stoptime and T>40.0:
 
-    now=dt.datetime.now()
+    now=dt.datetime.utcnow()
     tstamp,T=hk.get_temperature(dev=dev,ch=ch)
     if T is not None:
-        print('%s | Current temperature: %.1fK.  Next target temperature: %.1fK' % (now.strftime('%Y-%m-%d %H:%M:%S.%f'),T,Tnext))
+        print('%s | Current temperature: %.1fK.  Next target temperature: %.1fK' % (now.strftime('%Y-%m-%d %H:%M:%S.%f UT'),T,Tnext))
     if T is not None and T<Tnext:
-        now=dt.datetime.now()
-        print('%s | Opening Mechanical Heat Switches' % now.strftime('%Y-%m-%d %H:%M:%S.%f'))
+        now=dt.datetime.utcnow()
+        print('%s | Opening Mechanical Heat Switches' % now.strftime('%Y-%m-%d %H:%M:%S.%f UT'))
         hk.mech_open(1)
         hk.wait_for_position(1,hk.MECH_OPEN)
         hk.mech_open(2)
         hk.wait_for_position(1,hk.MECH_OPEN)
         
-        now=dt.datetime.now()            
-        print('%s | Closing Mechanical Heat Switches' % now.strftime('%Y-%m-%d %H:%M:%S.%f'))
+        now=dt.datetime.utcnow()            
+        print('%s | Closing Mechanical Heat Switches' % now.strftime('%Y-%m-%d %H:%M:%S.%f UT'))
         hk.mech_close(1)
         hk.wait_for_position(1,hk.MECH_CLOSED)
         hk.mech_close(2)

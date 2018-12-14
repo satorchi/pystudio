@@ -43,7 +43,7 @@ class entropy_hk :
     def log(self,msg):
         '''messages to log file and to screen
         '''
-        now=dt.datetime.now()
+        now=dt.datetime.utcnow()
         logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
         h=open('hk_entropy.log','a')
         h.write(logmsg+'\n')
@@ -116,8 +116,9 @@ class entropy_hk :
         a=self.sendreceive('dateTime AppStart\n')
         if a is None:return None
         
-        self.startTime=str2dt(a)
-        self.log('Logging start time: %s' % self.startTime.strftime('%Y-%m-%d %H:%M:%S.%f'))
+        self.startTime=str2dt(a) # this is given in CET
+        self.startTime += dt.timedelta(hours = -1) # convert to UT
+        self.log('Logging start time: %s' % self.startTime.strftime('%Y-%m-%d %H:%M:%S.%f UT'))
         return self.startTime
     
     def get_device_list(self):
@@ -293,7 +294,7 @@ class entropy_hk :
         '''wait for the mechanism to reach its position
         '''
         tolerance=1000
-        now=dt.datetime.now()
+        now=dt.datetime.utcnow()
         endtime=now+dt.timedelta(seconds=timeout)
         delta=100000
 
@@ -302,7 +303,7 @@ class entropy_hk :
             delta=abs(current_position - position)
             if delta>tolerance:
                 time.sleep(1)
-            now=dt.datetime.now()
+            now=dt.datetime.utcnow()
 
         return
     

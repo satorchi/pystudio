@@ -43,9 +43,9 @@ class hk_broadcast :
         return None
 
     def millisecond_timestamp(self):
-        '''return the current date in milliseconds since 1970-01-01
+        '''return the current date in milliseconds since 1970-01-01 in UT
         '''
-        now=dt.datetime.now()
+        now=dt.datetime.utcnow()
         msec=now.strftime('%f')[0:3]
         tstamp=int('%s%s' % (now.strftime('%s'),msec))
         return tstamp
@@ -286,7 +286,7 @@ class hk_broadcast :
             data, addr = client.recvfrom(nbytes)
             self.unpack_data(data)
             self.log_record()
-            timestamp_date=dt.datetime.fromtimestamp(1e-3*self.record.DATE[0]).strftime('%Y-%m-%d %H:%M:%S')
+            timestamp_date=dt.datetime.fromtimestamp(1e-3*self.record.DATE[0]).strftime('%Y-%m-%d %H:%M:%S UT')
             msg='client %08i: received timestamp: %s' % (local_counter,timestamp_date)
             self.log(msg)
             local_counter+=1
@@ -305,7 +305,7 @@ class hk_broadcast :
             if line.find('inet ')>0: break
         hostname=line.split()[1]
         self.log('server: hostname=%s' % hostname)
-        now=dt.datetime.now()
+        now=dt.datetime.utcnow()
         stoptime=now+dt.timedelta(days=1000)
 
         if test:
@@ -337,7 +337,7 @@ class hk_broadcast :
             ###################################################################################
             
             time.sleep(self.sampling_period)
-            now=dt.datetime.now()
+            now=dt.datetime.utcnow()
             counter+=1
 
         s.close()
@@ -378,8 +378,8 @@ class hk_broadcast :
     def log(self,msg):
         '''messages to log file and to screen
         '''
-        now=dt.datetime.now()
-        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
+        now=dt.datetime.utcnow()
+        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S UT'),msg)
         h=open('hk_broadcast.log','a')
         h.write(logmsg+'\n')
         h.close()
