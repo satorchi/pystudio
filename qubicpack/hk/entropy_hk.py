@@ -44,7 +44,7 @@ class entropy_hk :
         '''messages to log file and to screen
         '''
         now=dt.datetime.utcnow()
-        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S'),msg)
+        logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S UT'),msg)
         h=open('hk_entropy.log','a')
         h.write(logmsg+'\n')
         h.close()
