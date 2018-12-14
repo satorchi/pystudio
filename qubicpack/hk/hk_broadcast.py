@@ -184,7 +184,7 @@ class hk_broadcast :
             argv=cmd.split()
             cmd=self.powersupply.parseargs(argv)
             dat=self.powersupply.runCommands(cmd)
-            if isinstance(dat,str) or len(dat)!=2 or isinstance(dat[0],str) or isinstance(dat[1],str):
+            if isinstance(dat,str) or len(dat)!=3 or isinstance(dat[0],str) or isinstance(dat[1],str):
                 self.log('ERROR! Strange reply from power supply: %s' % str(dat))
                 dat = None
                 
@@ -197,8 +197,9 @@ class hk_broadcast :
                     self.record[recname][0] = -1
                 else:
                     try:
+                        status = dat[-1]
                         self.record[recname][0]=dat[_idx]
-                        self.log_hk(recname,tstamp,dat[_idx])
+                        self.log_hk(recname,tstamp,dat[_idx],status)
                     except:
                         self.record[recname][0] = -1
                         self.log('ERROR! Unable to interpret answer from power supply: %s' % dat)
@@ -345,7 +346,7 @@ class hk_broadcast :
         return
 
 
-    def log_hk(self,rootname,tstamp,data):
+    def log_hk(self,rootname,tstamp,data,data2=None):
         '''add data to log file
         '''
 
@@ -356,7 +357,10 @@ class hk_broadcast :
         tstamp = self.millisecond_timestamp()
 
         try:
-            line='%i %e\n' % (tstamp,data)
+            if data2 is None:
+                line = '%i %e\n' % (tstamp,data)
+            else:
+                line = '%i %e %s\n' % (tstamp,data,str(data2))
         except:
             self.log('ERROR! Could not convert timestamp,data for log_hk()')
             return False
