@@ -268,7 +268,7 @@ class PowerSupply :
         if self.nsupplies==2:
             Vleft=self.get_VoltageSetting('left')
             Ileft=self.get_CurrentOutput('left')
-            StatusLeft=self.OutputStatus('left')StatusLeft=self.OutputStatus('left')
+            StatusLeft=self.OutputStatus('left')
             print(subttl_left)
             try:
                 print('   Voltage: %f V\n   Current: %f mA\n   Output: %s\n' % (Vleft,Ileft,StatusLeft))
