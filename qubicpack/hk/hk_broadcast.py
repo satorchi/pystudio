@@ -305,6 +305,7 @@ class hk_broadcast :
             if line.find('inet ')>0: break
         hostname=line.split()[1]
         self.log('server: hostname=%s' % hostname)
+        self.log('server: receiver=%s' % self.RECEIVER)
         now=dt.datetime.utcnow()
         stoptime=now+dt.timedelta(days=1000)
 
