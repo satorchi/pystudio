@@ -50,6 +50,13 @@ class hk_broadcast :
         tstamp=int('%s%s' % (now.strftime('%s'),msec))
         return tstamp
 
+    def current_timestamp(self):
+        '''return the current date in milliseconds since 1970-01-01 in UT
+        '''
+        now=dt.datetime.utcnow()
+        tstamp=float(now.strftime('%s.%f'))
+        return tstamp
+    
     def define_hk_record(self):
         '''define a housekeeping data record
         '''
@@ -74,9 +81,10 @@ class hk_broadcast :
         record_zero.append(ID)
 
         # the current date (milliseconds since 1970-1-1)
+        # the current date (seconds since 1970-1-1)
         names.append('DATE')
         fmts.append('i8')
-        record_zero.append(self.millisecond_timestamp())
+        record_zero.append(self.current_timestamp())
 
         # temperatures from the two AVS47 controllers
         for idx in range(2):
@@ -148,7 +156,7 @@ class hk_broadcast :
                 recname='%s_ch%i' % (avs,ch)
                 tstamp,dat=self.hk_entropy.get_temperature(dev=avs,ch=ch)
                 if tstamp is None:
-                    tstamp=self.millisecond_timestamp()
+                    tstamp=self.current_timestamp()
                 if dat is None:
                     self.record[recname][0]=-1
                 else:
@@ -161,7 +169,7 @@ class hk_broadcast :
             ch=idx+1
             recname='MHS%i' % ch
             dat=self.hk_entropy.mech_get_position(ch)
-            tstamp=self.millisecond_timestamp()
+            tstamp=self.current_timestamp()
             if dat is None:
                 self.record[recname][0]=-1
             else:
@@ -192,7 +200,7 @@ class hk_broadcast :
             # if no data (maybe powersupply not connected) return -1 and do not log
             for _idx,meastype in enumerate(['Volt','Amp']):
                 recname='%s_%s' % (heater,meastype)
-                tstamp=self.millisecond_timestamp()
+                tstamp=self.current_timestamp()
                 if dat is None:
                     self.record[recname][0] = -1
                 else:
@@ -234,7 +242,7 @@ class hk_broadcast :
             
         for idx,val in enumerate(temperatures):
             recname = 'TEMPERATURE%02i' % (idx+1)
-            tstamp = self.millisecond_timestamp()
+            tstamp = self.current_timestamp()
             self.record[recname][0] = val
             if data_ok: self.log_hk(recname,tstamp,val)
                     
@@ -246,7 +254,7 @@ class hk_broadcast :
         self.get_entropy_hk()
         self.get_powersupply_hk()
         self.get_temperature_hk()
-        self.record[0].DATE = self.millisecond_timestamp()
+        self.record[0].DATE = self.current_timestamp()
         return self.record
 
     def unpack_data(self,data):
@@ -330,7 +338,7 @@ class hk_broadcast :
             if not test:
                 msg=self.get_all_hk()
             else:
-                msg[0].DATE=self.millisecond_timestamp()
+                msg[0].DATE=self.current_timestamp()
             s.sendto(msg, (self.RECEIVER, self.BROADCAST_PORT))
 
             ###################################################################################
@@ -354,7 +362,7 @@ class hk_broadcast :
         if data is None:return False
 
         # override timestamp.  This corrects the start/stop timestamping by Entropy
-        tstamp = self.millisecond_timestamp()
+        tstamp = self.current_timestamp()
 
         try:
             if data2 is None:
