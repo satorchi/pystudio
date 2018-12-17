@@ -83,7 +83,7 @@ class hk_broadcast :
         # the current date (milliseconds since 1970-1-1)
         # the current date (seconds since 1970-1-1)
         names.append('DATE')
-        fmts.append('i8')
+        fmts.append('f8')
         record_zero.append(self.current_timestamp())
 
         # temperatures from the two AVS47 controllers
