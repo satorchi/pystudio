@@ -121,11 +121,15 @@ def bias_offset2DAC(self,bias):
     self.debugmsg("DACoffset=%i" % DACoffset)
     return DACoffset
 
-def sample_period(self):
+def sample_period(self,timeline_index=None):
     '''
     the integration time per sample.  This is in seconds.
     2MHz is the sampling rate of the ASIC
     '''
+    if not self.exist_timeline_data():return None
+
+    if timeline_index is not None and 'NSAMPLES' in self.tdata[timeline_index].keys():
+        self.nsamples = self.tdata[timeline_index]['NSAMPLES']        
     if self.nsamples==None:return None
     
     npixels=self.NPIXELS_sampled
@@ -137,22 +141,34 @@ def timeline_npts(self):
     '''
     the size of the timeline determined from requested parameters.
     This is the number of points in the timeline vector
+
+    *** NOTE: this method is not used anywhere ******************
     '''
     sample_period=self.sample_period()
     if sample_period==None:return None
     timeline_size = int(np.ceil(self.tinteg / sample_period))
     return timeline_size
 
-def timeline_timeaxis(self):
+def timeline_timeaxis(self,timeline_index,axistype='index'):
     '''
     the timeline time axis.  
     This is determined from the sample period and the number of points
     or, possibly given as a list of datetime
     '''
+    if not self.exist_timeline_data():return None
+
+    if 'DATE-OBS' in self.tdata[timeline_index].keys():
+        timeline_date=self.tdata[timeline_index]['DATE-OBS']
+    else:
+        timeline_date=self.obsdate
+
+    timeline_npts = self.tdata[timeline_index]['TIMELINE'].shape[1]    
+    sample_period=self.sample_period(timeline_index)
     
-    sample_period=self.sample_period()
-    if isinstance(timeline_date,list) and isinstance(timeline_date[0],dt.datetime):
-        time_axis=timeline_date
+    if axistype!='index' and isinstance(timeline_date,list) and isinstance(timeline_date[0],dt.datetime):
+        time_axis = np.array([ eval(t.strftime('%s.%f')) for t in timeline_date ])
+        t0 = time_axis[0]
+        time_axis -= t0
     else:
         time_axis=sample_period*np.arange(timeline_npts)
     return time_axis
@@ -173,11 +189,17 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     timeline=self.timeline(TES,timeline_index)
     timeline_npts=len(timeline)
 
-    sample_period=self.sample_period()
-    time_axis=self.timeline_timeaxis()
+    sample_period=self.sample_period(timeline_index)
+    time_axis=self.timeline_timeaxis(timeline_index)
 
     # the so-called frequency of the bias modulation is, in fact, the period
-    bias_period_npts=int(self.bias_frequency/sample_period)
+    # In QubicStudio the selection of bias_frequency=99 changes the significance from frequency to period (confusing)
+    if self.bias_frequency is None:
+        period_firstguess = 92. # based on experience
+    else:
+        period_firstguess = self.bias_frequency
+        
+    bias_period_npts=int(period_firstguess/sample_period)
     self.debugmsg('period npts = %i' % bias_period_npts)
         
     # skip the first few seconds which are often noisy
@@ -204,9 +226,10 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     except:
         ipeak1=timeline_npts-1
     peak1=time_axis[ipeak1]
+    self.bias_period = peak1-peak0
     return (ipeak0,ipeak1)
 
-def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None,plot_sine=True,xwin=True):
+def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None,plot_sine=True,xwin=True,timeaxis='index'):
     '''
     plot the timeline
     '''
@@ -223,27 +246,45 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
 
-    if 'DATE-OBS' in self.tdata[timeline_index].keys():
-        timeline_date=self.tdata[timeline_index]['DATE-OBS']
+    tdata = self.tdata[timeline_index]
+    keys = tdata.keys()
+    
+    warning_str = ''
+    if 'WARNING' in keys and tdata['WARNING']:
+        warning_str = '\n'.join(tdata['WARNING'])
+                                 
+    if 'NSAMPLES' in keys:
+        self.nsamples = tdata['NSAMPLES']
+        
+    if 'DATE-OBS' in keys:
+        timeline_date=tdata['DATE-OBS']
     else:
         timeline_date=self.obsdate
 
-    if 'BEG-OBS' in self.tdata[timeline_index].keys():
-        timeline_start=self.tdata[timeline_index]['BEG-OBS']
+    if 'BEG-OBS' in keys:
+        timeline_start=tdata['BEG-OBS']
     else:
         timeline_start=timeline_date
+
+    if 'BIAS_MIN' in keys:
+        self.min_bias=tdata['BIAS_MIN']
+    if 'BIAS_MAX' in keys:
+        self.max_bias=tdata['BIAS_MAX']
+
+    
         
     ttl=str('QUBIC Timeline curve for TES#%3i (%s)' % (TES,timeline_start.strftime('%Y-%b-%d %H:%M UTC')))
 
-    if 'TES_TEMP' in self.tdata[timeline_index].keys():
-        tempstr='%.0f mK' % (1000*self.tdata[timeline_index]['TES_TEMP'])
+    if 'TES_TEMP' in keys:
+        tempstr='%.0f mK' % (1000*tdata['TES_TEMP'])
     else:
         if self.temperature==None:
             tempstr='unknown'
         else:
             tempstr=str('%.0f mK' % (1000*self.temperature))
     subttl=str('Array %s, ASIC #%i, Pixel #%i, Temperature %s' % (self.detector_name,self.asic,self.tes2pix(TES),tempstr))
-    
+    if warning_str: subttl += '\n'+warning_str
+                                
     if xwin: plt.ion()
     else: plt.ioff()
 
@@ -258,8 +299,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     current=self.ADU2I(timeline) # uAmps
     timeline_npts=len(timeline)
 
-    sample_period=self.sample_period()
-    time_axis=self.timeline_timeaxis()
+    time_axis=self.timeline_timeaxis(timeline_index,axistype=timeaxis)
 
     fitparms=None
     if fit:
@@ -345,7 +385,9 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
     '''
     if not self.exist_timeline_data():return None
     ntimelines=self.ntimelines()
-
+    tdata = self.tdata[timeline_index]
+    keys = tdata.keys()
+    
     if timeline_index is None:
         # by default, plot the first one.
         timeline_index=0
@@ -354,15 +396,15 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
 
-    if 'DATE-OBS' in self.tdata[timeline_index].keys():
-        timeline_date=self.tdata[timeline_index]['DATE-OBS']
+    if 'DATE-OBS' in keys:
+        timeline_date=tdata['DATE-OBS']
     else:
         timeline_date=self.obsdate
 
     ttl=str('QUBIC Timeline curves (%s)' % (timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
 
-    if 'TES_TEMP' in self.tdata[timeline_index].keys():
-        tempstr='%.0f mK' % (1000*self.tdata[timeline_index]['TES_TEMP'])
+    if 'TES_TEMP' in keys:
+        tempstr='%.0f mK' % (1000*tdata['TES_TEMP'])
     else:
         if self.temperature==None:
             tempstr='unknown'
@@ -467,18 +509,15 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0,shift=0.
     self.timeline_conversion['timeline_index']=timeline_index
     self.timeline_conversion['shift']=shift
     
-    timeline_npts=self.timeline_npts()
-    sample_period=self.sample_period()
-    if sample_period is None:
-        print('ERROR! Could not determine sample period.  Missing nsamples?')
-        return None
-    time_axis=self.timeline_timeaxis()
+    time_axis=self.timeline_timeaxis(timeline_index)
     peak0=time_axis[ipeak0]
     peak1=time_axis[ipeak1]
     bias_period=peak1-peak0
 
     # find the number of cycles from the bias modulation "frequency" which is the period
-    ncycles=int( np.round((peak1-peak0)/self.bias_frequency) )
+    ### what's this? it doesn't make sense.
+    # ncycles=int( np.round((peak1-peak0)/self.bias_frequency) )
+    ncycles = int( (time_axis[-1] - time_axis[0])/bias_period )
     if ncycles==0:
         # it's not down/up
         self.nbiascycles=1
@@ -495,8 +534,15 @@ def timeline2adu(self,TES=None,ipeak0=None,ipeak1=None,timeline_index=0,shift=0.
     self.vbias=ysine[ipeak0:ipeak1]
     self.min_bias=min(self.vbias)
     self.max_bias=max(self.vbias)
-    self.obsdate=self.tdata[timeline_index]['DATE-OBS']
-    self.temperature=self.tdata[timeline_index]['TES_TEMP']
+    if 'BEG-OBS' in self.tdata[timeline_index].keys():
+        self.obsdate=self.tdata[timeline_index]['BEG-OBS']
+    else:
+        self.obsdate=self.tdata[timeline_index]['DATE-OBS']
+    if 'TES_TEMP' in self.tdata[timeline_index].keys():
+        self.temperature=self.tdata[timeline_index]['TES_TEMP']
+    else:
+        self.temperature=None
+    
     npts=len(self.vbias)
     self.adu=np.empty((self.NPIXELS,npts))
     for idx in range(self.NPIXELS):
@@ -538,8 +584,7 @@ def fit_timeline(self,TES,timeline_index=None,ipeak0=None,ipeak1=None):
     current=self.ADU2I(timeline)
     timeline_npts=len(timeline)
 
-    sample_period=self.sample_period()
-    time_axis=self.timeline_timeaxis()
+    time_axis=self.timeline_timeaxis(timeline_index)
 
     # first guess;  use the peak search algorithm
     i0,i1=self.determine_bias_modulation(TES,timeline_index)
