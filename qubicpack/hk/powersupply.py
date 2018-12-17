@@ -169,7 +169,10 @@ class PowerSupply :
         Trying to read after a command which does not send a reply
         will cause hanging
         '''
-        ans=self.s.readline()
+        try:
+            ans=self.s.readline()
+        except:
+            ans=None
         return ans
         
     def set_Voltage(self,V,supply='left'):
