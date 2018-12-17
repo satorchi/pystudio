@@ -366,9 +366,9 @@ class hk_broadcast :
 
         try:
             if data2 is None:
-                line = '%i %e\n' % (tstamp,data)
+                line = '%f %e\n' % (tstamp,data)
             else:
-                line = '%i %e %s\n' % (tstamp,data,str(data2))
+                line = '%f %e %s\n' % (tstamp,data,str(data2))
         except:
             self.log('ERROR! Could not convert timestamp,data for log_hk()')
             return False
