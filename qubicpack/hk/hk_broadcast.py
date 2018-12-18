@@ -123,7 +123,7 @@ class hk_broadcast :
             dummy_val+=1
 
         # the temperature diodes
-        for idx in range(18): # THIS MUST CHANGE TO 21 AFTER WILFRIED CHANGES QUBICSTUDIO
+        for idx in range(21): # THIS MUST CHANGE TO 21 AFTER WILFRIED CHANGES QUBICSTUDIO
             Tname='TEMPERATURE%02i' % (idx+1)
             names.append('%s' % Tname)
             fmts.append('f8')
