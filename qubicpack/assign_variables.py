@@ -48,7 +48,7 @@ def assign_defaults(self):
     self.FLL_D=None
     self.figsize=(12.80,6.40)
     self.colours=['blue','green','red','cyan','magenta','yellow','black']
-    self.assign_asic(1)
+    self.asic=None
     self.assign_integration_time()
     self.adu=None
     self.vbias=None
@@ -130,7 +130,7 @@ def assign_asic(self,asic=1):
     #### QubicStudio has a reverse nomenclature for the ASIC index
     #### compared to the translation tables (eg. Correspondance.xlsx)
     # so define here a specific QubicStudio ASIC index which should be used in the acquisition methods
-    # see, for example, integrate_scientific_data() in tools.py
+    # see, for example, integrate_scientific_data() in acquisition.py
     asic_index=self.asic_index()
     self.QS_asic_index=asic_index
     if self.obsdate < self.asic_reversal_date:

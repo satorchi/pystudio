@@ -21,6 +21,10 @@ from astropy.io import fits as pyfits
 
 
 def read_date_from_filename(self,filename):
+    '''
+    read the date from the filename. 
+    this hasn't been used in a long time
+    '''
     try:
         datestr=filename.split('_')[-1].split('.')[0]
         date=dt.datetime.strptime(datestr,'%Y%m%dT%H%M%SUTC')
@@ -201,6 +205,9 @@ def write_fits(self):
     return
 
 def read_fits(self,filename):
+    '''
+    open a FITS file and determine whether it is QubicStudio or QubicPack
+    '''
     if not isinstance(filename,str):
         print('ERROR! please enter a valid filename.')
         return None
@@ -210,15 +217,205 @@ def read_fits(self,filename):
         return None
 
     print('reading fits file: %s' % filename)
-    h=pyfits.open(filename)
-    nhdu=len(h)
+    hdulist=pyfits.open(filename)
+    nhdu=len(hdulist)
 
     # check if it's a QUBIC file
-    if nhdu<=1\
-       or (not 'TELESCOP' in h[0].header.keys())\
-       or (not h[0].header['TELESCOP'].strip()=='QUBIC'):
-        print('This is not a QUBIC file.')
+    if nhdu>1\
+       and ('TELESCOP' in hdulist[0].header.keys())\
+       and (hdulist[0].header['TELESCOP'].strip()=='QUBIC'):
+        print('This is a QubicPack file.')
+        return self.read_qubicpack_fits(hdulist)
+
+    # check if it's a QubicStudio file
+    # QubicStudio FITS files always have exactly 2 HDUs
+    ok = True
+    if 'INSTRUME' not in hdulist[1].header.keys():
+        print("'INSTRUME' keyword not found")
+        ok = False
+    if hdulist[1].header['INSTRUME'].strip() !=  'QUBIC':
+        print('Instrument is not QUBIC')
+        ok = False
+    if 'EXTNAME' not in hdulist[1].header.keys():
+        print("'EXTNAME' keyword not found")
+        ok = False
+    if ok:
+        print('This is a QubicStudio FITS file')
+        return self.read_qubicstudio_fits(hdulist)
+    
+    print('Unrecognized FITS file!')
+    return False
+
+def read_fits_field(self,hdu,fieldname):
+    '''
+    check if a field exists, and if so read the data
+    '''
+    nfields = hdu.header['TFIELDS']
+    fieldnames = []
+    for field_idx in range(nfields):
+        fieldno = field_idx+1
+        fieldnames.append(hdu.header['TTYPE%i' % fieldno].strip())
+
+    if fieldname in fieldnames:
+        field_idx = fieldnames.index(fieldname)
+        return hdu.data.field(field_idx)
+
+    return None
+
+
+
+def read_qubicstudio_fits(self,hdulist):
+    '''
+    read a QubicStudio FITS file
+    the argument h is an hdulist after opening the FITS file
+    '''
+
+    # dictionary for the return of timeline data
+    if self.tdata is None:self.tdata = [{}]
+    tdata = self.tdata[-1]
+    nhdu = len(hdulist)
+
+    hdu = hdulist[1] # the primary header has nothing in it
+    keys = hdu.header.keys()
+
+    # what kind of QubicStudio file?
+    QS_filetype = None
+    extname = hdu.header['EXTNAME'].strip()
+    if extname =='ASIC_SUMS':
+        QS_filetype = 'science'
+    elif extname.find('CONF_ASIC')==0:
+        QS_filetype = 'asic'
+    elif extname.find('EXTERN_HK')==0:
+        QS_filetype = 'hk'
+    elif extname == 'ASIC_RAW':
+        QS_filetype = 'raw'
+    else:
+        print('ERROR! Unrecognized QubicStudio FITS file')
         return None
+
+    # get the timeline data from each detector
+    if QS_filetype=='science':
+        read_qubicstudio_science_fits(self,hdu)
+        
+    if QS_filetype=='asic':
+        read_qubicstudio_asic_fits(self,hdu)
+
+    hdulist.close()
+    return True
+
+def read_qubicstudio_science_fits(self,hdu):
+    '''
+    read the science data
+    The HDU passed here as the argument should already have been identified as the Science HDU
+    '''
+    tdata = self.tdata[-1]
+        
+    # check which ASIC
+    asic = hdu.header['ASIC_NUM']
+    if self.asic is None:
+        self.asic = asic
+    elif self.asic != asic:
+        msg='ERROR! ASIC Id does not match: previous=%i, current=%i' % (self.asic, asic)
+        tdata['WARNING'].append(msg)
+        print(msg)
+        self.asic = asic
+
+
+    # read the science data
+    npts = hdu.header['NAXIS2']
+    adu = np.zeros((self.NPIXELS,npts))
+    for pix_idx in range(self.NPIXELS):
+        pix_no = pix_idx+1
+        fieldname = 'pixel%i' % pix_no
+        adu[pix_idx,:] = self.read_fits_field(hdu,fieldname)
+    tdata['TIMELINE'] = adu
+
+    # get nsamples
+    nsample_list  =  self.read_fits_field(hdu,'NbSamplesPerSum')
+    tdata['NSAM_LST'] = nsample_list
+    nsamples = nsample_list[-1]
+    tdata['NSAMPLES'] = nsamples
+    ## check if they're all the same
+    difflist = np.unique(nsample_list)
+    if len(difflist)!=1:
+        msg = 'WARNING! nsamples changed during the measurement!'
+        print(msg)
+        tdata['WARNING'].append(msg)
+
+
+    # get the time axis
+    computertime_idx = 0
+    gpstime_idx = 1
+    dateobs = []
+    timestamp = 1e-3*hdu.data.field(computertime_idx)
+    for tstamp in timestamp:
+        dateobs.append(dt.datetime.fromtimestamp(tstamp))
+    tdata['DATE-OBS'] = dateobs
+    tdata['BEG-OBS'] = dateobs[0]
+    tdata['END-OBS'] = dateobs[-1]
+    
+    return
+
+def read_qubicstudio_asic_fits(self,hdu):
+    '''
+    read the data giving the ASIC configuration
+    The HDU passed here as the argument should already have been identified as the ASIC HDU
+    '''
+    tdata = self.tdata[-1]
+
+    # check which ASIC
+    asic = hdu.header['ASIC_NUM']
+    if self.asic is None:
+        self.asic = asic
+    elif self.asic != asic:
+        msg='ERROR! ASIC Id does not match: previous=%i, current=%i' % (self.asic, asic)
+        tdata['WARNING'].append(msg)
+        print(msg)
+            
+    # get the time axis
+    computertime_idx = 0
+    gpstime_idx = 1
+    dateobs = []
+    timestamp = 1e-3*hdu.data.field(computertime_idx)
+    for tstamp in timestamp:
+        dateobs.append(dt.datetime.fromtimestamp(tstamp))
+    tdata['BEGASIC%i' % asic] = dateobs[0]
+    tdata['ENDASIC%i' % asic] = dateobs[-1]
+
+    # get the Raw Mask
+    tdata['RAW-MASK'] = self.read_fits_field(hdu,'Raw-mask')
+
+    # get bias level (this is given directly in Volts.  No need to translate from DAC values)
+    # TESAmplitude is in fact, peak-to-peak, so multiply by 0.5
+    amplitude = 0.5*self.read_fits_field(hdu,'TESAmplitude')
+    offset = self.read_fits_field(hdu,'TESOffset')
+
+    ## check if they're all the same
+    bias_min = offset-amplitude
+    tdata['BIAS_MIN_LST']=bias_min
+    difflist = np.unique(bias_min)
+    if len(difflist)!=1:
+        msg = 'WARNING! Minimum Bias changed during the measurement!'
+        print(msg)
+        tdata['WARNING'].append(msg)
+    tdata['BIAS_MIN'] = min(bias_min)
+    
+    bias_max = offset+amplitude
+    tdata['BIAS_MAX_LST']=bias_max
+    difflist = np.unique(bias_max)
+    if len(difflist)!=1:
+        msg = 'WARNING! Maximum Bias changed during the measurement!'
+        print(msg)
+        tdata['WARNING'].append(msg)
+    tdata['BIAS_MAX'] = max(bias_max)
+    
+    return
+
+def read_qubicpack_fits(self,h):
+    '''
+    read a FITS file that was written by QubicPack
+    argument h is an hdulist after opening a FITS file
+    '''
 
     self.observer=h[0].header['OBSERVER']
     self.assign_obsdate(dt.datetime.strptime(h[0].header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC'))

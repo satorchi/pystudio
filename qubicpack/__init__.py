@@ -56,7 +56,12 @@ class qubicpack:
         read_date_from_filename,\
         keyvals,\
         write_fits,\
+        read_fits_field,\
         read_fits,\
+        read_qubicpack_fits,\
+        read_qubicstudio_fits,\
+        read_qubicstudio_science_fits,\
+        read_qubicstudio_asic_fits,\
         read_bins,\
         output_filename,\
         data_subdir,\
