@@ -38,7 +38,7 @@ class PowerSupply :
         self.device_ok=False
 
         if port is None:
-            print('\nNOTE: Please give a device (e.g. port="/dev/ttyACM0"')
+            print('\nNOTE: Please give a device (e.g. port="/dev/ttyACM0")')
             return None
 
         self.init_TTiPowerSupply(port=port)
