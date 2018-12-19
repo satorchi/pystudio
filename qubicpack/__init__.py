@@ -15,7 +15,6 @@ from __future__ import division, print_function
 import numpy as np
 import datetime as dt
 import sys,os,time
-import matplotlib.pyplot as plt
 
 try:
     import pystudio
