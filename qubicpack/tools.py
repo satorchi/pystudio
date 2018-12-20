@@ -298,7 +298,7 @@ def read_qubicstudio_fits(self,hdulist):
         read_qubicstudio_science_fits(self,hdu)
         
     if QS_filetype=='asic':
-        read_qubicstudio_asic_fits(self,hdu)
+        read_qubicstudio_asic_fits(self,hdulist)
 
     hdulist.close()
     return True
@@ -356,19 +356,24 @@ def read_qubicstudio_science_fits(self,hdu):
     
     return
 
-def read_qubicstudio_asic_fits(self,hdu):
+def read_qubicstudio_asic_fits(self,hdulist):
     '''
     read the data giving the ASIC configuration
     The HDU passed here as the argument should already have been identified as the ASIC HDU
+
+    we should read the science data first, and then read the corresponding ASIC table
     '''
+    if self.asic is None:
+        print('ERROR! Please read the science data first (asic is unknown)')
+        return None
+    
     tdata = self.tdata[-1]
 
     # check which ASIC
+    hdu = hdulist[self.asic]
     asic = hdu.header['ASIC_NUM']
-    if self.asic is None:
-        self.asic = asic
-    elif self.asic != asic:
-        msg='ERROR! ASIC Id does not match: previous=%i, current=%i' % (self.asic, asic)
+    if self.asic != asic:
+        msg="ERROR! I'm reading the wrong ASIC table!  want %i, found %i" % (self.asic, asic)
         tdata['WARNING'].append(msg)
         print(msg)
             
