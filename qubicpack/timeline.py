@@ -401,7 +401,12 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
     else:
         timeline_date=self.obsdate
 
-    ttl=str('QUBIC Timeline curves (%s)' % (timeline_date.strftime('%Y-%b-%d %H:%M UTC')))
+    if 'BEG-OBS' in keys:
+        timeline_start=tdata['BEG-OBS']
+    else:
+        timeline_start=timeline_date
+
+    ttl=str('QUBIC Timeline curves (%s)' % (timeline_start.strftime('%Y-%b-%d %H:%M UTC')))
 
     if 'TES_TEMP' in keys:
         tempstr='%.0f mK' % (1000*tdata['TES_TEMP'])
