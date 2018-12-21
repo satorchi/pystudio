@@ -330,15 +330,25 @@ def read_qubicstudio_science_fits(self,hdu):
         adu[pix_idx,:] = self.read_fits_field(hdu,fieldname)
     tdata['TIMELINE'] = adu
 
-    # get nsamples
-    nsample_list  =  self.read_fits_field(hdu,'NbSamplesPerSum')
-    tdata['NSAM_LST'] = nsample_list
-    nsamples = nsample_list[-1]
-    tdata['NSAMPLES'] = nsamples
+    # get number of samples per sum
+    #################################################################
+    # mail from Michel 20181221:
+    ## nsample=100 est le nombre total de points par TES. Cela
+    ## permet de remonter à la fréquence d’échantillonnage:
+    ## fs=2E6/128/nsample NbSamplesPerSum=64 est le nombre de points
+    ## utilisé pour obtenir le signal scientifique, après le
+    ## masquage de certains des 100 points par TES. En fait, le
+    ## signal scientifique est la somme des 64 points non masqué sur
+    ## les 100 échantillons pris sur chaque TES.
+    #################################################################
+    nbsamplespersum_list  =  self.read_fits_field(hdu,'NbSamplesPerSum')
+    tdata['NSAMSUM'] = nbsamplespersum_list
+    NbSamplesPerSum = nbsamplespersum_list[-1]
+    tdata['NbSamplesPerSum'] = NbSamplesPerSum
     ## check if they're all the same
-    difflist = np.unique(nsample_list)
+    difflist = np.unique(nbsamplespersum_list)
     if len(difflist)!=1:
-        msg = 'WARNING! nsamples changed during the measurement!'
+        msg = 'WARNING! nsamples per sum changed during the measurement!'
         print(msg)
         tdata['WARNING'].append(msg)
 
@@ -413,7 +423,16 @@ def read_qubicstudio_asic_fits(self,hdulist):
         print(msg)
         tdata['WARNING'].append(msg)
     tdata['BIAS_MAX'] = max(bias_max)
-    
+
+    # get the number of samples
+    nsamples_list = self.read_fits_field(hdu,'nsample')
+    tdata['NSAM_LST'] = nsamples_list
+    tdata['NSAMPLES'] = nsamples_list[-1]
+    difflist = np.unique(nsamples_list)
+    if len(difflist)!=1:
+        msg = 'WARNING! nsample changed during the measurement!'
+        tdata['WARNING'].append(msg)
+
     return
 
 def read_qubicpack_fits(self,h):
