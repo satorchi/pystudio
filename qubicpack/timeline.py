@@ -425,7 +425,7 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
     # need a square figure for this plot to look right
     figlen=max(self.figsize)
     fig,ax=plt.subplots(nrows,ncols,figsize=[figlen,figlen])
-    pngname=str('QUBIC_Array-%s_ASIC%i_timeline_%s.png' % (self.detector_name,self.asic,timeline_date.strftime('%Y%m%dT%H%M%SUTC')))
+    pngname=str('QUBIC_Array-%s_ASIC%i_timeline_%s.png' % (self.detector_name,self.asic,timeline_start.strftime('%Y%m%dT%H%M%SUTC')))
     pngname_fullpath=self.output_filename(pngname)
     if xwin: fig.canvas.set_window_title('plt:  '+ttl)
     fig.suptitle(ttl+'\n'+subttl,fontsize=16)
