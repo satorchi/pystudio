@@ -13,10 +13,8 @@ default values for various parameters in qubicpack
 """
 from __future__ import division, print_function
 import numpy as np
-import sys,os,time,subprocess
+import os,subprocess
 import datetime as dt
-import matplotlib.pyplot as plt
-from glob import glob
 
 def assign_defaults(self):
     self.debuglevel=0
