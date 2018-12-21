@@ -14,7 +14,6 @@ from __future__ import division, print_function
 import numpy as np
 import sys,os,time,subprocess,struct
 import datetime as dt
-import matplotlib.pyplot as plt
 from glob import glob
 import pickle
 from astropy.io import fits as pyfits
