@@ -79,7 +79,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     nrows=asic1_obj.pix_grid.shape[0]
     ncols=asic1_obj.pix_grid.shape[1]
 
-    if not temperature is None: temperature_str='%.0fmK' % (1000*temperature)
+    if temperature is not None: temperature_str='%.0fmK' % (1000*temperature)
 
     if xwin: plt.ion()
     else: plt.ioff()
@@ -140,7 +140,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                     text_x=max(asic1_obj.vbias)
                     text_y=min(Iadjusted)
                     curve_colour='black'
-                    if (not asic1_obj.is_good_iv(TES) is None) and (not asic1_obj.is_good_iv(TES)):
+                    if (asic1_obj.is_good_iv(TES) is not None) and (not asic1_obj.is_good_iv(TES)):
                         face_colour='black'
                         label_colour='white'
                         curve_colour='white'
@@ -160,7 +160,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                     text_x=max(asic2_obj.vbias)
                     text_y=min(Iadjusted)
                     curve_colour='blue'
-                    if (not asic2_obj.is_good_iv(TES) is None) and (not asic2_obj.is_good_iv(TES)):
+                    if (asic2_obj.is_good_iv(TES) is not None) and (not asic2_obj.is_good_iv(TES)):
                         face_colour='black'
                         label_colour='white'
                         curve_colour='white'
