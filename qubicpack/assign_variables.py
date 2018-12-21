@@ -125,6 +125,9 @@ def assign_asic(self,asic=1):
     else:
         self.asic=asic
 
+    if self.asic==1 or self.asic==2:
+        self.detector_name='P87'
+
 
     ######### Is this correct?
     #### QubicStudio has a reverse nomenclature for the ASIC index
