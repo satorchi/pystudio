@@ -50,7 +50,7 @@ else:
 
 def read_bath_temperature(qpobject,logfile):
     Tbath=qpobject.oxford_read_bath_temperature()
-    if Tbath==None:
+    if Tbath is None:
         qpobject.writelog(logfile,'ERROR! Could not read bath temperature.')
         Tbath=qpobject.temperature
     return Tbath
@@ -70,7 +70,7 @@ go.assign_detector_name(detname)
 
 # can I get ASIC from QubicStudio?
 asic=go.get_from_keyboard('Which ASIC?  ',2)
-if asic==None:quit()
+if asic is None:quit()
 ret=go.assign_asic(asic)
 
 # verify that we can get stuff from QubicStudio
@@ -84,21 +84,21 @@ if not TESTMODE:
 go.max_permitted_bias=10.0
 
 min_bias=go.get_from_keyboard('minimum bias voltage ',3.5)
-if min_bias==None:quit()
+if min_bias is None:quit()
 max_bias=go.get_from_keyboard('maximum bias voltage ',9.0)
-if max_bias==None:quit()
+if max_bias is None:quit()
 default_dv=(max_bias-min_bias)/300.0
 dv=go.get_from_keyboard('bias step size ',default_dv)
 cycle=go.get_from_keyboard('cycle bias up/down? ','y')
-if cycle==None:quit()
+if cycle is None:quit()
 if cycle.upper()=='N':
     cyclebias=False
 else:
     cyclebias=True
 ncycles=go.get_from_keyboard('number of bias cycles ',1)
-if ncycles==None:quit()
+if ncycles is None:quit()
 monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',82)
-if monitor_TES==None:quit()
+if monitor_TES is None:quit()
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
 
@@ -107,11 +107,11 @@ go.assign_integration_time(tinteg)
 
 # setup temperature range
 start_temp=go.get_from_keyboard('start bath temperature ',0.6)
-if start_temp==None:quit()
+if start_temp is None:quit()
 end_temp=go.get_from_keyboard('end bath temperature ',0.3)
-if end_temp==None:quit()
+if end_temp is None:quit()
 step_temp=go.get_from_keyboard('temperature steps',0.025)
-if step_temp==None:quit()
+if step_temp is None:quit()
 
 # make sure steps are negative if we're going down in temperature
 if start_temp>end_temp:
@@ -154,7 +154,7 @@ for T in Tbath_target:
     cmdret=go.oxford_set_point(T)
     # make sure the set point was accepted
     Tsetpt=go.oxford_read_set_point()
-    if Tsetpt==None:
+    if Tsetpt is None:
         go.writelog(logfile_fullpath,'ERROR! Could not read set point temperature.')
         Tsetpt=T
     go.writelog(logfile_fullpath,'Temperature set point = %.2f mK' % (1000*Tsetpt))

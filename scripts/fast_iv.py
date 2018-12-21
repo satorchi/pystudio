@@ -29,20 +29,20 @@ go.assign_detector_name(detname)
 
 # can I get ASIC from QubicStudio?
 asic=go.get_from_keyboard('Which ASIC?  ',2)
-if asic==None:quit()
+if asic is None:quit()
 ret=go.assign_asic(asic)
 
 # setup bias voltage range
 # Mon 22 Jan 2018 08:46:16 CET: we have removed the 5x bias factor
 go.max_permitted_bias=10.0
 min_bias=go.get_from_keyboard('minimum bias voltage ',3.0)
-if min_bias==None:quit()
+if min_bias is None:quit()
 max_possible_bias=go.DAC2V * 2**15
 max_bias=go.get_from_keyboard('maximum bias voltage ',max_possible_bias)
-if max_bias==None:quit()
+if max_bias is None:quit()
 
 monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',34)
-if monitor_TES==None:quit()
+if monitor_TES is None:quit()
 
 
 go.configure_PID()

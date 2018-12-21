@@ -253,7 +253,7 @@ def TEStable_entry(idx,nepresults,go):
         TES=TES_index+1
         txt+='\nINDEX=%i' % idx
         entry_both=go.lookup_TEStable(key='TES',value=TES)
-        if not entry_both==None:
+        if not entry_both is None:
             entry=[entry for entry in entry_both if entry['ASIC']==go.asic][0]
             for key in entry.keys():
                 txt+='\n%s=%s' % (key,str(entry[key]))
@@ -271,7 +271,7 @@ def TEStable_entry(idx,nepresults,go):
         for nepidx,nepentry in enumerate(nepresults):
             if nepentry['TES']==TES:
                 for key in nepkeys:
-                    if not nepentry[key]==None:
+                    if not nepentry[key] is None:
                         txt+='\n%s=%.8g' % (key,nepentry[key])
                     else:
                         txt+='\n%s=NaN' % key
@@ -290,7 +290,7 @@ def TEStable_writefile(nep1,go1,nep2,go2,version=0.0):
     h.write(TEStable_header(go1,go2))
     
     txt='KEYWORDS='
-    if not go1.transdic==None:
+    if not go1.transdic is None:
         for key in go1.transdic[0].keys():
             txt+='%s;' % key
     else:

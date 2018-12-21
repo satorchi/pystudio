@@ -24,7 +24,7 @@ def squid_test(self,vmin=0.0,vmax=15.0,dv=1.0,tinteg=None):
     '''
 
     client = self.connect_QubicStudio()
-    if client==None: return None
+    if client is None: return None
     
     # ask for return values to be voltages
     client.sendSetScientificDataTfUsed(1)

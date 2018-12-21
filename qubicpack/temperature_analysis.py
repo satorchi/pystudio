@@ -155,7 +155,7 @@ def plot_TES_turnover_temperature(qplist,TES,xwin=True):
     temps_list=[]
     turnover_list=[]
     for go in qplist:
-        if not go.turnover(TES)==None:
+        if not go.turnover(TES) is None:
             temps_list.append(go.temperature)
             turnover_list.append(go.turnover(TES))
 
@@ -281,7 +281,7 @@ def plot_TES_temperature_curves(qplist,TES,plot='I',xwin=True):
 
         if plot_type=='R':
             # plot normal resistance vs power
-            if not go.R1(TES)==None:
+            if not go.R1(TES) is None:
                 Rn_ratio=go.Rn_ratio(TES)[istart:iend]
                 if min(Rn_ratio)<min_Rn_ratio:min_Rn_ratio=min(Rn_ratio)
                 if max(Rn_ratio)>max_Rn_ratio:max_Rn_ratio=max(Rn_ratio)
@@ -377,7 +377,7 @@ def calculate_TES_NEP(qplist,TES):
     for idx in sorted_index:
         go=qplist[idx]
         all_T.append(go.temperature)
-        if go.turnover(TES)==None or go.turnover(TES)<0.0:continue
+        if go.turnover(TES) is None or go.turnover(TES)<0.0:continue
         filterinfo=go.filterinfo(TES)
         
         istart,iend=go.selected_iv_curve(TES)
@@ -400,7 +400,7 @@ def calculate_TES_NEP(qplist,TES):
     ret['T']=T
     ret['all temperatures']=all_T
 
-    if not temperature_fit==None:
+    if not temperature_fit is None:
         
         K=temperature_fit[0][0]
         T0=temperature_fit[0][1]
@@ -453,7 +453,7 @@ def plot_TES_NEP(qplist,TES,xwin=True):
     '''
 
     result=calculate_TES_NEP(qplist,TES)
-    if result==None:return None
+    if result is None:return None
 
     TES=result['TES']
     asic=result['ASIC']
@@ -477,7 +477,7 @@ def plot_TES_NEP(qplist,TES,xwin=True):
     plot_T_max=Tmax + 0.1*T_span
     T_stepsize=1.1*T_span/100
 
-    if NEP==None:
+    if NEP is None:
         txt='NEP estimate is not possible'
         if len(P)==1:
             plot_P_min=P[0]-0.2*P[0]
@@ -526,7 +526,7 @@ def plot_TES_NEP(qplist,TES,xwin=True):
     P_span=plot_P_max-plot_P_min
     text_y=plot_P_min+0.5*P_span
     plt.plot(T,P,linestyle='none',marker='D')
-    if not NEP==None: plt.plot(fit_T,fit_P,color='red')
+    if not NEP is None: plt.plot(fit_T,fit_P,color='red')
     plt.text(Tmin,text_y,txt,fontsize=14)
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
     if xwin:plt.show()
@@ -544,7 +544,7 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     for go in qplist:
         if go.temperature>=0.3-temperature_precision and go.temperature<=0.3+temperature_precision:
             go300=go
-    if go300==None:
+    if go300 is None:
         go300=qplist[-1]
         
     asic=go300.asic
@@ -552,13 +552,13 @@ def plot_NEP_histogram(qplist,NEPresults=None,xwin=True):
     detector_name=go300.detector_name
 
     # generate the results if not already done
-    if NEPresults==None:NEPresults=make_TES_NEP_resultslist(qplist)
+    if NEPresults is None:NEPresults=make_TES_NEP_resultslist(qplist)
 
     NEP_estimate=[]
     TESlist=[]
     for res in NEPresults:
         NEP=res['NEP']
-        if not NEP==None:
+        if not NEP is None:
             NEP_estimate.append(NEP)
             TESlist.append(res['TES'])
     nNEP=len(NEP_estimate)
@@ -619,7 +619,7 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None,refresh=True):
         datelist+='\n\\item %.3fmK on %s' % (1000*go.temperature,go.obsdate.strftime('%Y-%m-%d %H:%M:%S'))
         if go.temperature>=0.3-temperature_precision and go.temperature<=0.3+temperature_precision:
             go300=go
-    if go300==None:
+    if go300 is None:
         go300=qplist[-1]
         
     asic=go300.asic
@@ -627,13 +627,13 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None,refresh=True):
     detector_name=go300.detector_name
     
     # generate the plots if not already done
-    if NEPresults==None:NEPresults=make_TES_NEP_resultslist(qplist)
+    if NEPresults is None:NEPresults=make_TES_NEP_resultslist(qplist)
 
     NEP_estimate=[]
     TESlist=[]
     for res in NEPresults:
         NEP=res['NEP']
-        if not NEP==None:
+        if not NEP is None:
             NEP_estimate.append(NEP)
             TESlist.append(res['TES'])
     nNEP=len(TESlist)
@@ -723,7 +723,7 @@ def make_TES_NEP_tex_report(qplist,NEPresults=None,refresh=True):
     for result in NEPresults:
         NEP=result['NEP']
         TES=result['TES']
-        if not NEP==None:
+        if not NEP is None:
             rowstr=go300.iv_tex_table_entry(TES)
             rowstr+=' & %.2f \\\\\n' % (1e17*NEP)
             h.write(rowstr)

@@ -130,7 +130,7 @@ def sample_period(self,timeline_index=None):
 
     if timeline_index is not None and 'NSAMPLES' in self.tdata[timeline_index].keys():
         self.nsamples = self.tdata[timeline_index]['NSAMPLES']        
-    if self.nsamples==None:return None
+    if self.nsamples is None:return None
     
     npixels=self.NPIXELS_sampled
     if npixels is None:npixels=self.NPIXELS
@@ -145,7 +145,7 @@ def timeline_npts(self):
     *** NOTE: this method is not used anywhere ******************
     '''
     sample_period=self.sample_period()
-    if sample_period==None:return None
+    if sample_period is None:return None
     timeline_size = int(np.ceil(self.tinteg / sample_period))
     return timeline_size
 
@@ -278,7 +278,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     if 'TES_TEMP' in keys:
         tempstr='%.0f mK' % (1000*tdata['TES_TEMP'])
     else:
-        if self.temperature==None:
+        if self.temperature is None:
             tempstr='unknown'
         else:
             tempstr=str('%.0f mK' % (1000*self.temperature))
@@ -308,7 +308,7 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     ipeak0=0
     ipeak1=timeline_npts-1
     if plot_sine:
-        if self.timeline_conversion==None:
+        if self.timeline_conversion is None:
             try:
                 self.timeline2adu(TES=TES,timeline_index=timeline_index)
                 ipeak0=self.timeline_conversion['ipeak0']
@@ -411,7 +411,7 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
     if 'TES_TEMP' in keys:
         tempstr='%.0f mK' % (1000*tdata['TES_TEMP'])
     else:
-        if self.temperature==None:
+        if self.temperature is None:
             tempstr='unknown'
         else:
             tempstr=str('%.0f mK' % (1000*self.temperature))

@@ -42,7 +42,7 @@ def data_subdir(self):
 
     if not isinstance(self.datadir,str):
         datadir=self.assign_datadir()
-        if datadir==None:return None
+        if datadir is None:return None
 
     subdir=self.obsdate.strftime('%Y/%Y%m%d')
     fullpath='%s%s%s' % (self.datadir,os.sep,subdir)
@@ -121,10 +121,10 @@ def write_fits(self):
     it could be timeline data or I-V data, or both
     '''
     datefmt='%Y%m%dT%H%M%SUTC'
-    if self.obsdate==None: self.assign_obsdate()
+    if self.obsdate is None: self.assign_obsdate()
     datestr=self.obsdate.strftime(datefmt)
 
-    if self.endobs==None:
+    if self.endobs is None:
         self.endobs=self.obsdate
 
     keyvals=self.keyvals()
@@ -565,7 +565,7 @@ def read_qubicpack_fits(self,h):
 
     if self.exist_iv_data():
         f=self.read_filter()
-        if f==None:f=self.filter_iv_all()
+        if f is None:f=self.filter_iv_all()
 
     return
 

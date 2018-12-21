@@ -27,7 +27,7 @@ detname=go.get_from_keyboard('Which array is it? ','P87')
 go.assign_detector_name(detname)
 
 asic=go.get_from_keyboard('Which ASIC?  ',2)
-if asic==None:quit()
+if asic is None:quit()
 ret=go.assign_asic(asic)
 
 # verify that we can get stuff from QubicStudio
@@ -38,23 +38,23 @@ if not ret:quit()
 #min_bias=go.get_from_keyboard('minimum bias voltage ',0.5)
 go.max_permitted_bias=10.0
 min_bias=go.get_from_keyboard('minimum bias voltage ',3.0)
-if min_bias==None:quit()
+if min_bias is None:quit()
 #max_bias=go.get_from_keyboard('maximum bias voltage ',3.0)
 max_bias=go.get_from_keyboard('maximum bias voltage ',9.0)
-if max_bias==None:quit()
+if max_bias is None:quit()
 
 default_dv=(max_bias-min_bias)/300.0
 dv=go.get_from_keyboard('bias step size ',default_dv)
 cycle=go.get_from_keyboard('cycle bias up/down? ','y')
-if cycle==None:quit()
+if cycle is None:quit()
 if cycle.upper()=='N':
     cyclebias=False
 else:
     cyclebias=True
 ncycles=go.get_from_keyboard('number of bias cycles ',3)
-if ncycles==None:quit()
+if ncycles is None:quit()
 monitor_TES=go.get_from_keyboard('which TES would you like to monitor during the measurement? ',70)
-if monitor_TES==None:quit()
+if monitor_TES is None:quit()
 
 go.make_Vbias(vmin=min_bias,vmax=max_bias,cycle=cyclebias,ncycles=ncycles,dv=dv)
 
@@ -76,7 +76,7 @@ for viewer in viewers:
         break
         
 cmd='%s %s' % (use_viewer,pdfname)
-if not pdfname==None and os.path.exists(pdfname) and not use_viewer==None:
+if not pdfname is None and os.path.exists(pdfname) and not use_viewer is None:
     os.system(cmd)
 
     

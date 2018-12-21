@@ -21,7 +21,7 @@ go.assign_asic(1)
 go.assign_integration_time(0.5)
 
 client=go.connect_QubicStudio()
-if client==None:quit()
+if client is None:quit()
 
 
 count=10
