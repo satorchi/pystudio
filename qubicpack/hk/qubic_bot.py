@@ -812,6 +812,7 @@ class qubic_bot :
                 if key=='AVS2':key='AVS47_2'
                 if key=='T' or key=='TEMP':key='TEMPERATURE'
                 if key=='DMIN' or key=='DMAX':
+                    print('DEBUG: trying to convert date: %s' % keyarg[1])
                     _arg = str2dt(keyarg[1])
                 else:
                     try:
@@ -825,7 +826,7 @@ class qubic_bot :
 
         for key in ['AVS47_1','AVS47_2','TEMPERATURE']:
             if self.args[key]=='':continue
-            if not isinstance(self.args[key],list) or not isinstance(self.args[key],tuple):
+            if not isinstance(self.args[key],list) and not isinstance(self.args[key],tuple):
                 self.args[key]=[self.args[key]]
             
         return
