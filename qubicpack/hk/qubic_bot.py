@@ -822,6 +822,11 @@ class qubic_bot :
                 key=arg
                 _arg=True
             self.args[key]=_arg
+
+        for key in ['AVS47_1','AVS47_2','TEMPERATURE']:
+            if self.args[key]=='':continue
+            if not isinstance(self.args[key],list) or not isinstance(self.args[key],tuple):
+                self.args[key]=[self.args[key]]
             
         return
 
