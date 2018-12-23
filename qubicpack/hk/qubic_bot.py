@@ -162,7 +162,7 @@ class qubic_bot :
             self.chat_id=0            
         else:
             import telepot
-            self.bot = telepot.Bot(botId)
+            self.bot = telepot.Bot(self.botId)
             self.bot.getMe()
             
         return
