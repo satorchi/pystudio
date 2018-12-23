@@ -813,7 +813,8 @@ class qubic_bot :
                 if key=='T' or key=='TEMP':key='TEMPERATURE'
                 if key=='DMIN' or key=='DMAX':
                     print('DEBUG: trying to convert date: %s' % keyarg[1])
-                    _arg = str2dt(keyarg[1])
+                    print('DEBUG: this argument is of type: %s' % type(keyarg[1]))
+                    _arg = str2dt( str(keyarg[1]) )
                 else:
                     try:
                         _arg = eval(keyarg[1])
