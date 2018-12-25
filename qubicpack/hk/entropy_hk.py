@@ -105,6 +105,10 @@ class entropy_hk :
         '''send a command and receive the answer
         '''
         self.debugmsg('entropy command: %s' % cmd.strip())
+        if not self.connected:
+            self.log('ERROR! Major Tom is not connected.')
+            return None
+                     
         self.socket.send(cmd)
         try:
             a=self.socket.recv(self.MAX_MSGLEN)
