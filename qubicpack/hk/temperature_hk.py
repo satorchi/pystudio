@@ -221,7 +221,7 @@ class temperature_hk :
             self.log('ERROR! Bad reply from Temperature diodes')
             return None
 
-        if len(rawData)<self.nT:
+        if len(rawData)<=self.nT:
             self.log('Insufficient data.  length=%i, rawData: %s' % (len(rawData),str(rawData)))
             return None
         
