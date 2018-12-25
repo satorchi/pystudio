@@ -34,6 +34,7 @@ class entropy_hk :
         else:
             self.hostname=hostname
 
+        self.connected=False
         self.init_socket()
         self.get_device_list()
         self.get_startTime()
@@ -87,12 +88,17 @@ class entropy_hk :
     def init_socket(self):
         '''initialize the connection to the Entropy machine
         '''
-        s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self.hostname,2002))
-        self.socket=s
+        self.socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(2)
-        a=self.socket.recv(self.MAX_MSGLEN)
-        self.debugmsg(a)
+        try:
+            self.socket.connect((self.hostname,2002))
+            self.socket.settimeout(0.2)
+            a=self.socket.recv(self.MAX_MSGLEN)
+            self.debugmsg(a)
+            self.connected=True
+        except:
+            self.debugmsg('Unable to connect to Major Tom!')
+            self.connected=False
         return None
 
     def sendreceive(self,cmd):
