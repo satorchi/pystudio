@@ -103,63 +103,73 @@ for f in entropy_files:
     end_date=dt.datetime.fromtimestamp(tstamp_end).strftime('%Y-%m-%d %H:%M:%S')
     tot_npts=len(hk[label]['value'])
     print('%s npts=%8i tot_npts=%8i %s' % (end_date,npts,tot_npts,f))
-        
+
+
+# The Housekeeping types are the items saved by the housekeeping broadcast:
+#   AVS47_1 (this is managed by the Entropy machine, and already read above)
+#   AVS47_2 (this is managed by the Entropy machine, and already read above)
+#   TEMPERATURE
+#   MHS (Mechanical Heat Switch: also managed by the Entropy machine)
+#   HEATER_Amp (powersupply current)
+#   HEATER_Volt (powersupply voltage)
+HKtypes = {}
+HKtypes['TEMPERATURE'] = {}
+HKtypes['MHS'] = {}
+HKtypes['HEATER_Amp'] = {}
+HKtypes['HEATER_Volt'] = {}
+
 # set up the default labels for each housekeeping item        
-hk_labels = {}
-hk_labels['TEMPERATURE'] = ['40K filters',
-                            '40K sd',
-                            '40K sr',
-                            'PT2 s1',
-                            'PT1 s1',
-                            '4K filters',
-                            'HWP1',
-                            'HWP2',
-                            '4K sd',
-                            '4K PT2 CH',
-                            'PT1 s2',
-                            'PT2 s2',
-                            '300mK-4CP-D-1',
-                            '300mK-4HS-D-1',
-                            '300mK-3CP-D-1',
-                            '300mK-3HS-D-1',
-                            '1K-4HS-D-1',
-                            '1K-4CP-D-1']
+HKtypes['TEMPERATURE']['labels'] = ['40K filters',
+                                    '40K sd',
+                                    '40K sr',
+                                    'PT2 s1',
+                                    'PT1 s1',
+                                    '4K filters',
+                                    'HWP1',
+                                    'HWP2',
+                                    '4K sd',
+                                    '4K PT2 CH',
+                                    'PT1 s2',
+                                    'PT2 s2',
+                                    '300mK-4CP-D-1',
+                                    '300mK-4HS-D-1',
+                                    '300mK-3CP-D-1',
+                                    '300mK-3HS-D-1',
+                                    '1K-4HS-D-1',
+                                    '1K-4CP-D-1']
+HKtypes['TEMPERATURE']['unit'] = 'K'
+HKtypes['TEMPERATURE']['nchannels'] = len(HKtypes['TEMPERATURE']['labels'])
+HKtypes['TEMPERATURE']['fmtstr'] = 'TEMPERATURE%02i'
 
 nMHS = 2
-hk_labels['MHS'] = [ 'MHS%i' % (idx+1) for idx in range(nMHS) ]
+HKtypes['MHS']['labels'] = [ 'MHS%i' % (idx+1) for idx in range(nMHS) ]
+HKtypes['MHS']['unit'] = 'steps'
+HKtypes['MHS']['nchannels'] = len(HKtypes['MHS']['labels'])
+HKtypes['MHS']['fmtstr'] = 'MHS%i'
 
 nHEATER = 6
-hk_labels['HEATER_Volt'] = [ 'HEATER%i_Volt' % (idx+1) for idx in range(nHEATER) ]
-hk_labels['HEATER_Amp'] = [ 'HEATER%i_Amp' % (idx+1) for idx in range(nHEATER) ]
+HKtypes['HEATER_Volt']['labels'] = [ 'HEATER%i_Volt' % (idx+1) for idx in range(nHEATER) ]
+HKtypes['HEATER_Volt']['unit'] = 'V'
+HKtypes['HEATER_Volt']['nchannels'] = len(HKtypes['HEATER_Volt']['labels'])
+HKtypes['HEATER_Volt']['fmtstr'] = 'HEATER%i_Volt'
 
+HKtypes['HEATER_Amp']['labels'] = [ 'HEATER%i_Amp' % (idx+1) for idx in range(nHEATER) ]
+HKtypes['HEATER_Amp']['unit'] = 'mA'
+HKtypes['HEATER_Amp']['nchannels'] = len(HKtypes['HEATER_Amp']['labels'])
+HKtypes['HEATER_Amp']['fmtstr'] = 'HEATER%i_Amp'
 
-nHK = {}
-for key in hk_labels.keys():
-    nHK[key] = len(hk_labels[key])
-
-hk_units = {}
-hk_units['TEMPERATURE'] = 'K'
-hk_units['MHS'] = 'step'
-hk_units['HEATER_Volt'] = 'V'
-hk_units['HEATER_Amp'] = 'mA'
-
-hk_fmtstr = {}
-hk_fmtstr['TEMPERATURE'] = 'TEMPERATURE%02i'
-hk_fmtstr['MHS'] = 'MHS%i'
-hk_fmtstr['HEATER_Volt'] = 'HEATER%i_Volt'
-hk_fmtstr['HEATER_Amp'] = 'HEATER%i_Amp'
 
 HKname2label = {} # This is a translation from hkname to the physical label
-for key in nHK.keys():
-    for idx in range(nHK[key]):
+for key in HKtypes.keys():
+    for idx in range(HKtypes[key]['nchannels']):
         ch = idx + 1
-        hkname = hk_fmtstr[key] % ch
-        label = hk_labels[key][idx]
+        hkname = HKtypes[key]['fmtstr'] % ch
+        label = HKtypes[key]['labels'][idx]
         if label not in hk.keys():
             hk[label] = {}
             hk[label]['time'] = np.empty(0)
             hk[label]['value'] = np.empty(0)
-        hk[label]['unit'] = hk_units[key]
+        hk[label]['unit'] = HKtypes[key]['unit']
         HKname2label[hkname] = label
 
         
