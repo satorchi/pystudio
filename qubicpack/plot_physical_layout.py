@@ -21,7 +21,7 @@ def mylut(v,vmin=3.0,vmax=9.0):
     rgb=colourmap(vfractional)
     return rgb
 
-def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lutmax=9.0):
+def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,lutmax=None):
     '''
     plot an image of the TES array labeling each pixel
     plot the I-V curves in the appropriate boxes if a1 and/or a2 given
@@ -59,12 +59,27 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
     # Option:  a1 and a2 can be simply arrays with numbers to use as the colours for each pixel
     asic1_mapdata = False
     asic2_mapdata = False
-    if type(a1)==np.ndarray and a1.shape==(128,):
+    if (isinstance(a1,np.ndarray) or isinstance(a1,list)) and len(a1)==128:
         print('using mapping data for asic 1')
         asic1_mapdata = True
-    if type(a2)==np.ndarray and a1.shape==(128,):
+    if (isinstance(a2,np.ndarray) or isinstance(a2,list)) and len(a2)==128:
         print('using mapping data for asic 2')
         asic2_mapdata = True
+
+    if lutmin is None:
+        if asic1_mapdata and asic2_mapdata:
+            lutmin = min( min(a1),min(a2) )
+        elif asic1_mapdata:
+            lutmin = min(a1)
+        elif asic2_mapdata:
+            lutmin = min(a2)
+    if lutmax is None:
+        if asic1_mapdata and asic2_mapdata:
+            lutmax = max( max(a1),max(a2) )
+        elif asic1_mapdata:
+            lutmax = max(a1)
+        elif asic2_mapdata:
+            lutmax = max(a2)
 
     asic1_data=True
     asic1_fontsize=8
@@ -157,10 +172,10 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                         label_colour='white'
                         curve_colour='white'
                     else:
-                        face_colour=mylut(turnover)
+                        face_colour=mylut(turnover,lutmin,lutmax)
                     asic1_obj.draw_iv(Iadjusted,colour=curve_colour,axis=ax[row,col])
                 elif asic1_mapdata:
-                    face_colour = mylut(a1[TES_index])
+                    face_colour = mylut(a1[TES_index],lutmin,lutmax)
 
             elif physpix in asic2_obj.TES2PIX[1]:
                 TES=asic2_obj.pix2tes(physpix)
@@ -180,10 +195,10 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=3.0,lu
                         label_colour='white'
                         curve_colour='white'
                     else:
-                        face_colour=mylut(turnover)
+                        face_colour=mylut(turnover,lutmin,lutmax)
                     asic2_obj.draw_iv(Iadjusted,colour=curve_colour,axis=ax[row,col])
                 elif asic2_mapdata:
-                    face_colour = mylut(a2[TES_index])
+                    face_colour = mylut(a2[TES_index],lutmin,lutmax)
 
             else:
                 pix_label='???'
