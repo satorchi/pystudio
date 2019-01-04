@@ -158,8 +158,14 @@ class PowerSupply :
                      % (self.info['supplyname'],self.info['serialno'],self.info['port']))
             return False
         cmd=cmd % supplyno
+
+        try:
+            response=self.s.write(cmd)
+        except:
+            self.log('ERROR! Could not write command to powersupply: %s, %s, id# %s' % (self.port,self.supplyname,self.serialno))
+            self.device_ok = False
+            return False
         
-        response=self.s.write(cmd)
         if response>0:return True
         return False
 
