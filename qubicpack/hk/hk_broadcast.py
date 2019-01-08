@@ -30,6 +30,7 @@ class hk_broadcast :
         self.RECEIVER = '134.158.187.21'   # server sends only to QubicStudio
         self.RECEIVER = '134.158.187.224'   # server sends only to QubicStudio
         #self.RECEIVER = '134.158.187.0/24' # server broadcasts to APC subnet (syntax no good)
+        self.RECEIVER = '192.168.0.8' # QubicStudio on the QUBIC private network
         self.LISTENER = ''          # client listens on ethernet device (usually eth0)
         self.LISTENER = '127.0.0.1' # client listens on localhost
         self.sampling_period = 2.0
