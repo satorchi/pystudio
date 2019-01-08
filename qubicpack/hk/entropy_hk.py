@@ -30,7 +30,7 @@ class entropy_hk :
         self.verbosity=0
         
         if hostname is None:
-            self.hostname='apcbrain2.in2p3.fr'
+            self.hostname='apcbrain2'
         else:
             self.hostname=hostname
 
