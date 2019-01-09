@@ -37,11 +37,12 @@ class hk_broadcast :
         self.nENTROPY_TEMPERATURE = 8
         self.nMECH = 2
         self.nHEATER = 6
-        self.nPRESSURE = 0
+        self.nPRESSURE = 1
         self.record = self.define_hk_record()
         self.hk_entropy = None
         self.powersupply = None
         self.hk_temperature = None
+        self.hk_pressure = None
         return None
 
     def millisecond_timestamp(self):
@@ -252,6 +253,30 @@ class hk_broadcast :
             self.record[recname][0] = val
             if data_ok: self.log_hk(recname,tstamp,val)
                     
+        return self.record
+
+    def get_pressure_hk(self):
+        '''get the pressure data
+        '''
+        if self.hk_pressure is None:
+            self.hk_pressure=Pfeiffer(port='/dev/pfeiffer')
+
+        # the pressure gauge (this should be expanded into a loop for multiple pressure gauges)
+        gauge = 'PRESSURE1'
+        dat = self.hk_pressure.read_pressure()
+        if not dat or isinstance(dat,str):
+            self.log('ERROR! Strange reply from power supply: %s' % str(dat))
+            dat = None
+                
+        # if no data (maybe gauge not connected) return -1 and do not log
+        recname='%s' % gauge
+        tstamp=self.current_timestamp()
+        if dat is None:
+            self.record[recname][0] = -1
+        else:
+            self.record[recname][0] = dat
+            self.log_hk(recname,tstamp,dat)                    
+
         return self.record
     
     def get_all_hk(self):

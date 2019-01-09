@@ -24,7 +24,8 @@ class Pfeiffer :
         self.device_ok=False
 
         if port is None:
-            print('\nNOTE: Please give a device (e.g. port="/dev/ttyUSB0")')
+            print('NOTE: Please give a device (e.g. port="/dev/ttyUSB0")')
+            print('    : You can do this now with method init_Pfeiffer("/dev/ttyUSB0")')
             return None
 
         self.init_Pfeiffer(port=port)
@@ -35,7 +36,7 @@ class Pfeiffer :
         '''
         now=dt.datetime.utcnow()
         logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S UT'),msg)
-        h=open('hk_powersupply.log','a')
+        h=open('hk_pfeiffer.log','a')
         h.write(logmsg+'\n')
         h.close()
         print(logmsg)
