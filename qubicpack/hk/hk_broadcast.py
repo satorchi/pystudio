@@ -335,11 +335,26 @@ class hk_broadcast :
         return local_counter
 
 
-    def hk_server(self,test=False):
+    def hk_server(self,test=False,eth=None):
         '''broadcast all housekeeping info
         '''
 
-        cmd='/sbin/ifconfig eth0'
+        if eth is None:
+            cmd='/sbin/ifconfig -a'
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            out,err=proc.communicate()
+            devs=[]
+            for line in out.split('\n'):
+                match=re.match('^(eth[0-9])',line)
+                if match:
+                   devs.append(match.groups()[0])
+            if devs:
+                eth=devs[-1]
+            else:
+                eth='lo'
+
+            
+        cmd='/sbin/ifconfig %s' % eth
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out,err=proc.communicate()
         for line in out.split('\n'):
