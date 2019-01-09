@@ -19,6 +19,7 @@ import datetime as dt
 from qubicpack.hk.powersupply import PowerSupply, PowerSupplies, known_supplies
 from qubicpack.hk.entropy_hk import entropy_hk
 from qubicpack.hk.temperature_hk import temperature_hk
+from qubicpack.hk.pfeiffer import Pfeiffer
 
 class hk_broadcast :
     '''a class for broadcasting  and receiving QUBIC housekeeping data
