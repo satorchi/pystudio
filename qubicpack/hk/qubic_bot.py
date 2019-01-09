@@ -353,7 +353,10 @@ class qubic_bot :
         basename = 'PRESSURE%i' % (idx+1)
         fullname = '%s/%s.txt' % (self.hk_dir,basename)
         if not os.path.isfile(fullname):
-            continue
+            answer = 'No pressure.'
+            answer += '\n\nTime: %s' % latest_date.strftime(self.time_fmt)    
+            self._send_message(answer)
+            return
         
         h = open(fullname,'r')
         lines = h.read().split('\n')
