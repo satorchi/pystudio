@@ -15,6 +15,7 @@ from __future__ import division, print_function
 import sys,os,subprocess,time,socket,struct
 import numpy as np
 import datetime as dt
+import re
 
 from qubicpack.hk.powersupply import PowerSupply, PowerSupplies, known_supplies
 from qubicpack.hk.entropy_hk import entropy_hk
