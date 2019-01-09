@@ -72,6 +72,7 @@ class qubic_bot :
                          '/temp': self.temp_read_hk,
                          '/tempall': self.tempall,
                          '/heaters': self.read_heaters,
+                         '/pressure': self.read_pressure,
                          '/mech': self.read_mech,
                          '/photo': self.photo,
                          '/photo2': self.photo2,
@@ -340,7 +341,36 @@ class qubic_bot :
         self._send_message(answer)
         return
     
+    def read_pressure(self):
+        '''
+        read the pressure
+        '''
+        latest_date = dt.datetime.fromtimestamp(0)
+        fmt_str = '\n%10s:  %10.3e mbar'
+        answer = 'Pressure:\n'
 
+        idx = 0
+        basename = 'PRESSURE%i' % (idx+1)
+        fullname = '%s/%s.txt' % (self.hk_dir,basename)
+        if not os.path.isfile(fullname):
+            continue
+        
+        h = open(fullname,'r')
+        lines = h.read().split('\n')
+        h.close()
+        lastline = lines[-2]
+        cols = lastline.split()
+        tstamp = self.timestamp_factor*float(cols[0])
+        reading_date = dt.datetime.fromtimestamp(tstamp)
+        if reading_date > latest_date:
+            latest_date = reading_date
+        reading = eval(cols[1])
+        answer += fmt_str % (basename,reading)
+
+        answer += '\n\nTime: %s' % latest_date.strftime(self.time_fmt)    
+        self._send_message(answer)
+        return
+    
     def photo(self):
         '''
         take a picture of the APC QUBIC Integration Lab
