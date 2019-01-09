@@ -104,7 +104,7 @@ class PowerSupply :
         self.nsupplies=nsupplies
         return nsupplies
     
-    def init_TTiPowerSupply(self,port='/dev/powersupply'):
+    def init_TTiPowerSupply(self,port=None):
         '''initialize the power supply
         it should be recognized as /dev/powersupply or /dev/ttyACMn (n=0,1,2,...)
         
@@ -113,13 +113,21 @@ class PowerSupply :
         SUBSYSTEM=="tty", ATTRS{idVendor}=="103e", ATTRS{idProduct}=="0424", OWNER="pi",
         GROUP="users", MODE="0666", SYMLINK+="powersupply"
         '''
+
+        errmsg=None
+        if port is None:
+            errmsg='ERROR! No Device specified.'
         if not os.path.exists(port):
-            self.log('ERROR! Device does not exist.')
+            errmsg='ERROR! Device does not exist.'
+
+        if errmsg is not None:
+            self.log(errmsg)
             self.port=None
             self.nsupplies=0
             self.supplyname=None
             self.device_ok=False
             return None
+        
         self.port=port
 
         s=serial.Serial(port=port,timeout=0.1)
