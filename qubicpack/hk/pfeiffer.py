@@ -13,6 +13,7 @@ read the Pfeiffer pressure sensor
 '''
 from __future__ import division, print_function
 import os,sys,serial
+import datetime as dt
 
 class Pfeiffer :
 
@@ -58,7 +59,7 @@ class Pfeiffer :
             return None
         self.port=port
 
-        s=serial.Serial(port=port,timeout=1)
+        s=serial.Serial(port=port,timeout=0.1)
         self.s=s
         
         self.device_ok = True
@@ -121,6 +122,10 @@ class Pfeiffer :
         if len(val)!=2:
             self.log('ERROR! Did not get expected response from the pressure gauge.')
             return None
+
+        nak = self.get_response()
+        if nak!='\x15':
+            self.log('WARNING! Did not get NAK after pressure reading.')
 
         if val[0]!='0':
             self.log('ERROR! Pressure sensor data is not ok.')
