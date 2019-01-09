@@ -287,6 +287,7 @@ class hk_broadcast :
         self.get_entropy_hk()
         self.get_powersupply_hk()
         self.get_temperature_hk()
+        self.get_pressure_hk()
         self.record[0].DATE = self.current_timestamp()
         return self.record
 
