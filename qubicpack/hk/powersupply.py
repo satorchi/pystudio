@@ -91,6 +91,7 @@ class PowerSupply :
         self.supplyname=supplyname
         self.serialno=serialno
         self.device_ok=True
+        print('%s on port %s is okay' % (supplyname,self.port))
         return info
 
     def get_nsupplies(self):
@@ -353,13 +354,15 @@ class PowerSupplies :
     def find_PowerSupply(self):
         '''find devices
         '''
+        
         devs1=glob('/dev/ttyACM*')
-        devs2=glob('/dev/ttyUSB*') # these are not TTi power supplies
+        #devs2=glob('/dev/ttyUSB*') # these are not TTi power supplies
         devs=devs1
         if not devs:
             self.log('No power supplies found!')
             return None
 
+        devs.sort()
         supplylist=[]
         infolist=[]
         serialno_list=[]
