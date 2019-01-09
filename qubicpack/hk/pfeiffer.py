@@ -64,7 +64,7 @@ class Pfeiffer :
         self.device_ok = True
         return True
 
-    def send_command(self,cmd):
+    def send_command(self,cmd,ack=True):
         '''send a command and read the acknowledgement
         '''
         if not self.device_ok:
@@ -77,6 +77,8 @@ class Pfeiffer :
         except:
             self.device_ok = False
             return False
+
+        if not ack: return True
         
         reply = self.get_response()
         if reply=='\x06':
@@ -104,12 +106,12 @@ class Pfeiffer :
 
         # command to request pressure gauge
         cmd = 'PR1'
-        if not self.send_command(cmd):
+        if not self.send_command(cmd,ack=True):
             return None
 
         # command to get the result
         cmd = '\x05'
-        if not self.send_command(cmd):
+        if not self.send_command(cmd,ack=False):
             return None
         
         response = self.get_response()
