@@ -117,7 +117,7 @@ class PowerSupply :
         errmsg=None
         if port is None:
             errmsg='ERROR! No Device specified.'
-        if not os.path.exists(port):
+        elif not os.path.exists(port):
             errmsg='ERROR! Device does not exist.'
 
         if errmsg is not None:
