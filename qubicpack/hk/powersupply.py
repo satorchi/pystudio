@@ -122,7 +122,7 @@ class PowerSupply :
             return None
         self.port=port
 
-        s=serial.Serial(port=port,timeout=1)
+        s=serial.Serial(port=port,timeout=0.1)
         self.s=s
 
         info=self.identify_PowerSupply()
