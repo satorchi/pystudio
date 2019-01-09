@@ -345,7 +345,7 @@ class qubic_bot :
         '''
         take a picture of the APC QUBIC Integration Lab
         '''
-        #use the web cam on the other Pi
+        #use the web cam Pi1
         cmd='ssh pi1 ./snapshot.sh'
         subprocess.call(cmd.split())
         cmd='scp -p pi1:webcamshot.jpg .'
@@ -358,10 +358,12 @@ class qubic_bot :
         '''
         take a picture of the APC QUBIC Integration Lab
         '''
-        cmd='streamer -f jpeg -o photo.jpeg'
+        #use the web cam Pitemps
+        cmd='ssh pitemps ./snapshot.sh'
         subprocess.call(cmd.split())
-    
-        with open('photo.jpeg','r') as photo:
+        cmd='scp -p pitemps:webcamshot.jpg .'
+        subprocess.call(cmd.split())
+        with open('webcamshot.jpg','r') as photo:
             self._send_photo(photo)
         return
     
