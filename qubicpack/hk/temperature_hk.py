@@ -223,7 +223,7 @@ class temperature_hk :
             rawData = map(int,datlist)
             self.log('temperature diode rawData length = %i' % len(rawData))
         except:
-            self.log('ERROR! Bad reply from Temperature diodes')
+            self.log('ERROR! Bad reply from Temperature diodes: %s' % datlist)
             return None
         
         for idx in range(self.nT):
