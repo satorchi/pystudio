@@ -197,7 +197,7 @@ class qubic_bot :
         send a message from the bot
         '''
         if self.bot is None:
-            print('message not sent: %s' % msg)
+            print('bot not configured.  message not sent: %s' % msg)
             return
         
         self.bot.sendMessage(self.chat_id,msg)
