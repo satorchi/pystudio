@@ -124,7 +124,7 @@ class temperature_hk :
         except:
             self.log("Error! Couldn't read Temperature Diode data")
             return None
-        return ans
+        return ans.strip()
     
             
     def disconnect(self):
@@ -212,17 +212,18 @@ class temperature_hk :
         data_length = len(a)
         if data_length == 0: return None
 
-        datlist=a.strip().split()
+        datlist = a.split()
+        npts = len(datlist)
         
-        try:
-            rawData = map(int,datlist)
-            self.log('rawData length = %i' % len(rawData))
-        except:
-            self.log('ERROR! Bad reply from Temperature diodes')
+        if npts<=self.nT:
+            self.log('Insufficient data.  length=%i, rawData: %s' % (npts,datlist))
             return None
 
-        if len(rawData)<=self.nT:
-            self.log('Insufficient data.  length=%i, rawData: %s' % (len(rawData),str(rawData)))
+        try:
+            rawData = map(int,datlist)
+            self.log('temperature diode rawData length = %i' % len(rawData))
+        except:
+            self.log('ERROR! Bad reply from Temperature diodes')
             return None
         
         for idx in range(self.nT):
