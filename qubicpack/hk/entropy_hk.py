@@ -187,12 +187,12 @@ class entropy_hk :
 
         cmd='device %s %s? %i\n' % (dev,meastype,ch)
         a=self.sendreceive(cmd)
+       
+        if a is None:return None,None
 
         if a.find('no valid reading')>=0:
             return None,None
-        
-        if a is None:return None,None
-
+ 
         cols=a.strip().replace(',','').split()
         try:
             reading=float(cols[0])
