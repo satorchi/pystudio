@@ -41,7 +41,7 @@ class PowerSupply :
             print('NOTE: Please give a device (e.g. port="/dev/ttyACM0")')
             return None
 
-        print('PowerSupply to be initiated with port=%s' % port)
+        self.log('PowerSupply to be initiated with port=%s' % port)
         self.init_TTiPowerSupply(port=port)
         return None
 
@@ -91,7 +91,7 @@ class PowerSupply :
         self.supplyname=supplyname
         self.serialno=serialno
         self.device_ok=True
-        print('%s on port %s is okay' % (supplyname,self.port))
+        self.log('%s on port %s is okay' % (supplyname,self.port))
         return info
 
     def get_nsupplies(self):
