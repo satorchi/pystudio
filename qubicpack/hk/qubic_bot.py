@@ -110,6 +110,8 @@ class qubic_bot :
                                      '1K-4HS-D-1',
                                      '1K-4CP-D-1']
 
+        self._assign_entropy_labels()
+
         self.temperature_display_order = [4, 3, 10, 11, 9, 6, 7, 0, 1, 2, 5, 8, 12, 13, 14, 15, 16, 17]
         temperature_heading_len = [ len(val) for val in self.temperature_headings ]
         self.temperature_heading_maxlen = max(temperature_heading_len)
@@ -131,8 +133,6 @@ class qubic_bot :
         if self._get_bot_id(idfile):
             self._init_bot()
             self._begin_bot()
-
-        self._assign_entropy_labels()
             
         return None
 
@@ -196,7 +196,7 @@ class qubic_bot :
         '''
         send a message from the bot
         '''
-        if bot is None:
+        if self.bot is None:
             print('ERROR! No bot configured.')
             return
         
