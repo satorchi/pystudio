@@ -91,8 +91,6 @@ class qubic_bot :
                           789306705: 'Jean-Pierre',
                           0: 'Test Bot'}
 
-        self._assign_entropy_labels()
-
         self.temperature_headings = ['40K filters',
                                      '40K sd',
                                      '40K sr',
@@ -134,6 +132,7 @@ class qubic_bot :
             self._init_bot()
             self._begin_bot()
 
+        self._assign_entropy_labels()
             
         return None
 
@@ -197,6 +196,10 @@ class qubic_bot :
         '''
         send a message from the bot
         '''
+        if bot is None:
+            print('ERROR! No bot configured.')
+            return
+        
         self.bot.sendMessage(self.chat_id,msg)
         return
 
@@ -407,7 +410,7 @@ class qubic_bot :
         entropy_dir='/entropy/logs'
     
         if not os.path.exists(entropy_dir):
-            answer='Cannot read the MACRT temperatures on Entropy'
+            answer='Cannot read the temperatures on Entropy'
             self._send_message(answer)
             return None
 
