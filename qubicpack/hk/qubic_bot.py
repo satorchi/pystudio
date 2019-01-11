@@ -273,11 +273,14 @@ class qubic_bot :
         v=[]
         for line in lines:
             cols = line.split()
-            tstamp = self.timestamp_factor*float(cols[0])
-            reading_date = dt.datetime.fromtimestamp(tstamp)
-            reading = eval(cols[1])
-            t.append(reading_date)
-            v.append(reading)
+            try:
+                tstamp = self.timestamp_factor*float(cols[0])
+                reading_date = dt.datetime.fromtimestamp(tstamp)
+                reading = eval(cols[1])
+                t.append(reading_date)
+                v.append(reading)
+            except:
+                pass
         return t,v
     
 
@@ -441,6 +444,7 @@ class qubic_bot :
                 self.entropy_channel_title[avs].append(default_label)
 
         # read the configured labels
+        self.entropy_nchannels=0
         filelist=glob(tempdir+'/*')
         for f in filelist:
             chan_str = re.sub('\.log','',os.path.basename(f))
@@ -451,6 +455,8 @@ class qubic_bot :
                 avs=match.group(1)
                 ch=eval(match.group(2))
                 self.entropy_channel_title[avs][ch]=chan_str
+                self.entropy_nchannels+=1
+                                
 
         return
     
@@ -712,7 +718,7 @@ class qubic_bot :
         Tmaxlist=[]
         for f in filelist:
             print(f)
-            find_str='.* Ch ([0-%i])' % (entropy_nchannels-1)
+            find_str='.* Ch ([0-%i])' % (self.entropy_nchannels-1)
             match=re.match(find_str,f)
             if match:
                 idx=eval(match.group(1))
