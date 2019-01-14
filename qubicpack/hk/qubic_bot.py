@@ -608,7 +608,7 @@ class qubic_bot :
         plot a given channel
         '''
         tempdir=self.entropy_latest_temperature_dir()
-        if tempdir is None:return tempdir
+        if tempdir is None:return None
 
         filename=''
         find_str='.* AVS47_%i Ch (%i)' % (controller,channel)
@@ -620,17 +620,18 @@ class qubic_bot :
                 filename=f
                 break
 
+        avs = 'AVS47_%i' % controller
         print('DEBUG: filename=%s' % filename)
-        t,v=read_entropy_logfile(filename)
+        t,v=self.read_entropy_logfile(filename)
         if t is None:
             answer='No MACRT temperatures on Entropy'
             self._send_message(answer)
             return answer
 
-        result=self.plot_temperature(t,v,entropy_channel_title[channel],
+        result=self.plot_temperature(t,v,self.entropy_channel_title[avs][channel],
                                      dmin=dmin,dmax=dmax,Tmin=Tmin,Tmax=Tmax,logscale=logscale)
         with open('temperature_plot.png','r') as plot:
-            bot.sendPhoto(chat_id,plot)
+            self.bot.sendPhoto(self.chat_id,plot)
         return
 
     def entropy_channel_data(self,controller=1,channel=1):
@@ -672,20 +673,22 @@ class qubic_bot :
         plot the last hour of 300mK data
         '''
         tempdir=self.entropy_latest_temperature_dir()
-        if tempdir is None:return tempdir
+        if tempdir is None:return None
         channel=2
         filename=''
-        find_str='.* Ch (%i)' % channel
+        find_str='.*(AVS47_[12]) Ch (%i)' % channel
         filelist=glob(tempdir+'/*')
         for f in filelist:
             match=re.match(find_str,f)
             if match:
                 filename=f
+                avs = match.groups()[0]
                 break
 
-        t,v=read_entropy_logfile(filename)
+
+        t,v=self.read_entropy_logfile(filename)
         if t is None:
-            answer='No MACRT temperatures on Entropy'
+            answer='No AVS47 temperatures on Entropy'
             self._send_message(answer)
             return answer
 
@@ -698,7 +701,7 @@ class qubic_bot :
         Tmin=min(v[imin:])
         Tmax=max(v[imin:])
     
-        result=self.plot_temperature(t,v,entropy_channel_title[channel],dmin,dmax,Tmin,Tmax)
+        result=self.plot_temperature(t,v,self.entropy_channel_title[avs][channel],dmin,dmax,Tmin,Tmax)
         with open('temperature_plot.png','r') as plot:
             self._send_photo(plot)
         return
@@ -718,14 +721,15 @@ class qubic_bot :
         Tmaxlist=[]
         for f in filelist:
             print(f)
-            find_str='.* Ch ([0-%i])' % (self.entropy_nchannels-1)
+            find_str='.*(AVS47_[12]) Ch ([0-%i])' % (self.entropy_nchannels-1)
             match=re.match(find_str,f)
             if match:
-                idx=eval(match.group(1))
-                t,v=read_entropy_logfile(f)
+                ch=eval(match.groups()[1])
+                t,v=self.read_entropy_logfile(f)
                 Tminlist.append(min(v))
                 Tmaxlist.append(max(v))
-                if t is not None:plt.plot(t,v,label=entropy_channel_title[idx])
+                avs = match.groups()[0]
+                if t is not None:plt.plot(t,v,label=self.entropy_channel_title[avs][ch])
         if Tmin is None:
             Tmin = min(Tminlist)
         if Tmax is None:
