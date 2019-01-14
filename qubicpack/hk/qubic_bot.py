@@ -66,6 +66,11 @@ class qubic_bot :
         self.timestamp_factor = 1e-3 # on and before 20181217
         self.timestamp_factor = 1
 
+        self.hktypes = ['TEMPERATURE','AVS47_1','AVS47_2','HEATER','MHS','PRESSURE']
+        self.nHeaters = 6
+        self.nMHS = 2
+        self.nPressure = 1
+        
         # this list could be generated with inspect...
         self.commands = {'/start': self.start,
                          '/help': self.ayuda,
@@ -116,6 +121,16 @@ class qubic_bot :
         temperature_heading_len = [ len(val) for val in self.temperature_headings ]
         self.temperature_heading_maxlen = max(temperature_heading_len)
         self.nTemperatures = len(self.temperature_headings)
+
+        # for plotting all temperatures
+        self.allTemperatures = {}
+        for idx in range(2):
+            avs = 'AVS47_%i' % (idx+1)
+            self.allTemperatures[avs]=[]
+            for ch in range(8):
+                if self.entropy_channel_title[avs][ch].find('Touch')<0:
+                    self.allTemperatures[avs].append(ch)
+        self.allTemperatures['TEMPERATURE'] = range(1, self.nTemperatures+1)
 
         if 'HOME' in os.environ:
             homedir = os.environ['HOME']
@@ -180,15 +195,13 @@ class qubic_bot :
         setup the default arguments
         '''
         self.args={}
-        self.args['TMIN']=None
-        self.args['TMAX']=None
+        self.args['YMIN']=None
+        self.args['YMAX']=None
         self.args['DMIN']=None
         self.args['DMAX']=None
         self.args['LOGPLOT']=False
-        for controller in [1,2]:
-            avs = 'AVS47_%i' % controller
-            self.args[avs] = range(8)
-        self.args['TEMPERATURE'] = range(1, self.nTemperatures+1)
+        for key in self.hktypes:
+            self.args[key] = []
         
         return
 
@@ -223,7 +236,10 @@ class qubic_bot :
         '''
         some help:  This is a list of commands
         '''
-        self._send_message('\n'.join(self.commands.keys()))
+        msg = '\n'.join(self.commands.keys())
+        msg += '\n\n'
+        self._send_message(msg)
+        self.plothelp()
         return
 
     def temp_read_hk(self):
@@ -292,7 +308,7 @@ class qubic_bot :
         fmt_str = '\n%7s:  %7.3f %s %s'
         units = ['V','mA']
         answer = 'Heaters:'
-        for idx in range(8):
+        for idx in range(self.nHeaters):
             basename = 'HEATER%i' % (idx+1)
             for meastype_idx,meastype in enumerate(['Volt','Amp']):
                 fullname = '%s/%s_%s.txt' % (self.hk_dir,basename,meastype)
@@ -318,6 +334,89 @@ class qubic_bot :
         self._send_message(answer)
         return
 
+    def heater_hk_data(self,ch):
+        '''
+        return the date,power data from the heaters (power supplies)
+        '''
+        basename_volt = 'HEATER%i_Volt.txt' % ch
+        fullname_volt = '%s/%s' % (self.hk_dir,basename_volt)
+        if not os.path.isfile(fullname_volt):
+            print('Could not find file: %s' % fullname_volt)
+            return None,None
+        basename_amp = 'HEATER%i_Amp.txt' % ch
+        fullname_amp = '%s/%s' % (self.hk_dir,basename_amp)
+        if not os.path.isfile(fullname_amp):
+            print('Could not find file: %s' % fullname_amp)
+            return None,None
+
+
+        #print('Reading Heater files:\n  %s\n  %s' % (fullname_volt,fullname_amp))
+
+        power = []
+        # read voltages
+        h = open(fullname_volt,'r')
+        lines = h.read().split('\n')
+        h.close()
+        del(lines[-1])
+        
+        t_volt=[]
+        volt=[]
+        for line in lines:
+            cols = line.split()
+            try:
+                tstamp = self.timestamp_factor*float(cols[0])
+                t_volt.append(tstamp)
+                reading = eval(cols[1])
+                volt.append(reading)
+                power.append(-1)
+                if len(cols)==3:
+                    status = cols[2]
+                    if status=='OFF':
+                        volt[-1] = 0.0
+                        power[-1] = 0.0
+            except:
+                print("Couldn't interpret data:  %s" % line)
+
+        # read currents
+        h = open(fullname_amp,'r')
+        lines = h.read().split('\n')
+        h.close()
+        del(lines[-1])
+
+        t_amp=[]
+        amp=[]
+        for line in lines:
+            cols = line.split()
+            try:
+                tstamp = self.timestamp_factor*float(cols[0])
+                t_amp.append(tstamp)
+                reading = eval(cols[1])
+                amp.append(reading)
+                if len(cols)==3:
+                    status = cols[2]
+                    if status=='OFF':
+                        amp[-1]=0.0
+            except:
+                #print("Couldn't interpret data:  %s" % line)
+                pass
+        amp = np.array(amp)
+
+
+        t = np.array(t_volt)
+        dates = []
+        for idx,tstamp in enumerate(t):
+            dates.append(dt.datetime.fromtimestamp(tstamp))
+            p = power[idx]
+            if p==-1:
+                v = volt[idx]
+                i_indexes = np.where( (t>tstamp-1)*(t<tstamp+1) )
+                #print('indexes = %s' % i_indexes)
+                i_avg = amp[i_indexes].mean()
+                power[idx] = i_avg*v                                         
+        
+        return dates,power
+
+    
     def read_mech(self):
         '''
         read the mechanical heat switch positions
@@ -379,6 +478,33 @@ class qubic_bot :
         answer += '\n\nTime: %s' % latest_date.strftime(self.time_fmt)    
         self._send_message(answer)
         return
+
+    def pressure_hk_data(self,ch=1):
+        '''
+        return the data,pressure data
+        '''
+        basename = 'PRESSURE%i.txt' % ch
+        fullname = '%s/%s' % (self.hk_dir,basename)
+        if not os.path.isfile(fullname):
+            return None,None
+
+        h = open(fullname,'r')
+        lines = h.read().split('\n')
+        h.close()
+        del(lines[-1])
+        t=[]
+        v=[]
+        for line in lines:
+            cols = line.split()
+            try:
+                tstamp = self.timestamp_factor*float(cols[0])
+                reading_date = dt.datetime.fromtimestamp(tstamp)
+                reading = eval(cols[1])
+                t.append(reading_date)
+                v.append(reading)
+            except:
+                pass
+        return t,v
     
     def photo(self):
         '''
@@ -746,6 +872,20 @@ class qubic_bot :
             self._send_photo(plot)
         return
 
+    def plothelp(self):
+        '''
+        give some info about how to use the plot function
+        '''
+        msg =  'Help for the plot function: Plot Housekeeping data.'
+        msg += '\nThis function can be used to plot a selection of housekeeping data.'
+        msg += '\nThe default behaviour (no arguments) is to make a plot of all temperatures.'
+        msg += '\nThe channel list is a comma separated list of channels.' 
+        msg += '\n\nusage:  Plot [PRESSURE] [T=<channel list>]'
+        msg += ' [AVS1=<channel list>] [AVS2=<channel list>] [DMIN=<start date>] [DMAX=<end date>]'
+        msg += ' [MIN=<min value>] [MAX=<max value>]'
+        self._send_message(msg)
+        return
+    
     def plot(self):
         '''
         this is a generic plot using the parsed arguments
@@ -757,7 +897,16 @@ class qubic_bot :
         else:
             print("I didn't find any arguments")
 
-
+        # if nothing was selected, the default is to plot all temperatures
+        plotalltemps = True
+        for key in self.hktypes:
+            if self.args[key]:
+                plotalltemps = False
+                break
+        if plotalltemps:
+            print('plotting all temperatures')
+            for key in self.allTemperatures:
+                self.args[key] = self.allTemperatures[key]
         
         plt.ioff()
         fig=plt.figure(figsize=(20.48,7.68))
@@ -777,10 +926,16 @@ class qubic_bot :
                 tmin_list.append(min(v))
                 dmax_list.append(max(t))
                 dmin_list.append(min(t))
+        if self.args['TEMPERATURE']:
+            ylabel = 'temperature / K'
+            ttl = 'Temperatures'
 
         # plot AVS47 temperatures
         for controller in [1,2]:
             avs = 'AVS47_%i' % controller
+            if self.args[avs]:
+                ylabel = 'temperature / K'
+                ttl = 'Temperatures'
             for ch in self.args[avs]:
                 t,v = self.entropy_channel_data(controller,ch)
                 if (t is not None) and (v is not None):
@@ -790,13 +945,42 @@ class qubic_bot :
                     tmin_list.append(min(v))
                     dmax_list.append(max(t))
                     dmin_list.append(min(t))
+
+        # plot heater power
+        for ch in self.args['HEATER']:
+            idx = ch-1
+            t,v=self.heater_hk_data(ch)
+            if (t is not None) and (v is not None):
+                channel_label='HEATER%i' % ch
+                plt.plot(t,v,label=channel_label)
+                tmax_list.append(max(v))
+                tmin_list.append(min(v))
+                dmax_list.append(max(t))
+                dmin_list.append(min(t))
+        if self.args['HEATER']:
+            ylabel = 'power / mW'
+            ttl = 'Heater power'
+
+        # plot pressure
+        for ch in self.args['PRESSURE']:
+            t,v = self.pressure_hk_data(ch)
+            if (t is not None) and (v is not None):
+                channel_label='PRESSURE%i' % ch
+                plt.plot(t,v,label=channel_label)
+                tmax_list.append(max(v))
+                tmin_list.append(min(v))
+                dmax_list.append(max(t))
+                dmin_list.append(min(t))
+        if self.args['PRESSURE']:
+            ylabel = 'pressure / mbar'
+            ttl = 'Pressure'
                 
         Tmin=min(tmin_list)
         Tmax=max(tmax_list)
-        if self.args['TMIN'] is not None:
-            Tmin=self.args['TMIN']
-        if self.args['TMAX'] is not None:
-            Tmax=self.args['TMAX']
+        if self.args['YMIN'] is not None:
+            Tmin=self.args['YMIN']
+        if self.args['YMAX'] is not None:
+            Tmax=self.args['YMAX']
             
         dmin=min(dmin_list)
         dmax=max(dmax_list)
@@ -809,12 +993,12 @@ class qubic_bot :
         ax.set_xlim((dmin,dmax))
         ax.set_ylim((Tmin,Tmax))
         ax.set_xlabel('date')
-        ax.set_ylabel('temperature / K')
-        fig.suptitle('Temperatures')
+        ax.set_ylabel(ylabel)
+        fig.suptitle(ttl)
         plt.legend()
-        fig.savefig('temperature_plot.png',format='png',dpi=100,bbox_inches='tight')
+        fig.savefig('hk_plot.png',format='png',dpi=100,bbox_inches='tight')
         plt.close()
-        with open('temperature_plot.png','r') as plot:
+        with open('hk_plot.png','r') as plot:
             self._send_photo(plot)
         return
 
@@ -853,12 +1037,15 @@ class qubic_bot :
         '''
         self._init_args()
         for arg in args_list:
+            print('processing argument: %s' % arg)
             keyarg = arg.split('=')
             if len(keyarg)==2:
                 key = keyarg[0].upper()
                 if key=='AVS1':key='AVS47_1'
                 if key=='AVS2':key='AVS47_2'
                 if key=='T' or key=='TEMP':key='TEMPERATURE'
+                if key=='MIN' or key=='TMIN': key='YMIN'
+                if key=='MAX' or key=='TMAX': key='YMAX'
                 if key=='DMIN' or key=='DMAX':
                     print('DEBUG: trying to convert date: %s' % keyarg[1])
                     print('DEBUG: this argument is of type: %s' % type(keyarg[1]))
@@ -869,11 +1056,14 @@ class qubic_bot :
                     except:
                         _arg = keyarg[1]
             else:
-                key=arg
+                key=arg.upper()
                 _arg=True
             self.args[key]=_arg
 
-        for key in ['AVS47_1','AVS47_2','TEMPERATURE']:
+        if self.args['PRESSURE']==True:
+            self.args['PRESSURE']=[1]
+
+        for key in self.hktypes:
             if self.args[key]=='':continue
             if not isinstance(self.args[key],list) and not isinstance(self.args[key],tuple):
                 self.args[key]=[self.args[key]]
