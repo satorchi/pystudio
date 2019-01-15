@@ -34,7 +34,7 @@ class dummy_bot:
         return
 
     def sendMessage(self,chat_id,answer):
-        print('TESTMODE: Bot sent:\n  %s' % answer)
+        print('TESTMODE: Bot sent:\n\n%s' % answer)
         return
 
     def sendPhoto(self,chat_id,photo):
@@ -878,8 +878,9 @@ class qubic_bot :
         '''
         msg =  'Help for the plot function: Plot Housekeeping data.'
         msg += '\nThis function can be used to plot a selection of housekeeping data.'
-        msg += '\nThe default behaviour (no arguments) is to make a plot of all temperatures.'
-        msg += '\nThe channel list is a comma separated list of channels.' 
+        msg += '\n - The default behaviour (no arguments) is to make a plot of all temperatures.'
+        msg += '\n - The channel list is a comma separated list of channels.'
+        msg += '\n - dates should be given in ISO format, for example: 2019-01-15T20:18:00'
         msg += '\n\nusage:  Plot [PRESSURE] [T=<channel list>]'
         msg += ' [AVS1=<channel list>] [AVS2=<channel list>] [DMIN=<start date>] [DMAX=<end date>]'
         msg += ' [MIN=<min value>] [MAX=<max value>]'
@@ -894,6 +895,8 @@ class qubic_bot :
             print('I found the following keys:')
             for key in self.args.keys():
                 print('%s: %s' % (key,self.args[key]))
+            if 'HELP' in self.args.keys():
+                return self.plothelp()                
         else:
             print("I didn't find any arguments")
 
@@ -907,7 +910,8 @@ class qubic_bot :
             print('plotting all temperatures')
             for key in self.allTemperatures:
                 self.args[key] = self.allTemperatures[key]
-        
+
+        something2plot = False
         plt.ioff()
         fig=plt.figure(figsize=(20.48,7.68))
         tmin_list=[]
@@ -920,6 +924,7 @@ class qubic_bot :
             ch_idx = ch-1
             t,v=self.temp_hk_data(ch)
             if (t is not None) and (v is not None):
+                something2plot = True
                 channel_label=self.temperature_headings[ch_idx]
                 plt.plot(t,v,label=channel_label)
                 tmax_list.append(max(v))
@@ -939,6 +944,7 @@ class qubic_bot :
             for ch in self.args[avs]:
                 t,v = self.entropy_channel_data(controller,ch)
                 if (t is not None) and (v is not None):
+                    something2plot = True
                     entropy_label=self.entropy_channel_title[avs][ch]
                     plt.plot(t,v,label=entropy_label)                
                     tmax_list.append(max(v))
@@ -951,6 +957,7 @@ class qubic_bot :
             idx = ch-1
             t,v=self.heater_hk_data(ch)
             if (t is not None) and (v is not None):
+                something2plot = True
                 channel_label='HEATER%i' % ch
                 plt.plot(t,v,label=channel_label)
                 tmax_list.append(max(v))
@@ -965,6 +972,7 @@ class qubic_bot :
         for ch in self.args['PRESSURE']:
             t,v = self.pressure_hk_data(ch)
             if (t is not None) and (v is not None):
+                something2plot = True
                 channel_label='PRESSURE%i' % ch
                 plt.plot(t,v,label=channel_label)
                 tmax_list.append(max(v))
@@ -974,7 +982,11 @@ class qubic_bot :
         if self.args['PRESSURE']:
             ylabel = 'pressure / mbar'
             ttl = 'Pressure'
-                
+
+        if not something2plot:
+            msg = 'Sorry, your argument list resulted in no plot.  Are you sure about the channel numbers?'
+            return self._send_message(msg)
+
         Tmin=min(tmin_list)
         Tmax=max(tmax_list)
         if self.args['YMIN'] is not None:
