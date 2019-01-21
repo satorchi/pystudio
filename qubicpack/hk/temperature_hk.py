@@ -155,7 +155,7 @@ class temperature_hk :
                 self.log('ERROR! Could not find calibration file: %s' % fname)
                 return False    
         self.calibration_tables = map(lambda x: np.loadtxt(x),calibration_files)
-        
+
         self.gain=[0.0626158803,
                    0.0626095353,
                    0.0626137451,
@@ -197,6 +197,11 @@ class temperature_hk :
                      -2050.2215204946,
                      -2050.2695627877,
                      -2050.0539409956]
+
+        # corrected offsets measured Mon 21 Jan 2019 16:37:01 CET (MP & SAT @ APC)
+        self.offset[0] -= -632.621
+        self.offset[1] -=  370.963
+
         
         return True
 
