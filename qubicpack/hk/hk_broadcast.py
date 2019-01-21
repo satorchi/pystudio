@@ -44,6 +44,7 @@ class hk_broadcast :
         self.hk_entropy = None
         self.powersupply = None
         self.hk_temperature = None
+        self.dump_diode_rawData = True
         self.hk_pressure = None
         return None
 
@@ -231,7 +232,7 @@ class hk_broadcast :
         data_ok = True
 
         if self.hk_temperature is None:
-            self.hk_temperature=temperature_hk()
+            self.hk_temperature=temperature_hk(rawdump=self.dump_diode_rawData)
 
         if not self.hk_temperature.connected:
             # try to reconnect

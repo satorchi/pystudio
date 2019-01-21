@@ -29,13 +29,14 @@ class temperature_hk :
     ''' a class to gather temperatures from the temperature diodes
     there are 21 channels, of which 18 are used
     '''
-    def __init__(self,port='/dev/cryo_temperatures',caldir=None):
+    def __init__(self,port='/dev/cryo_temperatures',caldir=None,dumpraw=False):
  
         self.nchannel = 21
         self.nT = 18
         self.ser = None
         self.connected=False
         self.port=port
+        self.dumpraw=dumpraw
         homedir='/home/pi'
         if 'HOME' in os.environ.keys():
             homedir=os.environ['HOME']
@@ -225,6 +226,9 @@ class temperature_hk :
         except:
             self.log('ERROR! Bad reply from Temperature diodes: %s' % datlist)
             return None
+
+        if self.dumpraw:
+            self.dump_rawData(rawData)
         
         for idx in range(self.nT):
             voltageData.append(rawData[idx+1]*self.gain[idx]+self.offset[idx])
@@ -236,4 +240,15 @@ class temperature_hk :
         return np.array(temperatureData)
     
 
-
+    def dump_rawData(self,rawData):
+        '''dump the uncalibrated data to file
+        '''
+        npts = len(rawData) # this should be 21
+        fmt = '%.6f'
+        for idx in range(npts):
+            fmt += ' %14.6e'
+        fmt += '\n'
+        h=open('TEMPERATURE_RAW.txt','a')
+        h.write(fmt % tuple(rawData))
+        h.close()
+        return
