@@ -125,6 +125,9 @@ class temperature_hk :
         except:
             self.log("Error! Couldn't read Temperature Diode data")
             return None
+
+        # clean the datlist from possible crap.  Sometimes the diodes return '\x00' in the middle of the number
+        ans = ans.replace('\x00','')
         return ans.strip()
     
             
@@ -244,9 +247,9 @@ class temperature_hk :
         '''dump the uncalibrated data to file
         '''
         npts = len(rawData) # this should be 21
-        fmt = '%.6f'
+        fmt = '%8i'
         for idx in range(npts-1):
-            fmt += ' %14.6e'
+            fmt += ' %8i'
         fmt += '\n'
         h=open('TEMPERATURE_RAW.txt','a')
         h.write(fmt % tuple(rawData))
