@@ -214,7 +214,9 @@ class temperature_hk :
         a = self.device_readline()
         if a is None: return None
         data_length = len(a)
-        if data_length == 0: return None
+        if data_length == 0:
+            self.log('ERROR! Temperature diodes returned data length 0')
+            return None
 
         datlist = a.split()
         npts = len(datlist)
