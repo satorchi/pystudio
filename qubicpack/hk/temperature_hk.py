@@ -245,7 +245,7 @@ class temperature_hk :
         '''
         npts = len(rawData) # this should be 21
         fmt = '%.6f'
-        for idx in range(npts):
+        for idx in range(npts-1):
             fmt += ' %14.6e'
         fmt += '\n'
         h=open('TEMPERATURE_RAW.txt','a')
