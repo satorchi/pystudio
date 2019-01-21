@@ -232,7 +232,7 @@ class hk_broadcast :
         data_ok = True
 
         if self.hk_temperature is None:
-            self.hk_temperature=temperature_hk(rawdump=self.dump_diode_rawData)
+            self.hk_temperature=temperature_hk(dumpraw=self.dump_diode_rawData)
 
         if not self.hk_temperature.connected:
             # try to reconnect
