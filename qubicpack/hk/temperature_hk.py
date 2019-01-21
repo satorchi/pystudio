@@ -231,9 +231,6 @@ class temperature_hk :
         except:
             self.log('ERROR! Bad reply from Temperature diodes: npts=%i, datlist=%s' % (npts,datlist))
             return None
-
-        if self.dumpraw:
-            self.dump_rawData(rawData)
         
         for idx in range(self.nT):
             voltageData.append(rawData[idx+1]*self.gain[idx]+self.offset[idx])
@@ -242,18 +239,30 @@ class temperature_hk :
             interpolate_function = interpolate.interp1d(x,y,kind='linear',fill_value='extrapolate')
             temperatureData.append(interpolate_function(voltageData[idx]))
 
+        if self.dumpraw:
+            self.dump_rawData(rawData,voltageData)
+
         return np.array(temperatureData)
     
 
-    def dump_rawData(self,rawData):
+    def dump_rawData(self,rawData,voltageData):
         '''dump the uncalibrated data to file
         '''
         npts = len(rawData) # this should be 21
-        fmt = '%8i'
+        fmt = '%6i'
         for idx in range(npts-1):
-            fmt += ' %8i'
+            fmt += ' %6i'
         fmt += '\n'
         h=open('TEMPERATURE_RAW.txt','a')
         h.write(fmt % tuple(rawData))
         h.close()
+
+        npts = len(voltageData) # this should be 18
+        fmt = '%.3f'
+        for idx in range(npts-1):
+            fmt += ' %.3f'
+        fmt += '\n'
+        h=open('TEMPERATURE_VOLT.txt','a')
+        h.write(fmt % tuple(voltageData))
+        h.close()        
         return
