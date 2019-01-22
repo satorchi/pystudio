@@ -48,8 +48,8 @@ def lut(self,v,vmin=3.0,vmax=9.0):
     '''
     a colour look up table for showing Vturnover in the I-V plots
     '''
-    vfractional=v/(vmax-vmin)
-    colourmap = plt.cm.get_cmap('Spectral')
+    vfractional=(v-vmin)/(vmax-vmin)
+    colourmap = plt.cm.get_cmap('Spectral_r')
     rgb=colourmap(vfractional)
     return rgb
 
