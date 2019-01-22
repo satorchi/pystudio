@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 def mylut(v,vmin=3.0,vmax=9.0):
     vfractional=(v-vmin)/(vmax-vmin)
-    colourmap = plt.cm.get_cmap('Spectral')
+    colourmap = plt.cm.get_cmap('Spectral_r')
     rgb=colourmap(vfractional)
     return rgb
 
