@@ -199,8 +199,8 @@ class temperature_hk :
                      -2050.0539409956]
 
         # corrected offsets measured Mon 21 Jan 2019 16:37:01 CET (MP & SAT @ APC)
-        self.offset[0] -= -632.621
-        self.offset[1] -=  370.963
+        #self.offset[0] -= -632.621
+        #self.offset[1] -=  370.963
 
         
         return True
