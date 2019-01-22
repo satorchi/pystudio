@@ -16,7 +16,7 @@ from qubicpack import qubicpack as qp
 import matplotlib.pyplot as plt
 
 def mylut(v,vmin=3.0,vmax=9.0):
-    vfractional=v/(vmax-vmin)
+    vfractional=(v-vmin)/(vmax-vmin)
     colourmap = plt.cm.get_cmap('Spectral')
     rgb=colourmap(vfractional)
     return rgb
