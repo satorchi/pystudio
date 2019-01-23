@@ -94,7 +94,7 @@ class PowerSupply :
         serialnos=list(known_supplies.serial_number)
         idx=None
         if serialno in serialnos:
-            idx = serialnos.index(self.serialno)
+            idx = serialnos.index(serialno)
             label = known_supplies[idx].label
             info['label_left']=known_supplies[idx].label_left
             info['label_right']=known_supplies[idx].label_right
