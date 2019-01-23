@@ -134,10 +134,10 @@ class PowerSupply :
             if match:
                 label = match.groups()[0]
                 userlabel = match.groups()[1]
-                if label==info['label_left']:
+                if label==self.info['label_left']:
                     self.info['userlabel_left']=userlabel
                     break
-                if label==info['label_right']:
+                if label==self.info['label_right']:
                     self.info['userlabel_right']=userlabel
                     break
             
