@@ -136,10 +136,10 @@ class PowerSupply :
                 userlabel = match.groups()[1]
                 if label==self.info['label_left']:
                     self.info['userlabel_left']=userlabel
-                    break
+                    continue
                 if label==self.info['label_right']:
                     self.info['userlabel_right']=userlabel
-                    break
+                    continue
             
         return
     
