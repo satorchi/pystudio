@@ -87,7 +87,20 @@ class PowerSupply :
         info['id_string']=a.strip()
         info['supplyname']=supplyname
         info['nsupplies']=self.get_nsupplies()
+        info['label_left']='Left'
+        info['label_right']='Right'
+
+        # check if this is a known supply
+        serialnos=list(known_supplies.serial_number)
+        idx=None
+        if serialno in serialnos:
+            idx = serialnos.index(self.serialno)
+            label = known_supplies[idx].label
+            info['label_left']=known_supplies[idx].label_left
+            info['label_right']=known_supplies[idx].label_right
+        
         self.info=info
+        self.read_userlabels()
         self.supplyname=supplyname
         self.serialno=serialno
         self.device_ok=True
@@ -105,6 +118,30 @@ class PowerSupply :
             nsupplies=1
         self.nsupplies=nsupplies
         return nsupplies
+
+    def read_userlabels(self):
+        ''' read user supplied labels corresponding to HEATER1, HEATER2, etc
+            this is called by identify_PowerSupply()
+        '''
+        configfile='powersupply.conf'
+        if not os.path.isfile(configfile):
+            return
+        
+        h = open(configfile,'r')
+        lines = h.read().split('\n')
+        for line in lines:
+            match = re.match('^(HEATER.*): (.*)',line)
+            if match:
+                label = match.groups()[0]
+                userlabel = match.groups()[1]
+                if label==info['label_left']:
+                    self.info['userlabel_left']=userlabel
+                    break
+                if label==info['label_right']:
+                    self.info['userlabel_right']=userlabel
+                    break
+            
+        return
     
     def init_TTiPowerSupply(self,port=None):
         '''initialize the power supply
@@ -273,15 +310,12 @@ class PowerSupply :
         '''
 
         ttl='\nPower Supply: '+self.supplyname
-        subttl_left='"Left" supply'
-        subttl_right='"Right" supply'
-        serialnos=list(known_supplies.serial_number)
-        idx=None
-        if self.serialno in serialnos:
-            idx=serialnos.index(self.serialno)
-            ttl='\nPower Supply: %s' % known_supplies[idx].label
-            subttl_left=known_supplies[idx].label_left
-            subttl_right=known_supplies[idx].label_right
+        subttl_left  = self.info['label_left']
+        subttl_right = self.info['label_right']
+        if 'userlabel_left' in self.info.keys():
+            subttl_left += ': %s' % self.info['userlabel_left']
+        if 'userlabel_right' in self.info.keys():
+            subttl_right += ': %s' % self.info['userlabel_right']
 
         print(ttl)
         if self.nsupplies==2:
@@ -350,6 +384,7 @@ class PowerSupplies :
         self.nsupplies=None
         self.find_PowerSupply()
         return None
+
     
     def find_PowerSupply(self):
         '''find devices
@@ -419,6 +454,9 @@ class PowerSupplies :
             if a=='OFF':
                 command['ONOFF']=0
                 continue
+
+            if arg in self.userlabel.keys():
+                arg = self.userlabel[arg]                
             
             if arg in supplylabels_left:
                 idx=supplylabels_left.index(arg)
