@@ -401,17 +401,30 @@ class PowerSupplies :
         supplylist=[]
         infolist=[]
         serialno_list=[]
+        userlabel_left_list = []
+        userlabel_right_list = []
         for dev in devs:
             p=PowerSupply(dev)
             if p.device_ok:
                 supplylist.append(p)
                 infolist.append(p.info)
                 serialno_list.append(p.info['serialno'])
+                if 'userlabel_left' in p.info.keys():
+                    userlabel_left_list.append(p.info['userlabel_left'])
+                else:
+                    userlabel_left_list.append(p.info['label_left'])
+                if 'userlabel_right' in p.info.keys():
+                    userlabel_right_list.append(p.info['userlabel_right'])
+                else:
+                    userlabel_right_list.append(p.info['label_right'])
+                    
 
         self.nsupplies=len(supplylist)
         self.infolist=infolist
         self.serialno_list=serialno_list
         self.supplylist=supplylist
+        self.userlabel_left_list=userlabel_left_list
+        self.userlabel_right_list=userlabel_right_list
         return 
 
     def parseargs(self,argv):
@@ -455,9 +468,18 @@ class PowerSupplies :
                 command['ONOFF']=0
                 continue
 
-            if arg in self.userlabel.keys():
-                arg = self.userlabel[arg]                
-            
+            if arg in self.userlabel_left_list.keys():
+                idx=self.userlabel_left_list.index(arg)
+                command['serialno']=self.supplylist[idx].info['serialno']
+                command['subsupply']='LEFT'
+                continue
+
+            if arg in self.userlabel_right_list.keys():
+                idx=self.userlabel_right_list.index(arg)
+                command['serialno']=self.supplylist[idx].info['serialno']
+                command['subsupply']='RIGHT'
+                continue
+           
             if arg in supplylabels_left:
                 idx=supplylabels_left.index(arg)
                 command['subsupply']='LEFT'
