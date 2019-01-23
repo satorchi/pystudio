@@ -468,13 +468,13 @@ class PowerSupplies :
                 command['ONOFF']=0
                 continue
 
-            if arg in self.userlabel_left_list.keys():
+            if arg in self.userlabel_left_list:
                 idx=self.userlabel_left_list.index(arg)
                 command['serialno']=self.supplylist[idx].info['serialno']
                 command['subsupply']='LEFT'
                 continue
 
-            if arg in self.userlabel_right_list.keys():
+            if arg in self.userlabel_right_list:
                 idx=self.userlabel_right_list.index(arg)
                 command['serialno']=self.supplylist[idx].info['serialno']
                 command['subsupply']='RIGHT'
