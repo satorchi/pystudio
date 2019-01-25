@@ -226,7 +226,10 @@ class modulator:
 
         parms.keys() should have all the keywords used in self.configure()
         '''
-
+        if parms['help']:
+            self.help()
+            return
+        
         if parms['onoff'] == 'on':
             self.switchon()
             return
@@ -259,7 +262,7 @@ class modulator:
         # initialize
         parms = {}
         numerical_keys = ['frequency','amplitude','offset','duty']
-        str_keys = ['shape','status','onoff','quit','default']
+        str_keys = ['shape','status','onoff','quit','default','help']
         keys = numerical_keys + str_keys
         for key in keys:
             parms[key]=None
@@ -309,7 +312,29 @@ class modulator:
                 parms['quit'] = True
                 continue
 
+            if arg=='help' or arg=='h':
+                parms['help'] = True
+                continue
+
         return parms
+
+    def help(self):
+        '''
+        print some help about valid commands
+        '''
+        helptxt =  '\ncommands:\n'
+        helptxt += '\nfrequency <N> : frequency is given in Hz (default 1Hz)'
+        helptxt += '\namplitude <N> : amplitude in V (default 5V)'
+        helptxt += '\noffset <N>    : offset in V (default 2.5V)'
+        helptxt += '\nduty <N>      : duty cycle in percent (default 50%)'
+        helptxt += '\nshape <S>     : shape is one of "SQU, SIN, TRI (default SQU)'
+        helptxt += '\ndefault       : setup default values for the signal generator'
+        helptxt += '\nstatus        : print out the current settings'
+        helptxt += '\non            : switch on the signal generator'
+        helptxt += '\noff           : switch off the signal generator'
+        helptxt += '\nquit          : quit the program'
+                
+        return
 
     def command_loop(self,argstr=None):
         '''
