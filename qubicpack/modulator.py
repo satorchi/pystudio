@@ -233,7 +233,7 @@ class modulator:
         '''
 
         # some debug text
-        print("here are the commands I've received:\n"
+        print("here are the commands I've received:\n")
         for key in parms.keys():
             print('  %s: %s' % (key,parms[key]))
 
