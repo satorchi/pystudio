@@ -37,7 +37,7 @@ class modulator:
         dev = PMSDevice('energenie', '1')
 
         # switch on
-        dev.set_socket_states({3:True})
+        dev.set_socket_states({0:True})
         return
 
     def switchoff(self):
@@ -49,7 +49,7 @@ class modulator:
         dev = PMSDevice('energenie', '1')
 
         # switch on
-        dev.set_socket_states({3:False})
+        dev.set_socket_states({0:False})
         return    
         
 
