@@ -263,6 +263,8 @@ class modulator:
                        amplitude=parms['amplitude'],
                        offset=parms['offset'],
                        duty=parms['duty'])
+
+        time.sleep(0.2)
         self.read_settings(show=True)
         return
 
@@ -345,6 +347,8 @@ class modulator:
         helptxt += '\non            : switch on the signal generator'
         helptxt += '\noff           : switch off the signal generator'
         helptxt += '\nquit          : quit the program'
+
+        print(helptxt)
                 
         return
 
