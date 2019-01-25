@@ -74,7 +74,7 @@ class modulator:
 
         # check of the requested device exists
         if not os.path.exists(port):
-            print('ERROR! Cannot connect to device.  Device does not exist: %s' % port)
+            print('Cannot connect to device.  Device does not exist: %s' % port)
             return None
     
         s=serial.Serial(port=port,
@@ -86,7 +86,7 @@ class modulator:
                         xonxoff=True,
                         rtscts=False)
 
-        print('Establishing communication with the HP33120A wave generator.')
+        print('Establishing communication with the HP33120A wave generator on port %s' % port)
         s.write('*IDN?\n')
         id=s.readline()
         if id=='':
@@ -158,7 +158,12 @@ class modulator:
         ans=self.s.readline()
         vals=ans.strip().replace('"','').split()
         settings={}
-        settings['shape']=vals[0]
+        try:
+            settings['shape']=vals[0]
+        except:
+            print("what is wrong here? received ans=%s" % vals)
+            return None
+        
         val=vals[1].split(',')
         settings['frequency']=eval(val[0])
         settings['amplitude']=eval(val[1])
@@ -226,6 +231,13 @@ class modulator:
 
         parms.keys() should have all the keywords used in self.configure()
         '''
+
+        # some debug text
+        print("here are the commands I've received:\n"
+        for key in parms.keys():
+            print('  %s: %s' % (key,parms[key]))
+
+        
         if parms['help']:
             self.help()
             return
