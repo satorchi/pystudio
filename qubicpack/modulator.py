@@ -286,7 +286,7 @@ class modulator:
 
             for key in str_keys:
                 findstr = '%s=' % key
-                if arg.find(key)==0:
+                if arg.find(findstr)==0:
                     vals = arg.split('=')
                     val = vals[1].upper()
                     parms[key] = val
