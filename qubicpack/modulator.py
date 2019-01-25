@@ -285,8 +285,8 @@ class modulator:
         
         # initialize
         parms = {}
-        numerical_keys = ['frequency','amplitude','offset','duty']
-        str_keys = ['shape','status','onoff','quit','default','help']
+        numerical_keys = ['frequency','freq','f','amplitude','a','offset','o','duty','d']
+        str_keys = ['shape','sh','status','onoff','quit','default','help']
         keys = numerical_keys + str_keys
         for key in keys:
             parms[key]=None
@@ -301,10 +301,18 @@ class modulator:
             for key in numerical_keys:
                 findstr = '%s=' % key
                 if arg.find(findstr)==0:
+                    if key=='freq' or key=='f':
+                        key='frequency'
+                    if key=='a': key='amplitude'
+                    if key=='o': key='offset'
+                    if key=='d': key='duty'
+                    if key=='s': key='status'
+                    if key=='sh': key='shape'
                     vals = arg.split('=')
                     try:
                         val = eval(vals[1])
                         parms[key] = val
+                            
                     except:
                         print('invalid %s' % key)
 
