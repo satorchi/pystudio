@@ -557,9 +557,6 @@ class qubic_bot :
         '''                                                                                                      
         read temperature labels from the Entropy Windows machine, shared by Samba
         '''
-        tempdir=self.entropy_latest_temperature_dir()
-        if tempdir is None:return None
-
         # default labels
         self.entropy_channel_title={}
         self.entropy_channel_title['AVS47_1']=[]
@@ -569,6 +566,10 @@ class qubic_bot :
                 default_label='%s ch%i' % (avs,ch)
                 self.entropy_channel_title[avs].append(default_label)
 
+        # check if we can read the entropy data directory
+        tempdir=self.entropy_latest_temperature_dir()
+        if tempdir is None:return None
+                
         # read the configured labels
         self.entropy_nchannels=0
         filelist=glob(tempdir+'/*')
