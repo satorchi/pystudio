@@ -12,7 +12,7 @@ send commands to the HP33120A wave form generator
 This is used to modulate the calibration source
 '''
 from __future__ import division, print_function
-import serial,time,os
+import serial,time,os,sys
 import readline
 readline.parse_and_bind('tab: complete')
 readline.parse_and_bind('set editing-mode vi')
