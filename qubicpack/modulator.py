@@ -26,6 +26,7 @@ class modulator:
 
     def __init__(self,port='/dev/rs232'):
         self.s = None
+        self.energenie = None
         return None
 
     def switchon(self):
@@ -34,10 +35,11 @@ class modulator:
         '''
 
         # open Energenie device with hostname and password
-        dev = PMSDevice('energenie', '1')
+        if self.energenie is None:
+            self.energenie = PMSDevice('energenie', '1')
 
         # switch on
-        dev.set_socket_states({0:True})
+        self.energenie.set_socket_states({0:True})
         return
 
     def switchoff(self):
@@ -46,10 +48,11 @@ class modulator:
         '''
 
         # open Energenie device with hostname and password
-        dev = PMSDevice('energenie', '1')
+        if self.energenie is None:
+            self.energenie = PMSDevice('energenie', '1')
 
         # switch on
-        dev.set_socket_states({0:False})
+        self.energenie.set_socket_states({0:False})
         return    
         
 
@@ -155,8 +158,12 @@ class modulator:
             if s is None:return None
 
         self.s.write('APPL?\n')
-        ans=self.s.readline()
-        vals=ans.strip().replace('"','').split()
+        ans=self.s.readline().strip()
+        if  not ans:
+            print('signal generator appears to be off')
+            return None
+        
+        vals=ans.replace('"','').split()
         settings={}
         try:
             settings['shape']=vals[0]
@@ -233,9 +240,10 @@ class modulator:
         '''
 
         # some debug text
-        print("here are the commands I've received:\n")
-        for key in parms.keys():
-            print('  %s: %s' % (key,parms[key]))
+        #print("here are the commands I've received:\n")
+        #for key in parms.keys():
+        #    print('  %s: %s\n' % (key,parms[key]))
+        
 
         
         if parms['help']:
