@@ -37,7 +37,7 @@ def init_hp33120a(self,port='/dev/hp33120a'):
                     bytesize=8,
                     parity='N',
                     stopbits=1,
-                    timeout=10,
+                    timeout=0.5,
                     xonxoff=True,
                     rtscts=False)
 
@@ -57,7 +57,7 @@ def init_hp33120a(self,port='/dev/hp33120a'):
     self.modulator=s
     return s
 
-def modulator_configure(self,frequency=None,shape=None,amplitude=None,offset=None,port='/dev/hp33120a'):
+def modulator_configure(self,frequency=None,shape=None,amplitude=None,offset=None,duty=None,port='/dev/rs232'):
     '''
     configure the HP33120A waveform generator
 
@@ -70,7 +70,7 @@ def modulator_configure(self,frequency=None,shape=None,amplitude=None,offset=Non
         if s is None:return False
 
     # default values
-    if frequency is None and shape is None and amplitude is None and offset is None:
+    if frequency is None and shape is None and amplitude is None and offset is None and duty is None:
         frequency=1.0
         shape='SQU'
         amplitude=5.0
@@ -86,12 +86,16 @@ def modulator_configure(self,frequency=None,shape=None,amplitude=None,offset=Non
         amplitude=settings['amplitude']
     if offset is None:
         offset=settings['offset']
+    if duty is None:
+        duty=settings['dutycycle']
 
     # fix a common error in the shape.  I sometimes write "sqr" instead of "squ"
     if shape.upper().find('SQ') >= 0: shape='SQU'
 
     
     cmd='APPL:%s %.5E, %.2f, %.2f\n' % (shape.upper(),frequency,amplitude,offset)
+    self.modulator.write(cmd)
+    cmd='PULS:DCYC %.2f\n' % duty
     self.modulator.write(cmd)
     return True
 
@@ -113,9 +117,13 @@ def modulator_settings(self,show=True):
     settings['frequency']=eval(val[0])
     settings['amplitude']=eval(val[1])
     settings['offset']   =eval(val[2])
+    self.modulator.write('PULS:DCYC?\n')
+    ans=self.modulator.readline()
+    val=ans.strip()
+    settings['dutycycle']=eval(val)
     if show:
-        print('SHAPE: %s\nFREQUENCY: %.2f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V' % \
-              (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset']))
+        print('SHAPE: %s\nFREQUENCY: %.2f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V\nDUTY CYCLE: %.1f%%' % \
+              (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset'],settings['dutycycle']))
     return settings
         
 def modulator_frequency(self):
