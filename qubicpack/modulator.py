@@ -258,7 +258,7 @@ class modulator:
         
         # initialize
         parms = {}
-        numerical_keys = ['frequency','offset','duty']
+        numerical_keys = ['frequency','amplitude','offset','duty']
         str_keys = ['shape','status','onoff','quit','default']
         keys = numerical_keys + str_keys
         for key in keys:
