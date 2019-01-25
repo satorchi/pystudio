@@ -35,11 +35,12 @@ class modulator:
         '''
 
         # open Energenie device with hostname and password
-        if self.energenie is None:
-            self.energenie = PMSDevice('energenie', '1')
+        dev = PMSDevice('energenie', '1')
 
         # switch on
-        self.energenie.set_socket_states({0:True})
+        dev.set_socket_states({0:True})
+
+        del(dev)
         return
 
     def switchoff(self):
@@ -48,11 +49,12 @@ class modulator:
         '''
 
         # open Energenie device with hostname and password
-        if self.energenie is None:
-            self.energenie = PMSDevice('energenie', '1')
+        dev = PMSDevice('energenie', '1')
 
         # switch on
-        self.energenie.set_socket_states({0:False})
+        dev.set_socket_states({0:False})
+
+        del(dev)
         return    
         
 
