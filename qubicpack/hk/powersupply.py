@@ -123,7 +123,12 @@ class PowerSupply :
         ''' read user supplied labels corresponding to HEATER1, HEATER2, etc
             this is called by identify_PowerSupply()
         '''
-        configfile='powersupply.conf'
+        if 'HOME' in os.environ.keys():
+            homedir = os.environ['HOME']
+        else:
+            homedir = os.path.curdir
+        
+        configfile = homedir + os.sep + 'powersupply.conf'
         if not os.path.isfile(configfile):
             return
         
