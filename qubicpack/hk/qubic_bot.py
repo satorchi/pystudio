@@ -116,6 +116,7 @@ class qubic_bot :
                                      '1K-4CP-D-1']
 
         self._assign_entropy_labels()
+        self._assign_heater_labels()
 
         self.temperature_display_order = [4, 3, 10, 11, 9, 6, 7, 0, 1, 2, 5, 8, 12, 13, 14, 15, 16, 17]
         temperature_heading_len = [ len(val) for val in self.temperature_headings ]
@@ -298,6 +299,36 @@ class qubic_bot :
             except:
                 pass
         return t,v
+
+    def _assign_heater_labels(self):
+        ''' read user supplied labels corresponding to HEATER1, HEATER2, etc
+        '''
+        # default labels
+        self.heater_label = {}
+        for idx in range(self.nHeaters):
+            label = 'HEATER%i' % (idx+1)
+            self.heater_label[label] = label
+
+        # read the powersupply config file
+        if 'HOME' in os.environ.keys():
+            homedir = os.environ['HOME']
+        else:
+            homedir = os.path.curdir
+        
+        configfile = homedir + os.sep + 'powersupply.conf'
+        if not os.path.isfile(configfile):
+            return
+        
+        h = open(configfile,'r')
+        lines = h.read().split('\n')
+        for line in lines:
+            match = re.match('^(HEATER.*): (.*)',line)
+            if match:
+                key = match.groups()[0]
+                label = match.groups()[1]
+                self.heater_label[key] = label
+            
+        return
     
 
     def read_heaters(self):
@@ -305,11 +336,14 @@ class qubic_bot :
         read the status of the heaters (power supplies)
         '''
         latest_date = dt.datetime.fromtimestamp(0)
-        fmt_str = '\n%7s:  %7.3f %s %s'
+        fmt_str = '\n%20s:  %7.3f %s %s'
         units = ['V','mA']
         answer = 'Heaters:'
         for idx in range(self.nHeaters):
             basename = 'HEATER%i' % (idx+1)
+            label = basename
+            if basename in self.heater_label.keys():
+                label = '%8s - %9s' % (basename,self.heater_label[basename])
             for meastype_idx,meastype in enumerate(['Volt','Amp']):
                 fullname = '%s/%s_%s.txt' % (self.hk_dir,basename,meastype)
                 if not os.path.isfile(fullname):
@@ -327,7 +361,7 @@ class qubic_bot :
                 reading = eval(cols[1])
                 if len(cols)==3: status = cols[2]
                 else: status = ''
-                answer += fmt_str % (basename,reading,units[meastype_idx],status)
+                answer += fmt_str % (label,reading,units[meastype_idx],status)
             answer += '\n'
 
         answer += 'Time: %s' % latest_date.strftime(self.time_fmt)    
