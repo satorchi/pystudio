@@ -43,7 +43,7 @@ class arduino:
         self.connected = True
         return True
     
-    def acquire(self,arduino_t,arduino_a,duration=None):
+    def acquire(self,duration=None):
         '''
         acquire data with timestamps from the Arduino Uno
 
