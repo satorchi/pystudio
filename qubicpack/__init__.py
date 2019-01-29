@@ -172,12 +172,6 @@ class qubicpack:
         oxford_determine_best_heater_level,\
         oxford_increase_heater_range
 
-    from .calibration_source import\
-        calsource_init,\
-        calsource_setFreqCommand,\
-        calsource_outputFrequency,\
-        calsource_setFrequency
-
     from .arduino import\
         arduino_acquire,\
         arduino_sin_curve,\
