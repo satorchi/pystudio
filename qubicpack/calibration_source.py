@@ -133,7 +133,7 @@ class calibration_source:
         
         cmd=self.set_FreqCommand(f/self.factor)
         self.s.write(cmd)
-        response=bytearray(com.read(6))
+        response=bytearray(self.s.read(6))
 
         if(response[0]==85):
             of=self.output_Frequency(response[1:])
