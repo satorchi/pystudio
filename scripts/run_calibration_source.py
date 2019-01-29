@@ -15,13 +15,14 @@ run a measurement with the calibration source
   - acquire data using the arduino
 '''
 from __future__ import division, print_function
-import os,sys
+import os,sys,time
+import datetime as dt
 
 def helptxt():
     '''
     some help text
     '''
-    print('usage: %s duration=<duration in seconds>')
+    print('usage: %s duration=<duration in seconds>' % sys.argv[0])
     return
 
 
@@ -68,24 +69,34 @@ energenie_socket = {}
 energenie_socket['modulator'] = 0
 energenie_socket['calibration source'] = 1
 energenie_socket['lamp'] = 2
-energenie_sockert['amplifier'] = 3
+energenie_socket['amplifier'] = 3
 
+'''
+THIS IS NOT WORKING.  IT HANGS AFTER THE FIRST SWITCH-ON
 # switch on devices
-for dev in ['modulator','calibration source','amplifier']:
+for dev in ['amplifier','modulator','calibration source']:
+    print('switching on %s' % dev)
     energenie.set_socket_states({energenie_socket[dev]:True})
-
+    print('pause for 1 second')
+    time.sleep(1)
+'''
+    
 # initialize devices
+print('initializing modulator')
 mod = modulator()
 mod.configure(frequency=0.33,duty=33)
 
+print('initializing calibration source')
 calsrc = calibration_source('LF')
 calsrc.set_Frequency(150)
 
+print('initializing arduino')
 ard = arduino()
 ard.init()
 
 # make an acquisition
 startTime = dt.datetime.utcnow()
+print('acquisition will begin now and continue for %.1f seconds' % duration_seconds)
 t,v = ard.acquire(duration=duration_seconds)
 
 # write the result to file
