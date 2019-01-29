@@ -76,6 +76,8 @@ class arduino:
         delta=t[-1]-t[0]
         print('total acquisition time: %.3f seconds' % tot_seconds(delta))
 
+        arduino_a = []
+        arduino_t = []
         # the first reading is always blank
         for idx,val in enumerate(y):
             val_stripped=val.strip().replace('\r','')
