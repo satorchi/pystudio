@@ -32,58 +32,83 @@ from __future__ import division, print_function
 import os,serial
 import numpy as np
 
-def calsource_init(self,source=None):
+import readline
+readline.parse_and_bind('tab: complete')
+readline.parse_and_bind('set editing-mode vi')
+
+class calibration_source:
     '''
-    setup communication to the Low Frequency source
+    a class to communicate with the calibration sources
     '''
-    if source is None:
-        print('Please enter the calibration source: HF or LF')
+
+    def __init__(self,source=None):
+        self.s = None
+        self.calsource = None
+        self.init(source=source)
         return None
 
-    if source.upper()=='LF':
-        dev='/dev/calsource-LF'
-        which_freq='Low'
-    else:
-        dev='/dev/calsource-HF'
-        which_freq='High'
+    def init(self,source=None):
+        '''
+        setup communication to the calibration source
+        '''
+        if source is None:
+            print('Please enter the calibration source: HF or LF')
+            return None
+
+        if source.upper()=='LF':
+            dev='/dev/calsource-LF'
+            which_freq='Low'
+            self.calsource = 'LF'
+            self.factor = 12.
+        else:
+            dev='/dev/calsource-HF'
+            which_freq='High'
+            self.calsource = 'HF'
+            self.factor = 24.
+
         
-    if not os.path.exists(dev):
-        print('ERROR! could not connect to the %s Frequency Calibration Source.' % which_freq)
-        return None
+        if not os.path.exists(dev):
+            print('ERROR! No device for the %s Frequency Calibration Source.' % which_freq)
+            self.calsource = None
+            return None
 
-    connection=serial.Serial(dev)
-    return connection
+        try:
+            self.s = serial.Serial(dev,timeout=0.5)
+        except:
+            print('ERROR! could not connect to the %s Frequency Calibration Source.' % which_freq)
+            self.calsource = None
+        return
 
-def calsource_setFreqCommand(self,f):
-    '''
-    make the frequency command
-    this code by Manuel Gonzalez
-    '''
-    a=[6,70]
-    for i in range(5):
-        a.append(int(f))
-        f=f % 1
-        f*=256
-    b=a[0]
-    for i in a[1:]:
-        b=b^i
-    a.append(b)
-    c = bytearray(a)
-    return c
+    def set_FreqCommand(self,f):
+        '''
+        make the frequency command
+        this code by Manuel Gonzalez
+        '''
+        a=[6,70]
+        for i in range(5):
+            a.append(int(f))
+            f=f % 1
+            f*=256
+        b=a[0]
+        for i in a[1:]:
+            b=b^i
+        a.append(b)
+        c = bytearray(a)
+        return c
 
-def calsource_outputFrequency(self,response):
-    '''
-    interpret the result of the output from the calibration source
-    this code by Manuel Gonzalez
-    '''
+    def output_Frequency(self,response):
+        '''
+        interpret the result of the output from the calibration source
+        this code by Manuel Gonzalez
+        '''
 
-    # make sure we have a bytearray
-    if not isinstance(response,bytearray):
-        response=bytearray(response)
+        # make sure we have a bytearray
+        if not isinstance(response,bytearray):
+            response=bytearray(response)
 
-    # interpret the result
-    result = ''
-    for i in response[1:]:
+        # interpret the result
+        result = ''
+        for i in response[1:]:
             result+=format(i,'08b') 
             j=1
             s=0
@@ -91,49 +116,33 @@ def calsource_outputFrequency(self,response):
                 if(int(i)):
                     s+=2**(-j)
                 j+=1
-    return (s+response[0])
+        return (s+response[0])
 
 
-def calsource_setFrequency(self,f=None,source=None):
-    '''
-    set the frequency.  Note that this will send the command to the device.
-    the method above calsource_setFreqCommand() only formats the command without sending
-    '''
+    def set_Frequency(self,f=None):
+        '''
+        set the frequency.  Note that this will send the command to the device.
+        the method above set_FreqCommand() only formats the command without sending
+        '''
 
-    if source is None:
-        print('Please enter the calibration source: HF or LF')
-        return None
+        if self.calsource is None:
+            print('Please initialize the calibration source')
+            return None
 
-    if source.upper()=='HF':        
-        factor=24.
-        if self.calsource_HF is None:
-            self.calsource_HF=self.calsource_init('HF')
-        com=self.calsource_HF
-
-    elif source.upper()=='LF':
-        factor=12.
-        if self.calsource_LF is None:
-            self.calsource_LF=self.calsource_init('LF')
-        com=self.calsource_LF            
-
-    else:
-        print('ERROR! Please enter a valid calibration source: HF or LF')
-        return None
-
-    if not isinstance(com,serial.serialposix.Serial):return None
+        if not isinstance(self.s,serial.serialposix.Serial):return None
         
-    cmd=self.calsource_setFreqCommand(f/factor)
-    com.write(cmd)
-    response=bytearray(com.read(6))
+        cmd=self.set_FreqCommand(f/self.factor)
+        self.s.write(cmd)
+        response=bytearray(com.read(6))
 
-    if(response[0]==85):
-        of=self.calsource_outputFrequency(response[1:])
-    else:
-        print("communication error")
-        of=calsource_outputFrequency(response[1:])
+        if(response[0]==85):
+            of=self.output_Frequency(response[1:])
+        else:
+            print("communication error")
+            of=output_Frequency(response[1:])
     
-    print('The output frequency is %.3f GHz' % of)
-    return of
+        print('The output frequency is %.3f GHz' % of)
+        return of
 
 
     
