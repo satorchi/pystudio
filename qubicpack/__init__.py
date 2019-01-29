@@ -197,9 +197,6 @@ class qubicpack:
             get_iv_timeline,\
             get_ASD
 
-        from .arduino import\
-            arduino_acquire_timeline
-
         from .squids import\
             squid_test
 
