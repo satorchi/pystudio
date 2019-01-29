@@ -27,7 +27,7 @@ class arduino:
 
     def __init__(self):
         self.s = None
-        return
+        return None
 
     def init(self,port='/dev/arduino'):
         '''
@@ -65,7 +65,7 @@ class arduino:
         end_time=start_time+dt_duration
         now=dt.datetime.utcnow()
         while now < end_time:
-            x=s.readline()
+            x=self.s.readline()
             now=dt.datetime.utcnow()
             y.append(x)
             t.append(dt.datetime.utcnow())
