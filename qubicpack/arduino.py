@@ -35,7 +35,7 @@ class arduino:
         '''
         self.connected = False
         try:
-            s=serial.Serial('/dev/arduino', 9600,timeout=0.5)
+            self.s = serial.Serial('/dev/arduino', 9600,timeout=0.5)
         except:
             print('Could not connect to the Arduino Uno')
             return False
