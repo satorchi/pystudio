@@ -17,191 +17,213 @@ import serial,time,multiprocessing
 import numpy as np
 from scipy.optimize import curve_fit
 import datetime as dt
-from satorchipy.datefunctions import *
+from satorchipy.datefunctions import tot_seconds
 
-def arduino_acquire(self,arduino_t,arduino_a):
+
+class arduino:
+    '''
+    class for running the Arduino Uno
+    '''
+
+    def __init__(self):
+        self.s = None
+        return
+
+    def init(self,port='/dev/arduino'):
+        '''
+        initialize the arduino device
+        '''
+        self.connected = False
+        try:
+            s=serial.Serial('/dev/arduino', 9600,timeout=0.5)
+        except:
+            print('Could not connect to the Arduino Uno')
+            return False
+
+        self.connected = True
+        return True
+    
+    def acquire(self,arduino_t,arduino_a,duration=None):
     '''
     acquire data with timestamps from the Arduino Uno
 
     duration is given in seconds
     '''
-    print('##### arduino_acquire #####')
-    try:
-        s=serial.Serial('/dev/arduino', 9600)
-    except:
-        print('Could not connect to the Arduino Uno')
-        return None
+        print('##### arduino_acquire #####')
+        if not self.connected: self.init()
+        if not self.connected: return None,None
 
-    duration=self.tinteg
-    if duration is None:
-        dt_duration=dt.timedelta(minutes=5)
-    else:
-        dt_duration=dt.timedelta(seconds=duration)
+        if duration is None:
+            dt_duration=dt.timedelta(minutes=5)
+        else:
+            dt_duration=dt.timedelta(seconds=duration)
         
-    y=[]
-    a=[]
-    t=[]
-    start_time=dt.datetime.utcnow()
-    end_time=start_time+dt_duration
-    now=dt.datetime.utcnow()
-    while now < end_time:
-        x=s.readline()
+        y=[]
+        a=[]
+        t=[]
+        start_time=dt.datetime.utcnow()
+        end_time=start_time+dt_duration
         now=dt.datetime.utcnow()
-        y.append(x)
-        t.append(dt.datetime.utcnow())
+        while now < end_time:
+            x=s.readline()
+            now=dt.datetime.utcnow()
+            y.append(x)
+            t.append(dt.datetime.utcnow())
 
 
-    print('started data acquisition at %s' %  t[0].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
-    print('  ended data acquisition at %s' % t[-1].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
-    delta=t[-1]-t[0]
-    print('total acquisition time: %.3f seconds' % tot_seconds(delta))
+        print('started data acquisition at %s' %  t[0].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
+        print('  ended data acquisition at %s' % t[-1].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
+        delta=t[-1]-t[0]
+        print('total acquisition time: %.3f seconds' % tot_seconds(delta))
 
-    # the first reading is always blank
-    for idx,val in enumerate(y):
-        val_stripped=val.strip().replace('\r','')
-        try:
-            valno=eval(val_stripped)
-            arduino_a.append(valno)
-            arduino_t.append(t[idx])
-        except:
-            pass
+        # the first reading is always blank
+        for idx,val in enumerate(y):
+            val_stripped=val.strip().replace('\r','')
+            try:
+                valno=eval(val_stripped)
+                arduino_a.append(valno)
+                arduino_t.append(t[idx])
+            except:
+                pass
         
-    return arduino_t,arduino_a
+        return arduino_t,arduino_a
 
-def arduino_sin_curve(t,period,amplitude,offset,shift):
-    '''
-    the sine curve to fit to the modulated signal
-    '''
+    def sin_curve(self,t,period,amplitude,offset,shift):
+        '''
+        the sine curve to fit to the modulated signal
+        '''
     
-    val=offset+amplitude*np.sin(2*np.pi*t/period  + shift)
-    return val
+        val=offset+amplitude*np.sin(2*np.pi*t/period  + shift)
+        return val
 
 
-def arduino_fit_signal(t,a,period=None,amplitude=None,offset=None,shift=None):
-    '''
-    fit the signal data to a sine curve
-    '''
+    def fit_signal(self,t,a,period=None,amplitude=None,offset=None,shift=None):
+        '''
+        fit the signal data to a sine curve
+        '''
 
-    # first guess
-    if period is None:period=1.0
-    if amplitude is None:
-        amplitude=0.5*(max(a)-min(a))
-    if offset is None:
-        offset=amplitude+min(a)
-    if shift is None: shift=0.0
+        # first guess
+        if period is None:period=1.0
+        if amplitude is None:
+            amplitude=0.5*(max(a)-min(a))
+        if offset is None:
+            offset=amplitude+min(a)
+        if shift is None: shift=0.0
     
-    p0=[period,amplitude,offset,shift]
-    popt,pcov=curve_fit(sin_curve,t,a,p0=p0)
-    result={}
-    result['period']=popt[0]
-    result['amplitude']=popt[1]
-    result['offset']=popt[2]
-    result['shift']=popt[3]
+        p0=[period,amplitude,offset,shift]
+        popt,pcov=curve_fit(sin_curve,t,a,p0=p0)
+        result={}
+        result['period']=popt[0]
+        result['amplitude']=popt[1]
+        result['offset']=popt[2]
+        result['shift']=popt[3]
 
-    return result
+        return result
 
 
-def arduino_acquire_timeline(self,save=True,modulation=True):
-    '''
-    get a data timeline and the calibration source modulation at the same time
 
-    this will replace integrate_scientific_data() and be moved to acquisition.py
+    #### This needs work !! #####################################################
+    def acquire_timeline(self,go,save=True,modulation=True):
+        '''
+        get a data timeline and the calibration source modulation at the same time
 
-    '''
-    client = self.connect_QubicStudio()
-    if client is None:return None
-
-    if modulation:
-        manager=multiprocessing.Manager()
-        arduino_a=manager.list()
-        arduino_t=manager.list()
-    
-        arduino_proc  = multiprocessing.Process(target=arduino_acquire, args=(self,arduino_t,arduino_a))
-        arduino_proc.start()
-
-    if not self.exist_timeline_data():self.tdata=[]
-    tdata={}
-    
-    self.debugmsg('calling integrate_scientific_data for ASIC %i' % self.asic)
-    self.debugmsg ('integration_time=%.2f' % self.tinteg)
-
-    npixels=self.get_NPIXELS()
-    tdata['NPIXSAMP']=npixels
-    
-    nsamples = self.get_nsamples()
-    if nsamples is None: return None
-    tdata['NSAMPLES']=nsamples
-    
-    period = self.sample_period()
-    self.debugmsg('period=%.3f msec' % (1000*period))
-    
-    timeline_size = int(np.ceil(self.tinteg / period))
-    self.debugmsg('timeline size=%i' % timeline_size)
-
-    chunk_size=self.get_chunksize()
-    if chunk_size is None: return None
-    tdata['CHUNK']=chunk_size
-
-    bias_config=self.get_bias()
-    tdata['BIAS_MIN']=self.min_bias
-    tdata['BIAS_MAX']=self.max_bias
-    tdata['BIAS_MOD']=self.bias_frequency
-    tdata['BIASMODE']=self.bias_mode
-    
-    timeline = np.empty((self.NPIXELS, timeline_size))
-
-    # date of the observation
-    self.assign_obsdate()
-    tdata['DATE-OBS']=self.obsdate
-    
-    # bath temperature
-    self.oxford_read_bath_temperature()
-    tdata['TES_TEMP']=self.temperature
-
-    # feedback loop resistance (relay)
-    tdata['R_FEEDBK']=self.Rfeedback
-
-    FLL_state,FLL_P,FLL_I,FLL_D=self.get_PID()
-    tdata['FLL_STAT']=FLL_state
-    tdata['FLL_P']=FLL_P
-    tdata['FLL_I']=FLL_I
-    tdata['FLL_D']=FLL_D
+        this will replace integrate_scientific_data() and be moved to acquisition.py
         
-    # integration time
-    tdata['INT-TIME']=self.tinteg
+        '''
+        client = go.connect_QubicStudio()
+        if client is None:return None
 
-    # get the rawmask from which we calculate n_masked
-    rawmask=self.get_RawMask()
+        if modulation:
+            manager=multiprocessing.Manager()
+            arduino_a=manager.list()
+            arduino_t=manager.list()
     
-    self.debugmsg('requesting scientific data timeline...')
-    parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % self.QS_asic_index
-    req = client.request(parameter)
-    self.debugmsg('scientific data requested.')
-    istart = 0
-    for i in range(int(np.ceil(timeline_size / chunk_size))):
-        delta = min(chunk_size, timeline_size - istart)
-        self.debugmsg('getting next data chunk...',level=2)
-        timeline[:, istart:istart+delta] = req.next()[:, :delta]
-        self.debugmsg('got data chunk.',level=2)
-        istart += chunk_size
-    req.abort()
-    tdata['TIMELINE']=timeline
+            arduino_proc  = multiprocessing.Process(target=self.acquire, args=(self,arduino_t,arduino_a))
+            arduino_proc.start()
 
-
-    if modulation:
-        # get the timing info from the Arduino
-        arduino_proc.join()
-
-        tdata['MOD-AMP']=arduino_a
-        tdata['MOD-TIME']=arduino_t
+        if not go.exist_timeline_data():go.tdata=[]
+        tdata={}
     
-    if not self.AVOID_HANGUP:
-        for count in range(10):
-            req.abort() # maybe we need this more than once?
-        del(req) # maybe we need to obliterate this?
+        go.debugmsg('calling integrate_scientific_data for ASIC %i' % go.asic)
+        go.debugmsg ('integration_time=%.2f' % go.tinteg)
+
+        npixels=go.get_NPIXELS()
+        tdata['NPIXSAMP']=npixels
+    
+        nsamples = go.get_nsamples()
+        if nsamples is None: return None
+        tdata['NSAMPLES']=nsamples
+    
+        period = go.sample_period()
+        go.debugmsg('period=%.3f msec' % (1000*period))
+    
+        timeline_size = int(np.ceil(go.tinteg / period))
+        go.debugmsg('timeline size=%i' % timeline_size)
+
+        chunk_size=go.get_chunksize()
+        if chunk_size is None: return None
+        tdata['CHUNK']=chunk_size
+
+        bias_config=go.get_bias()
+        tdata['BIAS_MIN']=go.min_bias
+        tdata['BIAS_MAX']=go.max_bias
+        tdata['BIAS_MOD']=go.bias_frequency
+        tdata['BIASMODE']=go.bias_mode
+    
+        timeline = np.empty((go.NPIXELS, timeline_size))
+
+        # date of the observation
+        go.assign_obsdate()
+        tdata['DATE-OBS']=go.obsdate
+    
+        # bath temperature
+        go.oxford_read_bath_temperature()
+        tdata['TES_TEMP']=go.temperature
+
+        # feedback loop resistance (relay)
+        tdata['R_FEEDBK']=go.Rfeedback
+
+        FLL_state,FLL_P,FLL_I,FLL_D=go.get_PID()
+        tdata['FLL_STAT']=FLL_state
+        tdata['FLL_P']=FLL_P
+        tdata['FLL_I']=FLL_I
+        tdata['FLL_D']=FLL_D
         
-    if save:self.tdata.append(tdata)
-    return timeline
+        # integration time
+        tdata['INT-TIME']=go.tinteg
+
+        # get the rawmask from which we calculate n_masked
+        rawmask=go.get_RawMask()
+    
+        go.debugmsg('requesting scientific data timeline...')
+        parameter = 'QUBIC_PixelScientificDataTimeLine_%i' % go.QS_asic_index
+        req = client.request(parameter)
+        go.debugmsg('scientific data requested.')
+        istart = 0
+        for i in range(int(np.ceil(timeline_size / chunk_size))):
+            delta = min(chunk_size, timeline_size - istart)
+            go.debugmsg('getting next data chunk...',level=2)
+            timeline[:, istart:istart+delta] = req.next()[:, :delta]
+            go.debugmsg('got data chunk.',level=2)
+            istart += chunk_size
+        req.abort()
+        tdata['TIMELINE']=timeline
+
+
+        if modulation:
+            # get the timing info from the Arduino
+            arduino_proc.join()
+
+            tdata['MOD-AMP']=arduino_a
+            tdata['MOD-TIME']=arduino_t
+    
+        if not go.AVOID_HANGUP:
+            for count in range(10):
+                req.abort() # maybe we need this more than once?
+            del(req) # maybe we need to obliterate this?
+        
+        if save:go.tdata.append(tdata)
+        return timeline
         
 
 
