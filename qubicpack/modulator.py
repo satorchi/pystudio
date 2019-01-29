@@ -24,7 +24,7 @@ class modulator:
     class to send commands to the HP3312A signal generator
     '''
 
-    def __init__(self,port='/dev/rs232'):
+    def __init__(self,port='/dev/rs232_1'):
         self.s = None
         self.energenie = None
         return None
@@ -58,7 +58,7 @@ class modulator:
         return    
         
 
-    def init_hp33120a(self,port='/dev/rs232'):
+    def init_hp33120a(self,port='/dev/rs232_1'):
         '''
         establish connection to the HP33120A waveform generator
         It should be connected by RS232 cable (serial port, usually /dev/ttyS0)
@@ -107,7 +107,7 @@ class modulator:
         self.s=s
         return s
 
-    def configure(self,frequency=None,shape=None,amplitude=None,offset=None,duty=None,port='/dev/rs232'):
+    def configure(self,frequency=None,shape=None,amplitude=None,offset=None,duty=None,port='/dev/rs232_1'):
         '''
         configure the HP33120A waveform generator
         
