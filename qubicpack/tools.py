@@ -272,6 +272,8 @@ def read_qubicstudio_fits(self,hdulist):
     # dictionary for the return of timeline data
     if self.tdata is None:self.tdata = [{}]
     tdata = self.tdata[-1]
+    if 'WARNING' not in tdata.keys():
+        tdata['WARNING'] = []
     nhdu = len(hdulist)
 
     hdu = hdulist[1] # the primary header has nothing in it
