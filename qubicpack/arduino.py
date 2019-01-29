@@ -44,11 +44,11 @@ class arduino:
         return True
     
     def acquire(self,arduino_t,arduino_a,duration=None):
-    '''
-    acquire data with timestamps from the Arduino Uno
+        '''
+        acquire data with timestamps from the Arduino Uno
 
-    duration is given in seconds
-    '''
+        duration is given in seconds
+        '''
         print('##### arduino_acquire #####')
         if not self.connected: self.init()
         if not self.connected: return None,None
