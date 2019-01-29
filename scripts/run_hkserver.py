@@ -24,7 +24,7 @@ else:
 
 broadcast_dir = homedir + os.sep + os.sep.join(['data','temperature','broadcast'])
 if not os.path.isdir(broadcast_dir):
-    os.system('mkdir %s' % broadcast_dir
+    os.system('mkdir %s' % broadcast_dir)
 
 os.chdir(broadcast_dir)
 
