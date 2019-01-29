@@ -171,11 +171,6 @@ class qubicpack:
         oxford_set_heater_range,\
         oxford_determine_best_heater_level,\
         oxford_increase_heater_range
-
-    from .arduino import\
-        arduino_acquire,\
-        arduino_sin_curve,\
-        arduino_fit_signal
     
     if with_pystudio:
         '''
