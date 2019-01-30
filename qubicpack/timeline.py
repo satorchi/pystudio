@@ -237,8 +237,8 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
         print('ERROR! No timeline data.')
         return None
 
-    if not isinstance(timeline_index,int):
-        # by default, plot the first one.  this could change
+    if timeline_index is None:
+        # by default, plot the first one.  For QubicStudio files, there is only one timeline
         timeline_index=0
 
     ntimelines=self.ntimelines()
@@ -385,8 +385,6 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
     '''
     if not self.exist_timeline_data():return None
     ntimelines=self.ntimelines()
-    tdata = self.tdata[timeline_index]
-    keys = tdata.keys()
     
     if timeline_index is None:
         # by default, plot the first one.
@@ -395,6 +393,9 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
     if timeline_index>=ntimelines:
         print('Please enter a timeline between 0 and %i' % (ntimelines-1))
         return None
+
+    tdata = self.tdata[timeline_index]
+    keys = tdata.keys()    
 
     if 'DATE-OBS' in keys:
         timeline_date=tdata['DATE-OBS']
