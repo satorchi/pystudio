@@ -497,13 +497,17 @@ def polynomial_fit_parameters(self,fit):
 
     # if we're using the combined fit, then we can exit now
     if fit['fitfunction']=='COMBINED':return fit
+
+    fit['Vsuper'] = None
+    fit['Vnormal'] = None
+    # the inflection point greater than turnover is the Vnormal
+    if fit['turnover'] is not None and inflection_V>fit['turnover']:
+        fit['Vnormal'] = inflection_V
     
     # if the inflection is between the turnover and the max bias,
     # then we fit a straight line to the final points
     # instead of using the fit all the way through
-    if (not fit['turnover'] is None) \
-       and (inflection_V>fit['turnover']) \
-       and (inflection_V<self.bias_factor*self.max_bias):
+    if fit['Vnormal'] is not None and (inflection_V<self.bias_factor*self.max_bias):
         # find the corresponding points to fit
         istart=fit['curve index']*fit['npts_curve']
         iend=istart+fit['npts_curve']
@@ -546,9 +550,11 @@ def polynomial_fit_parameters(self,fit):
 
         # get the current, according to the model, at the region transitions: Vsuper, Vnormal
         Vsuper=fit['Vsuper']
-        fit['Isuper']=a0 + a1*Vsuper + a2*Vsuper**2 + a3*Vsuper**3 + offset
+        if Vsuper is not None:
+            fit['Isuper']=a0 + a1*Vsuper + a2*Vsuper**2 + a3*Vsuper**3 + offset
         Vnormal=fit['Vnormal']
-        fit['Inormal']=a0 + a1*Vnormal + a2*Vnormal**2 + a3*Vnormal**3 + offset
+        if Vnormal is not None:
+            fit['Inormal']=a0 + a1*Vnormal + a2*Vnormal**2 + a3*Vnormal**3 + offset
 
         if found_turnover:
             V0=fit['turnover']
@@ -646,6 +652,18 @@ def combined_fit_parameters(self,fit):
         
     return fit
 
+def do_linefit(self,bias,curve):
+    '''
+    fit a straight line
+    '''
+    self.debugmsg('I-V linefit.  A straight line through the whole I-V curve.')
+    npts=len(bias)
+    polyfit=np.polyfit(bias,curve,1,full=True)
+    residual=polyfit[1][0]/npts
+    ret={}
+    ret['fitinfo']=polyfit
+    ret['residual']=residual
+    return ret
 
 def do_polyfit(self,bias,curve):
     '''
