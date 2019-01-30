@@ -85,6 +85,7 @@ class qubicpack:
         filter_jumps,\
         polynomial_fit_parameters,\
         combined_fit_parameters,\
+        do_linefit,\
         do_polyfit,\
         do_combinedfit,\
         model_iv_super,\
