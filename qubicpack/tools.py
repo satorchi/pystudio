@@ -223,26 +223,24 @@ def read_fits(self,filename):
     if nhdu>1\
        and ('TELESCOP' in hdulist[0].header.keys())\
        and (hdulist[0].header['TELESCOP'].strip()=='QUBIC'):
-        print('This is a QubicPack file.')
+        print('Reading QubicPack file: %s' % filename)
         return self.read_qubicpack_fits(hdulist)
 
     # check if it's a QubicStudio file
-    # QubicStudio FITS files always have exactly 2 HDUs
-    ok = True
+    # QubicStudio FITS files always have at least 2 HDUs, with nothing in the primary header
+    nogood_msg = 'Unrecognized FITS file!'
     if 'INSTRUME' not in hdulist[1].header.keys():
-        print("'INSTRUME' keyword not found")
-        ok = False
+        print("'INSTRUME' keyword not found\n%s" % nogood_msg)
+        return False
     if hdulist[1].header['INSTRUME'].strip() !=  'QUBIC':
-        print('Instrument is not QUBIC')
-        ok = False
+        print('Instrument is not QUBIC\n%s' % nogood_msg)
+        return False
     if 'EXTNAME' not in hdulist[1].header.keys():
-        print("'EXTNAME' keyword not found")
-        ok = False
-    if ok:
-        print('This is a QubicStudio FITS file')
-        return self.read_qubicstudio_fits(hdulist)
+        print("'EXTNAME' keyword not found\n%s" % nogood_msg)
+        return False
     
-    print('Unrecognized FITS file!')
+    print('Reading QubicStudio FITS file: %s' % filename)
+    return self.read_qubicstudio_fits(hdulist)
     return False
 
 def read_fits_field(self,hdu,fieldname):
@@ -262,44 +260,89 @@ def read_fits_field(self,hdu,fieldname):
     return None
 
 
+def read_qubicstudio_dataset(self,datadir,asic=None):
+    '''
+    read a QubicStudio data set which consists of a number of FITS files in a directory
+    '''
+    if not os.path.isdir(datadir):
+        print('Please enter a valid directory.')
+        return None
+
+    if asic is None:
+        asic = 1
+        print('If you would like to read data for a specific ASIC, please include the keyword asic=<N>')
+    print('Reading data for ASIC %i' % asic)
+
+    scidir = '%s/Sums' % datadir
+    hkdir = '%s/Hks' % datadir
+    subdir = {}
+    subdir['science'] = 'Sums'
+    subdir['asic'] = 'Hks'
+    subdir['hkextern'] = 'Hks'
+    subdir['raw'] = 'Raws'
+    subdir['MMR'] = 'Hks'
+    
+    pattern = {}
+    pattern['science'] = '%s/%s/science-asic%i-*.fits' % (datadir,subdir['science'],asic)
+    pattern['asic'] = '%s/%s/conf-asics-*.fits' % (datadir,subdir['asic'])
+    pattern['hkextern'] = '%s/%s/hk-extern-*.fits' % (datadir,subdir['hkextern'])
+
+    # check for files, and read if found
+    for filetype in pattern.keys():
+        files = glob(pattern[filetype])
+        if len(files)==0:
+            print('No %s data found in directory: %s/%s' % (filetype,datdir,subdir[filetype]))
+            continue
+
+        filename = files[0]
+    
+        # we expect only one file of each type (per ASIC)
+        if len(files)>1:
+            print('WARNING! There are %i science data files for this ASIC!' % len(files))
+            print('         There should only be 1 file.')
+
+        
+        chk = self.read_fits(filename)
+        # try to guess the name of the detector array (P87, or whatever)
+        self.guess_detector_name()
+    
+    return
 
 def read_qubicstudio_fits(self,hdulist):
     '''
     read a QubicStudio FITS file
     the argument h is an hdulist after opening the FITS file
+    and having confirmed that it really is a QubicStudio FITS file
     '''
+
+    nhdu = len(hdulist)
+    hdu = hdulist[1] # the primary header has nothing in it
+    keys = hdu.header.keys()
+
+    # what kind of QubicStudio file?
+    QS_filetypes = ['ASIC_SUMS','CONF_ASIC1','EXTERN_HK','ASIC_RAW']
+    extname = hdu.header['EXTNAME'].strip()
+    if extname not in QS_filetypes:
+        print('ERROR! Unrecognized QubicStudio FITS file: %s' % extname)
+        return None
+
+    self.datafiletype = extname
 
     # dictionary for the return of timeline data
     if self.tdata is None:self.tdata = [{}]
     tdata = self.tdata[-1]
     if 'WARNING' not in tdata.keys():
         tdata['WARNING'] = []
-    nhdu = len(hdulist)
-
-    hdu = hdulist[1] # the primary header has nothing in it
-    keys = hdu.header.keys()
-
-    # what kind of QubicStudio file?
-    QS_filetype = None
-    extname = hdu.header['EXTNAME'].strip()
-    if extname =='ASIC_SUMS':
-        QS_filetype = 'science'
-    elif extname.find('CONF_ASIC')==0:
-        QS_filetype = 'asic'
-    elif extname.find('EXTERN_HK')==0:
-        QS_filetype = 'hk'
-    elif extname == 'ASIC_RAW':
-        QS_filetype = 'raw'
-    else:
-        print('ERROR! Unrecognized QubicStudio FITS file')
-        return None
-
+    
     # get the timeline data from each detector
-    if QS_filetype=='science':
-        read_qubicstudio_science_fits(self,hdu)
+    if extname=='ASIC_SUMS':
+        self.read_qubicstudio_science_fits(hdu)
         
-    if QS_filetype=='asic':
-        read_qubicstudio_asic_fits(self,hdulist)
+    if extname=='CONF_ASIC1':
+        self.read_qubicstudio_asic_fits(hdulist)
+
+    if extname=='EXTERN_HK':
+        self.read_qubicstudio_hkextern_fits(hdu)
 
     hdulist.close()
     return True
@@ -335,15 +378,17 @@ def read_qubicstudio_science_fits(self,hdu):
     #################################################################
     # mail from Michel 20181221:
     ## nsample=100 est le nombre total de points par TES. Cela
-    ## permet de remonter à la fréquence d’échantillonnage:
-    ## fs=2E6/128/nsample NbSamplesPerSum=64 est le nombre de points
+    ## permet de remonter à la fréquence d'échantillonnage:
+    ## fs=2E6/128/nsample
+    ##
+    ## NbSamplesPerSum=64 est le nombre de points
     ## utilisé pour obtenir le signal scientifique, après le
     ## masquage de certains des 100 points par TES. En fait, le
     ## signal scientifique est la somme des 64 points non masqué sur
     ## les 100 échantillons pris sur chaque TES.
     #################################################################
     nbsamplespersum_list  =  self.read_fits_field(hdu,'NbSamplesPerSum')
-    tdata['NSAMSUM'] = nbsamplespersum_list
+    tdata['NSAMSUM_LST'] = nbsamplespersum_list
     NbSamplesPerSum = nbsamplespersum_list[-1]
     tdata['NbSamplesPerSum'] = NbSamplesPerSum
     ## check if they're all the same
@@ -363,6 +408,7 @@ def read_qubicstudio_science_fits(self,hdu):
         dateobs.append(dt.datetime.fromtimestamp(tstamp))
     tdata['DATE-OBS'] = dateobs
     tdata['BEG-OBS'] = dateobs[0]
+    self.obsdate = tdata['BEG-OBS']
     tdata['END-OBS'] = dateobs[-1]
     
     return
@@ -393,13 +439,24 @@ def read_qubicstudio_asic_fits(self,hdulist):
     gpstime_idx = 1
     dateobs = []
     timestamp = 1e-3*hdu.data.field(computertime_idx)
+    npts = len(timestamp)
     for tstamp in timestamp:
         dateobs.append(dt.datetime.fromtimestamp(tstamp))
     tdata['BEGASIC%i' % asic] = dateobs[0]
     tdata['ENDASIC%i' % asic] = dateobs[-1]
 
+    # print some info
+    datefmt = '%Y-%m-%d %H:%M:%S'
+    print('There are %i housekeeping measurements in the period %s to %s'\
+          % (npts,dateobs[0].strftime(datefmt),dateobs[-1].strftime(datefmt)))
+    
     # get the Raw Mask
-    tdata['RAW-MASK'] = self.read_fits_field(hdu,'Raw-mask')
+    rawmask_lst = self.read_fits_field(hdu,'Raw-mask')
+    tdata['RAW-MASK_LST'] = rawmask_lst
+    tdata['RAW-MASK'] = rawmask_lst[0]
+    print('WARNING!  Assuming Raw-mask did not change during the measurement.')
+    print("          You can check by looking at .tdata[0]['RAW-MASK_LST']")    
+    self.rawmask = tdata['RAW-MASK']
 
     # get bias level (this is given directly in Volts.  No need to translate from DAC values)
     # TESAmplitude is in fact, peak-to-peak, so multiply by 0.5
@@ -415,6 +472,7 @@ def read_qubicstudio_asic_fits(self,hdulist):
         print(msg)
         tdata['WARNING'].append(msg)
     tdata['BIAS_MIN'] = min(bias_min)
+    self.min_bias = tdata['BIAS_MIN']
     
     bias_max = offset+amplitude
     tdata['BIAS_MAX_LST']=bias_max
@@ -424,11 +482,13 @@ def read_qubicstudio_asic_fits(self,hdulist):
         print(msg)
         tdata['WARNING'].append(msg)
     tdata['BIAS_MAX'] = max(bias_max)
+    self.max_bias = tdata['BIAS_MAX']
 
     # get the number of samples
     nsamples_list = self.read_fits_field(hdu,'nsample')
     tdata['NSAM_LST'] = nsamples_list
     tdata['NSAMPLES'] = nsamples_list[-1]
+    self.nsamples = tdata['NSAMPLES']
     difflist = np.unique(nsamples_list)
     if len(difflist)!=1:
         msg = 'WARNING! nsample changed during the measurement!'
@@ -436,12 +496,32 @@ def read_qubicstudio_asic_fits(self,hdulist):
 
     return
 
+def read_qubicstudio_hkextern_fits(self,hdu):
+    '''
+    read the housekeeping data
+    '''
+    tdata = self.tdata[-1]
+    testemp = hdu.data.field(5)
+    min_temp = testemp.min()
+    max_temp = testemp.max()
+    temperature = testemp.mean()
+    print('TES temperatures varies between %.1fmK and %.1fmK during the measurement' % (1000*min_temp,1000*max_temp))
+    print('Using TES temperature %.1fmK' % (1000*temperature))
+    self.tdata[0]['TES_TEMP'] = temperature
+    self.temperature = temperature
+
+
+    # When I have time, I'll implement reading all the other stuff
+    return
+
 def read_qubicpack_fits(self,h):
     '''
     read a FITS file that was written by QubicPack
     argument h is an hdulist after opening a FITS file
+    and confirming that it really is a QubicPack fits file
     '''
 
+    self.datafiletype='QP_FITS'
     self.observer=h[0].header['OBSERVER']
     self.assign_obsdate(dt.datetime.strptime(h[0].header['DATE-OBS'],'%Y-%m-%d %H:%M:%S UTC'))
             
