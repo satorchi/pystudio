@@ -291,7 +291,7 @@ def read_qubicstudio_dataset(self,datadir,asic=None):
     for filetype in pattern.keys():
         files = glob(pattern[filetype])
         if len(files)==0:
-            print('No %s data found in directory: %s/%s' % (filetype,datdir,subdir[filetype]))
+            print('No %s data found in directory: %s/%s' % (filetype,datadir,subdir[filetype]))
             continue
 
         filename = files[0]
