@@ -62,10 +62,13 @@ def read_hk_file(filename):
     v=np.zeros(npts)
     idx=0
     for line_idx,line in enumerate(lines):
-        cols = line.split()
+        cols = line.strip().replace('\x00','').split()
         try:
             tstamp = float(cols[0])
-            reading = eval(cols[1])
+            if cols[1]=='inf':
+                reading = 2**32
+            else:
+                reading = eval(cols[1])
             v[idx] = reading
             t[idx] = tstamp
             idx+=1
