@@ -66,9 +66,9 @@ def read_hk_file(filename):
         try:
             tstamp = float(cols[0])
             if cols[1]=='inf':
-                reading = 2**32
-            else:
-                reading = eval(cols[1])
+                continue
+            
+            reading = eval(cols[1])
             v[idx] = reading
             t[idx] = tstamp
             idx+=1
