@@ -28,7 +28,8 @@ def assign_defaults(self):
     self.endobs=None
     self.zero=1e-9
     #self.QubicStudio_ip='134.158.186.233'
-    self.QubicStudio_ip='134.158.187.21'
+    #self.QubicStudio_ip='134.158.187.21'
+    self.QubicStudio_ip='192.168.2.8'
     self.OxfordInstruments_ip='134.158.186.162'
     self.NPIXELS=128
     self.NPIXELS_requested=False # this is a hack to help with the hangup problem
