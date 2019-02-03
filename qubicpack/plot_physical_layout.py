@@ -21,7 +21,15 @@ def mylut(v,vmin=3.0,vmax=9.0):
     rgb=colourmap(vfractional)
     return rgb
 
-def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,lutmax=None):
+def plot_physical_layout(a1=None,
+                         a2=None,
+                         figsize=(16,16),
+                         xwin=True,
+                         lutmin=None,
+                         lutmax=None,
+                         timeline_index=None,
+                         tmin=None,
+                         tmax=None):
     '''
     plot an image of the TES array labeling each pixel
     plot the I-V curves in the appropriate boxes if a1 and/or a2 given
@@ -55,6 +63,26 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
         asic2_obj.assign_asic(2)
         asic2_fontsize=figsize[0]
 
+    # Option: plot timeline instead of I-V
+    if timeline_index is not None:
+        print('plotting timelines in focal plane')
+        tdata = asic1_obj.tdata[timeline_index]
+        timeline_npts = tdata['TIMELINE'].shape[1]
+        ilim=[None,None]
+        tlim=[0,timeline_npts]
+        if tmin is not None:
+            tlim[0] = tmin
+        if tmax is not None:
+            tlim[1] = tmax
+        
+        if lutmax is None:
+            lutmax = tdata['TIMELINE'].max() - tdata['TIMELINE'].min()
+        if lutmin is None:
+            lutmin = 0.0
+
+
+
+
 
     # Option:  a1 and a2 can be simply arrays with numbers to use as the colours for each pixel
     asic1_mapdata = False
@@ -82,16 +110,31 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
             lutmax = max(a2)
 
     asic1_data=True
+    asic1_iv_data=True
+    asic1_timeline_data=True
     asic1_fontsize=8
     asic2_data=True
+    asic2_iv_data=True
+    asic2_timeline_data=True
     asic2_fontsize=8
     if not asic1_obj.exist_iv_data():
+        asic1_iv_data=False
+    if not asic1_obj.exist_timeline_data() or timeline_index is None:
+        asic1_timeline_data=False
+    if not asic1_iv_data and not asic1_timeline_data:
         asic1_data=False
         asic1_fontsize=figsize[0]
         asic1_subttl='ASIC 1 blue background'
     else:
         asic1_subttl='Array %s ASIC1 black curves' % asic1_obj.detector_name
+
+
     if not asic2_obj.exist_iv_data():
+        asic2_iv_data=False
+    if not asic2_obj.exist_timeline_data() or timeline_index is None:
+        asic2_timeline_data=False
+
+    if not asic2_iv_data and not asic2_timeline_data:
         asic2_data=False
         asic2_fontsize=figsize[0]
         asic2_subttl='ASIC 2 green background'
@@ -127,7 +170,7 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
         ngood+=asic2_obj.ngood()
         npix+=asic2_obj.NPIXELS
     subttl=asic1_subttl+'\n'+asic2_subttl
-    if asic1_data or asic2_data:
+    if asic1_iv_data or asic2_iv_data:
         subttl+='\nbad pixels in black background. %i good pixels out of %i = %.1f%%' % (ngood,npix,100.0*ngood/npix)
         subttl+='\nV$_\mathrm{turnover}$ from red to blue (%.1fV to %.1fV)' % (lutmin,lutmax)
     fig.suptitle(subttl,fontsize=fontsize)
@@ -138,8 +181,6 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
             TES=0
             ax[row,col].get_xaxis().set_visible(False)
             ax[row,col].get_yaxis().set_visible(False)
-            #ax[row,col].set_xlim([0,1])
-            #ax[row,col].set_ylim([0,1])
 
             # the pixel identity associated with its physical location in the array
             physpix=asic1_obj.pix_grid[row,col]
@@ -160,13 +201,14 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
                 pix_label=str('%i' % TES)
                 label_colour='yellow'
                 face_colour='blue'
-                if asic1_data:
-                    fontsize=asic1_fontsize
+                curve_colour='black'
+                fontsize=asic1_fontsize
+
+                if asic1_iv_data:
                     Iadjusted=asic1_obj.adjusted_iv(TES)
                     turnover=asic1_obj.turnover(TES)
                     text_x=max(asic1_obj.vbias)
                     text_y=min(Iadjusted)
-                    curve_colour='black'
                     if (asic1_obj.is_good_iv(TES) is not None) and (not asic1_obj.is_good_iv(TES)):
                         face_colour='black'
                         label_colour='white'
@@ -174,6 +216,25 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
                     else:
                         face_colour=mylut(turnover,lutmin,lutmax)
                     asic1_obj.draw_iv(Iadjusted,colour=curve_colour,axis=ax[row,col])
+
+                if asic1_timeline_data:
+                    face_colour='white'
+                    label_colour='black'
+                    tline = asic1_obj.timeline(timeline_index=timeline_index,TES=TES)
+                    ax[row,col].plot(tline,color=curve_colour)
+                    ax[row,col].set_xlim(tlim)
+
+                    # get min/max from timeline window
+                    negpeak = min(tline[ tlim[0]:tlim[1] ])
+                    pospeak = max(tline[ tlim[0]:tlim[1] ])
+                    ilim[0] = negpeak
+                    ilim[1] = pospeak
+                    text_x=tlim[1]
+                    text_y=ilim[0]
+                    ax[row,col].set_xlim(tlim)
+                    ax[row,col].set_ylim(ilim)
+
+                    
                 elif asic1_mapdata:
                     face_colour = mylut(a1[TES_index],lutmin,lutmax)
 
@@ -183,8 +244,9 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
                 pix_label=str('%i' % TES)
                 label_colour='black'
                 face_colour='green'
-                if asic2_data:
-                    fontsize=asic2_fontsize
+                curve_colour='blue'
+                fontsize=asic2_fontsize
+                if asic2_iv_data:
                     Iadjusted=asic2_obj.adjusted_iv(TES)
                     turnover=asic2_obj.turnover(TES)
                     text_x=max(asic2_obj.vbias)
@@ -197,6 +259,22 @@ def plot_physical_layout(a1=None,a2=None,figsize=(16,16),xwin=True,lutmin=None,l
                     else:
                         face_colour=mylut(turnover,lutmin,lutmax)
                     asic2_obj.draw_iv(Iadjusted,colour=curve_colour,axis=ax[row,col])
+
+                if asic2_timeline_data:
+                    face_colour='white'
+                    tline = asic2_obj.timeline(timeline_index=timeline_index,TES=TES)
+                    ax[row,col].plot(tline,color=curve_colour)
+                    ax[row,col].set_xlim(tlim)
+                    # get min/max from timeline window
+                    negpeak = min(tline[ tlim[0]:tlim[1] ])
+                    pospeak = max(tline[ tlim[0]:tlim[1] ])
+                    ilim[0] = negpeak
+                    ilim[1] = pospeak
+                    text_x=tlim[1]
+                    text_y=ilim[0]
+                    ax[row,col].set_xlim(tlim)
+                    ax[row,col].set_ylim(ilim)
+                        
                 elif asic2_mapdata:
                     face_colour = mylut(a2[TES_index],lutmin,lutmax)
 
