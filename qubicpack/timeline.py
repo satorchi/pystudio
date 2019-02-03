@@ -379,7 +379,15 @@ def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None
     return fitparms
 
 
-def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,imax=None):
+def plot_timeline_physical_layout(self,
+                                  timeline_index=None,
+                                  xwin=True,
+                                  imin=None,
+                                  imax=None,
+                                  tmin=None,
+                                  tmax=None,
+                                  lutmin=None,
+                                  lutmax=None):
     '''
     plot the timeline curves in thumbnails mapped to the physical location of each detector
     '''
@@ -396,6 +404,12 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
 
     tdata = self.tdata[timeline_index]
     keys = tdata.keys()    
+    timeline_npts = tdata['TIMELINE'].shape[1]
+    if lutmax is None:
+        lutmax = tdata['TIMELINE'].max() - tdata['TIMELINE'].min()
+    if lutmin is None:
+        lutmin = 0.0
+    
 
     if 'DATE-OBS' in keys:
         timeline_date=tdata['DATE-OBS']
@@ -435,6 +449,8 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
     # the pixel number is between 1 and 248
     TES_translation_table=self.TES2PIX[self.asic_index()]
     ilim=[None,None]
+    tlim=[0,timeline_npts]
+    
     text_y=0.0
     text_x=1.0
     for row in range(nrows):
@@ -448,29 +464,49 @@ def plot_timeline_physical_layout(self,timeline_index=None,xwin=True,imin=None,i
             self.debugmsg('processing PIX %i' % physpix)
 
             if physpix==0:
-                pix_label='EMPTY'
-                label_colour='black'
-                face_colour='black'
+                pix_label = 'EMPTY'
+                label_colour = 'black'
+                face_colour = 'black'
             elif physpix in TES_translation_table:
-                TES=self.pix2tes(physpix)
-                pix_label=str('%i' % TES)
-                label_colour='black'
-                face_colour='white'
-                TES_index=self.TES_index(TES)
-                timeline=self.timeline(TES,timeline_index)
-                I=self.ADU2I(timeline)
+                TES = self.pix2tes(physpix)
+                pix_label = str('%i' % TES)
+                label_colour = 'black'
+                face_colour = 'white'
+                TES_index = self.TES_index(TES)
+                timeline = self.timeline(TES,timeline_index)
+                I = self.ADU2I(timeline)
                 self.debugmsg('plotting TES %i' % TES)
-                plt.sca(ax[row,col])
-                plt.plot(I,color='blue')
+                ax[row,col].plot(I,color='blue')
+
+                # plot subsection of timeline
+                if tmin is None:
+                    tlim[0] = 0
+                else:
+                    tlim[0] = tmin
+                if tmax is None:
+                    tlim[1] = timeline_npts
+                else:
+                    tlim[1] = tmax
+                ax[row,col].set_xlim(tlim)
+
+                # get min/max from timeline window
+                negpeak = min(I[ tlim[0]:tlim[1] ])
+                pospeak = max(I[ tlim[0]:tlim[1] ])
                 if imin is None:
-                    ilim[0]=min(I)
+                    ilim[0] = negpeak
                 else:
-                    ilim[0]=imin
+                    ilim[0] = imin
                 if imax is None:
-                    ilim[1]=max(I)
+                    ilim[1] = pospeak
                 else:
-                    ilim[1]=imax
+                    ilim[1] = imax
                 ax[row,col].set_ylim(ilim)
+
+                # get face colour from peak-to-peak
+                peak2peak = pospeak - negpeak
+                #face_colour = self.lut(peak2peak,lutmin,lutmax)
+                              
+                
 
             else:
                 pix_label='other\nASIC'
