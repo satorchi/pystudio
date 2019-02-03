@@ -64,7 +64,7 @@ def connect_QubicStudio(self,client=None, ip=None, silent=False):
     if ip is None:
         ip=self.QubicStudio_ip
     else:
-        self.assign_QubicStudio_ip(ip)
+        self.QubicStudio_ip=ip
     
     if client is None:
         client = pystudio.get_client()
