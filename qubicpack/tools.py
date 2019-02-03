@@ -281,11 +281,13 @@ def read_qubicstudio_dataset(self,datadir,asic=None):
     subdir['hkextern'] = 'Hks'
     subdir['raw'] = 'Raws'
     subdir['MMR'] = 'Hks'
+    subdir['hkintern'] = 'Hks'
     
     pattern = {}
     pattern['science'] = '%s/%s/science-asic%i-*.fits' % (datadir,subdir['science'],asic)
     pattern['asic'] = '%s/%s/conf-asics-*.fits' % (datadir,subdir['asic'])
     pattern['hkextern'] = '%s/%s/hk-extern-*.fits' % (datadir,subdir['hkextern'])
+    pattern['hkintern'] = '%s/%s/hk-intern-*.fits' % (datadir,subdir['hkextern'])
 
     # check for files, and read if found
     for filetype in pattern.keys():
@@ -298,7 +300,7 @@ def read_qubicstudio_dataset(self,datadir,asic=None):
     
         # we expect only one file of each type (per ASIC)
         if len(files)>1:
-            print('WARNING! There are %i science data files for this ASIC!' % len(files))
+            print('WARNING! There are %i %s data files!' % (len(files),filetype))
             print('         There should only be 1 file.')
 
         
@@ -442,6 +444,7 @@ def read_qubicstudio_asic_fits(self,hdulist):
     npts = len(timestamp)
     for tstamp in timestamp:
         dateobs.append(dt.datetime.fromtimestamp(tstamp))
+    tdata['ASICDATE'] = dateobs
     tdata['BEGASIC%i' % asic] = dateobs[0]
     tdata['ENDASIC%i' % asic] = dateobs[-1]
 
