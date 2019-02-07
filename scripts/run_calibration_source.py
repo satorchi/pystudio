@@ -104,7 +104,7 @@ outfile = startTime.strftime('calsource_%Y%m%dT%H%M%S.dat')
 h=open(outfile,'w')
 for idx,val in enumerate(v):
     tstamp = t[idx].strftime('%s.%f')
-    h.write('%s %i' % (tstamp,val))
+    h.write('%s %i\n' % (tstamp,val))
 h.close()
 print('output file written: %s' % outfile)
 
