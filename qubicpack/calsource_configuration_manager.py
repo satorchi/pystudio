@@ -170,7 +170,7 @@ class calsource_configuration_manager():
                 else:
                     parm = devcmd
                     val = True
-            command[dev][parm] = val
+                command[dev][parm] = val
         return command
 
 
