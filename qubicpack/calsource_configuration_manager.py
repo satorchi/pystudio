@@ -159,8 +159,10 @@ class calsource_configuration_manager():
                 val = devcmd_lst[1]
                 try:
                     command[dev][parm] = eval(val)
+                    print('%s %s = %f (a number)' % (dev,parm,command[dev][parm]))
                 except:
                     command[dev][parm] = val
+                    print('%s %s = %s (a string)' % (dev,parm,command[dev][parm]))
             else:
                 if devcmd=='on' or devcmd=='off':
                     parm = 'onoff'
