@@ -69,7 +69,7 @@ class calibration_source:
         
         if not os.path.exists(dev):
             print('ERROR! No device for the %s Frequency Calibration Source.' % which_freq)
-            self.calsource = None
+            self.s = None
             return None
 
         try:
