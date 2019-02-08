@@ -187,7 +187,6 @@ class calsource_configuration_manager():
         cmdstr, addr = client.recvfrom(self.nbytes)
         received_date = dt.datetime.utcnow()
         received_tstamp = eval(received_date.strftime('%s.%f'))
-        received_date = dt.datetime.fromtimestamp(received_tstamp)
         self.log('received a command at %s' % received_date.strftime(self.date_fmt))
         return received_tstamp, cmdstr
 
@@ -197,19 +196,6 @@ class calsource_configuration_manager():
         interpret the dictionary of commands, and take the necessary steps
         this method is called by the "manager"
         '''
-        now = dt.datetime.utcnow()
-        command['timestamp']['received'] = eval(now.strftime('%s.%f'))
-
-        tstamp = command['timestamp']['sent']        
-        sent_date = dt.datetime.fromtimestamp(tstamp)
-        
-        self.log('received the following commands:')
-        self.log('sent:      %s\nreceived:  %s\n' % (sent_date.strftime(self.date_fmt),now.strftime(self.date_fmt)))
-
-        # this is for debugging.  print all commands
-        for dev in command.keys():
-            for parm in command[dev].keys():
-                self.log('%s: %s = %s' % (dev,parm,command[dev][parm]))
 
         # add None to modulator parameters that are to be set by default
         modulator_configure = False
@@ -257,7 +243,12 @@ class calsource_configuration_manager():
         keepgoing = True
         while keepgoing:
             received_tstamp, cmdstr = self.listen_for_command()
+            received_date = dt.datetime.fromtimestamp(received_tstamp)
             command = self.parse_command_string(cmdstr)
+            sent_date = dt.datetime.fromtimestamp(command['timestamp']['sent'])
+            self.log('command sent:     %s' % sent_date.strftime(self.date_fmt))
+            self.log('command received: %s' % received_date.strftime(self.date_fmt))
+            
             self.interpret_commands(command)
         return
                 
