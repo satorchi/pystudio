@@ -138,12 +138,16 @@ class modulator:
         if offset is None:
             offset=settings['offset']
         if duty is None:
-            duty=settings['dutycycle']
+            duty=settings['duty']
 
         # fix a common error in the shape.  I sometimes write "sqr" instead of "squ"
         if shape.upper().find('SQ') >= 0: shape='SQU'
 
-    
+        print('type<frequency> = %s' % type(frequency))
+        print('type<amplitude> = %s' % type(amplitude))
+        print('type<offset> = %s' % type(offset))
+        print('type<duty> = %s' % type(duty))
+        
         cmd='APPL:%s %.5E, %.2f, %.2f\n' % (shape.upper(),frequency,amplitude,offset)
         self.s.write(cmd)
         cmd='PULS:DCYC %.2f\n' % duty
@@ -180,10 +184,10 @@ class modulator:
         self.s.write('PULS:DCYC?\n')
         ans=self.s.readline()
         val=ans.strip()
-        settings['dutycycle']=eval(val)
+        settings['duty']=eval(val)
         if show:
             print('SHAPE: %s\nFREQUENCY: %.2f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V\nDUTY CYCLE: %.1f%%' % \
-                  (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset'],settings['dutycycle']))
+                  (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset'],settings['duty']))
         return settings
         
     def read_frequency(self):
