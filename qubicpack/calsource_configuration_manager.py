@@ -97,7 +97,8 @@ class calsource_configuration_manager():
                 self.hostname = os.environ['HOST']
             if self.hostname=='calsource':
                 role = 'manager'
-
+        self.role = role
+                
         if role=='manager':
             print('I am the calsource configuration manager')
             self.energenie = PMSDevice('energenie', '1')
