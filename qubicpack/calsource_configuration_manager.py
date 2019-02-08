@@ -178,7 +178,7 @@ class calsource_configuration_manager():
 
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client.bind((self.receiver, broadcast_port))
+        client.bind((self.receiver, self.broadcast_port))
 
         now = dt.datetime.utcnow()
         self.log('client listening on %s' % self.receiver)
