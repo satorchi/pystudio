@@ -12,9 +12,8 @@ A class with methods to send/receive configuration command for the calibration s
 Commands are sent to switch on/off and configure three components: calsource, amplifier, modulator
 '''
 from __future__ import division, print_function
-import socket
+import socket,subprocess,time
 import datetime as dt
-import subprocess
 
 import readline
 readline.parse_and_bind('tab: complete')
@@ -158,7 +157,10 @@ class calsource_configuration_manager():
                 devcmd_lst = devcmd.split('=')
                 parm = devcmd_lst[0]
                 val = devcmd_lst[1]
-                command[dev][parm] = val
+                try:
+                    command[dev][parm] = eval(val)
+                except:
+                    command[dev][parm] = val
             else:
                 if devcmd=='on' or devcmd=='off':
                     parm = 'onoff'
@@ -219,6 +221,7 @@ class calsource_configuration_manager():
                     if state is not None:
                         self.log('switching %s %s' % (command[dev][parm],dev))
                         self.energenie.set_socket_states({self.powersocket[dev]:state})
+                        time.sleep(1)
                     continue
                 
                 if dev=='calsource' and parm=='frequency':
