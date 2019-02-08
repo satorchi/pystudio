@@ -231,8 +231,8 @@ class calsource_configuration_manager():
                     if command[dev][parm] == 'off':
                         state = False
                     if state is not None:
-                        self.log('switching %s %s' % (command[dev][parm],dev)
-                                 self.energenie.set_socket_states({self.powersocket[dev]:state})
+                        self.log('switching %s %s' % (command[dev][parm],dev))
+                        self.energenie.set_socket_states({self.powersocket[dev]:state})
                     continue
                 
                 if dev=='calsource' and parm=='frequency':
