@@ -76,7 +76,7 @@ class calibration_source:
             self.s = serial.Serial(dev,timeout=0.5)
         except:
             print('ERROR! could not connect to the %s Frequency Calibration Source.' % which_freq)
-            self.calsource = None
+            self.s = None
         return
 
     def set_FreqCommand(self,f):
@@ -129,7 +129,13 @@ class calibration_source:
             print('Please initialize the calibration source')
             return None
 
-        if not isinstance(self.s,serial.serialposix.Serial):return None
+        if self.s is None:
+            print('initializing calibration source %s' % self.calsource)
+            self.init(source=self.calsource)
+
+        if self.s is None:
+            return None
+            
         
         cmd=self.set_FreqCommand(f/self.factor)
         self.s.write(cmd)
