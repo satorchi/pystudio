@@ -143,10 +143,10 @@ class modulator:
         # fix a common error in the shape.  I sometimes write "sqr" instead of "squ"
         if shape.upper().find('SQ') >= 0: shape='SQU'
 
-        print('type<frequency> = %s' % type(frequency))
-        print('type<amplitude> = %s' % type(amplitude))
-        print('type<offset> = %s' % type(offset))
-        print('type<duty> = %s' % type(duty))
+        print('type<frequency> = %s = %s' % (type(frequency),frequency))
+        print('type<amplitude> = %s = %s' % (type(amplitude),amplitude))
+        print('type<offset> = %s = %s' % (type(offset),offset))
+        print('type<duty> = %s = %s' % (type(duty),duty))
         
         cmd='APPL:%s %.5E, %.2f, %.2f\n' % (shape.upper(),frequency,amplitude,offset)
         self.s.write(cmd)
