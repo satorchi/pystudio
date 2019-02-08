@@ -208,7 +208,6 @@ class calsource_configuration_manager():
 
         # this is for debugging.  print all commands
         for dev in command.keys():
-            print('%s' % command[dev])
             for parm in command[dev].keys():
                 self.log('%s: %s = %s' % (dev,parm,command[dev][parm]))
 
@@ -226,9 +225,11 @@ class calsource_configuration_manager():
             # check for on/off commands
             for parm in command[dev].keys():
                 if parm=='on':
+                    self.log('switching on %s' % dev)
                     self.energenie.set_socket_states({self.powersocket[dev]:True})
                     continue
                 if parm=='off':
+                    self.log('switching off %s' % dev)
                     self.energenie.set_socket_states({self.powersocket[dev]:False})
                     continue
                 
