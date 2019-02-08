@@ -21,6 +21,10 @@ invoke with command line argument "manager" to run the "manager"
 from __future__ import division, print_function
 import sys
 
+# avoid error message because of Xorg server inaccessible
+import matplotlib
+matplotlib.use('Agg')
+
 from qubicpack.calsource_configuration_manager import calsource_configuration_manager
 
 role = 'commander'
