@@ -237,6 +237,9 @@ class calsource_configuration_manager():
                                            shape=command[dev]['shape'],
                                            offset=command[dev]['offset'],
                                            duty=command[dev]['duty'])
+
+                # wait a bit before trying to read the results
+                time.sleep(1)
                 settings = self.device[dev].read_settings(show=False)
                 if settings is not None:
                     self.log('%s: SHAPE=%s FREQUENCY=%.2f Hz AMPLITUDE=%.3f V OFFSET=%.3f V DUTY CYCLE=%.1f%%' % \
