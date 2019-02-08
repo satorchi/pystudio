@@ -38,6 +38,11 @@ class calsource_configuration_manager():
         The "commander" sends commands via socket to the "manager"
         '''
         self.assign_variables(role)
+        if self.role == 'manager':
+            self.listen_loop()
+        else:
+            self.command_loop()
+            
         return None
 
     def log(self,msg):
