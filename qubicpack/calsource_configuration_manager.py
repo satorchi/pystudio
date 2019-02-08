@@ -20,10 +20,6 @@ import readline
 readline.parse_and_bind('tab: complete')
 readline.parse_and_bind('set editing-mode vi')
 
-# avoid error message because of Xorg server inaccessible
-import matplotlib
-matplotlib.use('Agg')
-
 # the Energenie powerbar
 from PyMS import PMSDevice
 
@@ -106,7 +102,6 @@ class calsource_configuration_manager():
             print('I am the calsource configuration manager')
             self.energenie = PMSDevice('energenie', '1')
             self.device['modulator'] = modulator()
-            self.device['modulator'].init_hp33120a()
             self.device['calsource'] = calibration_source('LF')
 
         # if undefined, try to get hostname from the ethernet device
@@ -126,6 +121,7 @@ class calsource_configuration_manager():
         if self.hostname is None:
             self.hostname = 'localhost'
 
+        self.log('Calibration Source Configuration: I am %s as the %s' % (self.hostname,self.role))
         return None
 
     def parse_command_string(self,cmdstr):
