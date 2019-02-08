@@ -159,10 +159,10 @@ class calsource_configuration_manager():
                 val = devcmd_lst[1]
                 try:
                     command[dev][parm] = eval(val)
-                    print('%s %s = %f (a number)' % (dev,parm,command[dev][parm]))
+                    #print('%s %s = %f (a number)' % (dev,parm,command[dev][parm]))
                 except:
                     command[dev][parm] = val
-                    print('%s %s = %s (a string)' % (dev,parm,command[dev][parm]))
+                    #print('%s %s = %s (a string)' % (dev,parm,command[dev][parm]))
             else:
                 if devcmd=='on' or devcmd=='off':
                     parm = 'onoff'
@@ -237,6 +237,11 @@ class calsource_configuration_manager():
                                            shape=command[dev]['shape'],
                                            offset=command[dev]['offset'],
                                            duty=command[dev]['duty'])
+                settings = self.device[dev].read_settings(show=False)
+                self.log('%s: SHAPE=%s FREQUENCY=%.2f Hz AMPLITUDE=%.3f V OFFSET=%.3f V DUTY CYCLE=%.1f%%' % \
+                         (dev,settings['shape'],settings['frequency'],settings['amplitude'],settings['offset'],settings['duty']))
+
+                
         
         return
 
