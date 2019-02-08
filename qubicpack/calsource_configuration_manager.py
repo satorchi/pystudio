@@ -242,63 +242,63 @@ class calsource_configuration_manager():
                     
                 
         
-            return
+        return
 
 
-        def listen_loop(self):
-            '''
-            keep listening on the socket for commands
-            '''
-            keepgoing = True
-            while keepgoing:
-                received_tstamp, cmdstr = self.listen_for_command()
-                command = self.parse_command_string(cmdstr)
-                self.interpret_commands(command)
-            return
+    def listen_loop(self):
+        '''
+        keep listening on the socket for commands
+        '''
+        keepgoing = True
+        while keepgoing:
+            received_tstamp, cmdstr = self.listen_for_command()
+            command = self.parse_command_string(cmdstr)
+            self.interpret_commands(command)
+        return
                 
-        def send_command(self,cmd_str):
-            '''
-            send commands to the calibration source manager
-            '''
-            s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            s.settimeout(0.2)
-            s.bind((self.hostname,self.broadcast_port))
+    def send_command(self,cmd_str):
+        '''
+        send commands to the calibration source manager
+        '''
+        s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        s.settimeout(0.2)
+        s.bind((self.hostname,self.broadcast_port))
 
-            now=dt.datetime.utcnow()
-            now_str = now.strftime('%s.%f')
-            len_nowstr = len(now_str)
-            len_remain = nbytes - len_nowstr - 1
-            fmt = '%%%is %%%is' % (len_nowstr,len_remain)
-            msg = fmt % (now_str,cmd_str)
-            self.log('sending socket data: %s' % msg)
+        now=dt.datetime.utcnow()
+        now_str = now.strftime('%s.%f')
+        len_nowstr = len(now_str)
+        len_remain = nbytes - len_nowstr - 1
+        fmt = '%%%is %%%is' % (len_nowstr,len_remain)
+        msg = fmt % (now_str,cmd_str)
+        self.log('sending socket data: %s' % msg)
 
-            s.sendto(msg, (self.receiver, self.broadcast_port))
-            s.close()
-            return
+        s.sendto(msg, (self.receiver, self.broadcast_port))
+        s.close()
+        return
 
-        def command_loop(self):
-            '''
-            command line interface to send commands
-            '''
-            keepgoing = True
-            while keepgoing:
-                ans=raw_input('Enter command ("help" for list): ')
-                cmd_str = ans.strip().lower()
-                if cmd_str.find('help')>=0:
-                    self.command_help()
-                    continue
+    def command_loop(self):
+        '''
+        command line interface to send commands
+        '''
+        keepgoing = True
+        while keepgoing:
+            ans=raw_input('Enter command ("help" for list): ')
+            cmd_str = ans.strip().lower()
+            if cmd_str.find('help')>=0:
+                self.command_help()
+                continue
 
-                if cmd_str.find('quit')>=0:
-                    keepgoing = False
-                    continue
+            if cmd_str.find('quit')>=0:
+                keepgoing = False
+                continue
 
-                if cmd_str == 'q':
-                    keepgoing = False
-                    continue
+            if cmd_str == 'q':
+                keepgoing = False
+                continue
 
-                self.send_command(cmd_str)
+            self.send_command(cmd_str)
 
                 
-            return
+        return
                 
