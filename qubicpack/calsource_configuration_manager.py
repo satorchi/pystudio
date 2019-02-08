@@ -206,6 +206,7 @@ class calsource_configuration_manager():
 
         # this is for debugging.  print all commands
         for dev in command.keys():
+            print('%s' % command[dev])
             for parm in command[dev].keys():
                 print('%s: %s = %s' % (dev,parm,command[dev][parm]))
 
