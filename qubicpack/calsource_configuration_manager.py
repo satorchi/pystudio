@@ -138,15 +138,16 @@ class calsource_configuration_manager():
 
         # the returned command dictionary is a dictionary of dictionaries
         command = {}
+        command['timestamp'] = {}
         for dev in self.device_list:
             command[dev] = {}
 
         command_lst = cmdstr.strip().split()
         tstamp_str = command_lst[0]
         try:
-            command['timestamp'] = eval(tstamp_str)
+            command['timestamp']['sent'] = eval(tstamp_str)
         except:
-            command['timestamp'] = tstamp_str
+            command['timestamp']['sent'] = tstamp_str
             
         command_lst = command_lst[1:]
         for cmd in command_lst:
@@ -197,18 +198,19 @@ class calsource_configuration_manager():
         this method is called by the "manager"
         '''
         now = dt.datetime.utcnow()
-        tstamp = command['timestamp']
-        
+        command['timestamp']['received'] = eval(now.strftime('%s.%f'))
+
+        tstamp = command['timestamp']['sent']        
         sent_date = dt.datetime.fromtimestamp(tstamp)
         
-        print('received the following commands:')
-        print('sent:      %s\nreceived:  %s\n' % (sent_date.strftime(self.date_fmt),now.strftime(self.date_fmt)))
+        self.log('received the following commands:')
+        self.log('sent:      %s\nreceived:  %s\n' % (sent_date.strftime(self.date_fmt),now.strftime(self.date_fmt)))
 
         # this is for debugging.  print all commands
         for dev in command.keys():
             print('%s' % command[dev])
             for parm in command[dev].keys():
-                print('%s: %s = %s' % (dev,parm,command[dev][parm]))
+                self.log('%s: %s = %s' % (dev,parm,command[dev][parm]))
 
         # add None to modulator parameters that are to be set by default
         modulator_configure = False
@@ -220,6 +222,7 @@ class calsource_configuration_manager():
                 
 
         for dev in command.keys():
+
             # check for on/off commands
             for parm in command[dev].keys():
                 if parm=='on':
@@ -228,7 +231,7 @@ class calsource_configuration_manager():
                 if parm=='off':
                     self.energenie.set_socket_states({self.powersocket[dev]:False})
                     continue
-
+                
                 if dev=='calsource' and parm=='frequency':
                     self.device[dev].set_frequency(command[dev][parm])
                     continue
@@ -240,9 +243,6 @@ class calsource_configuration_manager():
                                            shape=command[dev]['shape'],
                                            offset=command[dev]['offset'],
                                            duty=command[dev]['duty'])
-                                               
-                    
-                
         
         return
 
