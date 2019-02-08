@@ -196,12 +196,13 @@ class calsource_configuration_manager():
         interpret the dictionary of commands, and take the necessary steps
         this method is called by the "manager"
         '''
-
+        now = dt.datetime.utcnow()
         tstamp = command['timestamp']
         
         sent_date = dt.datetime.fromtimestamp(tstamp)
+        
         print('received the following commands:')
-        print('sent:      %s\nreceived:  %s\n' % (sent_date.strftime(self.date_fmt),received_date.strftime(self.date_fmt)))
+        print('sent:      %s\nreceived:  %s\n' % (sent_date.strftime(self.date_fmt),now.strftime(self.date_fmt)))
 
         # this is for debugging.  print all commands
         for dev in command.keys():
