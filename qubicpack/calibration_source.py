@@ -145,7 +145,7 @@ class calibration_source:
             of=self.output_Frequency(response[1:])
         else:
             print("communication error")
-            of=output_Frequency(response[1:])
+            return None
     
         print('The output frequency is %.3f GHz' % of)
         return of
