@@ -230,7 +230,7 @@ class calsource_configuration_manager():
                     if command[dev][parm] == 'off':
                         state = False
                     if state is not None:
-                        msg = 'switch %s %s: ' % (command[dev][parm],dev))
+                        msg = 'switch %s %s: ' % (command[dev][parm],dev)
                         try:
                             self.energenie.set_socket_states({self.powersocket[dev]:state})
                             time.sleep(4) # wait a bit after switching off/on
