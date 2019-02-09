@@ -154,8 +154,8 @@ class calsource_configuration_manager():
         for cmd in command_lst:
             cmd_lst = cmd.split(':')
             try:
-                dev = cmd_lst[0]
                 devcmd = cmd_lst[1]
+                dev = cmd_lst[0]
             except:
                 # if we forget to specify the device, use the most recent one
                 devcmd = cmd_lst[0]
