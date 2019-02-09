@@ -337,7 +337,7 @@ class calsource_configuration_manager():
         len_remain = self.nbytes - len_nowstr - 1
         fmt = '%%%is %%%is' % (len_nowstr,len_remain)
         msg = fmt % (now_str,cmd_str)
-        self.log('sending socket data: %s' % msg)
+        #self.log('sending socket data: %s' % msg)
 
         s.sendto(msg, (self.receiver, self.broadcast_port))
         s.close()
