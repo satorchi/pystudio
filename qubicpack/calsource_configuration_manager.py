@@ -245,9 +245,9 @@ class calsource_configuration_manager():
                     of = self.device[dev].set_Frequency(command[dev][parm])
                     msg = '%s:%s=%.1f: ' % (dev,parm,command[dev][parm])
                     if of is None:
-                        msg += 'OK.  synthesiser frequency=%.2fGHz' % of
-                    else:
                         msg += 'FAILED'
+                    else:
+                        msg += 'OK.  synthesiser frequency=%.2fGHz' % of
                     self.log(msg)
                     ack += ' | %s' % msg
                     continue
