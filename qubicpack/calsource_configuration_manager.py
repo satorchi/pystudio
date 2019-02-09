@@ -208,6 +208,8 @@ class calsource_configuration_manager():
         this method is called by the "manager"
         '''
 
+        ack = ''
+
         # add None to modulator parameters that are to be set by default
         modulator_configure = False
         for parm in ['frequency','amplitude','shape','offset','duty']:
@@ -228,13 +230,26 @@ class calsource_configuration_manager():
                     if command[dev][parm] == 'off':
                         state = False
                     if state is not None:
-                        self.log('switching %s %s' % (command[dev][parm],dev))
-                        self.energenie.set_socket_states({self.powersocket[dev]:state})
-                        if state: time.sleep(4) # wait a bit after switching on
+                        msg = 'switch %s %s: ' % (command[dev][parm],dev))
+                        try:
+                            self.energenie.set_socket_states({self.powersocket[dev]:state})
+                            time.sleep(4) # wait a bit after switching off/on
+                            msg += 'OK'                        
+                        except:
+                            msg += 'FAILED'
+                        ack += msg
+                        self.log(msg)
                     continue
                 
                 if dev=='calsource' and parm=='frequency':
-                    self.device[dev].set_Frequency(command[dev][parm])
+                    of = self.device[dev].set_Frequency(command[dev][parm])
+                    msg = '%s:%s=%.1f: ' % (dev,parm,command[dev][parm])
+                    if of is None:
+                        msg += 'OK.  synthesiser frequency=%.2fGHz' % of
+                    else:
+                        msg += 'FAILED'
+                    self.log(msg)
+                    ack += ' | %s' % msg
                     continue
 
             # handle the modulator separately
@@ -248,17 +263,20 @@ class calsource_configuration_manager():
                 # wait a bit before trying to read the results
                 time.sleep(1)
                 settings = self.device[dev].read_settings(show=False)
-                if settings is not None:
-                    self.log('%s: SHAPE=%s FREQUENCY=%.2f Hz AMPLITUDE=%.3f V OFFSET=%.3f V DUTY CYCLE=%.1f%%' % \
-                             (dev,settings['shape'],
-                              settings['frequency'],
-                              settings['amplitude'],
-                              settings['offset'],
-                              settings['duty']))
-
+                if settings is None:
+                    msg = '%s: COMMAND FAILED' % dev
+                else:
+                    msg = '%s: SHAPE=%s FREQUENCY=%.2f Hz AMPLITUDE=%.3f V OFFSET=%.3f V DUTY CYCLE=%.1f%%' % \
+                        (dev,settings['shape'],
+                         settings['frequency'],
+                         settings['amplitude'],
+                         settings['offset'],
+                         settings['duty'])
+                    
+                self.log(msg)
+                ack += ' | %s' % msg
                 
-        
-        return
+        return ack
 
 
     def listen_loop(self):
@@ -274,7 +292,8 @@ class calsource_configuration_manager():
             self.log('command sent:     %s' % sent_date.strftime(self.date_fmt))
             self.log('command received: %s' % received_date.strftime(self.date_fmt))
             
-            self.interpret_commands(command)
+            ack = self.interpret_commands(command)
+            print('acknowledgement to be sent: %s' % ack)
         return
                 
     def send_command(self,cmd_str):
