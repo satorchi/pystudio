@@ -121,15 +121,24 @@ class modulator:
             if s is None:return False
 
         # default values
-        if frequency is None and shape is None and amplitude is None and offset is None and duty is None:
-            frequency=1.0
-            shape='SQU'
-            amplitude=5.0
-            offset=2.5
-            duty=50.0
+        default_values = {}
+        default_values['frequency'] = 1.0
+        default_values['shape'] = 'SQU'
+        default_values['amplitude'] = 5.0
+        default_values['offset'] = 2.5
+        default_values['duty'] = 50.0
         
-        # read the current values for the default values if necessary
-        settings=self.read_settings(show=False)
+        # set default values if *no* options given
+        if frequency is None and shape is None and amplitude is None and offset is None and duty is None:
+            settings = default_values
+        else:        
+            # read the current values for the default values if necessary
+            settings = self.read_settings(show=False)
+            
+        # is something went wrong with reading, use the default values
+        if settings is None:
+            settings = default_values
+            
         if frequency is None:
             frequency=settings['frequency']
         if shape is None:
@@ -146,8 +155,10 @@ class modulator:
 
         cmd='APPL:%s %.5E, %.2f, %.2f\n' % (shape.upper(),frequency,amplitude,offset)
         self.s.write(cmd)
+        time.sleep(0.5)
         cmd='PULS:DCYC %.2f\n' % duty
         self.s.write(cmd)
+        time.sleep(0.5)
         return True
 
     def read_settings(self,show=True):
