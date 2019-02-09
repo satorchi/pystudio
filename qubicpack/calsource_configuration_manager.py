@@ -147,12 +147,19 @@ class calsource_configuration_manager():
             command['timestamp']['sent'] = eval(tstamp_str)
         except:
             command['timestamp']['sent'] = tstamp_str
-            
+
+        
         command_lst = command_lst[1:]
+        dev = 'unknown'
         for cmd in command_lst:
             cmd_lst = cmd.split(':')
-            dev = cmd_lst[0]
-            devcmd = cmd_lst[1]
+            try:
+                dev = cmd_lst[0]
+                devcmd = cmd_lst[1]
+            except:
+                # if we forget to specify the device, use the most recent one
+                devcmd = cmd_lst
+                
             if devcmd.find('=')>0:
                 devcmd_lst = devcmd.split('=')
                 parm = devcmd_lst[0]
@@ -223,7 +230,7 @@ class calsource_configuration_manager():
                     if state is not None:
                         self.log('switching %s %s' % (command[dev][parm],dev))
                         self.energenie.set_socket_states({self.powersocket[dev]:state})
-                        if state: time.sleep(2) # wait a bit after switching on
+                        if state: time.sleep(4) # wait a bit after switching on
                     continue
                 
                 if dev=='calsource' and parm=='frequency':
