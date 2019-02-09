@@ -208,7 +208,7 @@ class calsource_configuration_manager():
         this method is called by the "manager"
         '''
 
-        ack = ''
+        ack = '%s' % dt.datetime.utcnow().strftime('%s.%f')
 
         # add None to modulator parameters that are to be set by default
         modulator_configure = False
@@ -237,7 +237,7 @@ class calsource_configuration_manager():
                             msg += 'OK'                        
                         except:
                             msg += 'FAILED'
-                        ack += msg
+                        ack += ' | %s' % msg
                         self.log(msg)
                     continue
                 
