@@ -282,7 +282,7 @@ class calsource_configuration_manager():
         now=dt.datetime.utcnow()
         now_str = now.strftime('%s.%f')
         len_nowstr = len(now_str)
-        len_remain = nbytes - len_nowstr - 1
+        len_remain = self.nbytes - len_nowstr - 1
         fmt = '%%%is %%%is' % (len_nowstr,len_remain)
         msg = fmt % (now_str,cmd_str)
         self.log('sending socket data: %s' % msg)
