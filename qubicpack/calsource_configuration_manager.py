@@ -197,7 +197,7 @@ class calsource_configuration_manager():
         received_date = dt.datetime.utcnow()
         received_tstamp = eval(received_date.strftime('%s.%f'))
         self.log('received a command from %s at %s' % (addr,received_date.strftime(self.date_fmt)))
-        return received_tstamp, cmdstr, addr
+        return received_tstamp, cmdstr, addr[0]
 
     def listen_for_acknowledgement(self):
         '''
