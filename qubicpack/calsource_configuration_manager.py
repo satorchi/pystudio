@@ -59,7 +59,7 @@ class calsource_configuration_manager():
         '''
         print some help text to screen
         '''
-        device_list_str = ', '.joint(self.device_list)
+        device_list_str = ', '.join(self.device_list)
         txt  = 'Calibration Source Commander:  Help\n'
         txt += 'commands should be given in the following format:\n'
         txt += '    <device>:<parameter>[=<value>]\n\n'
@@ -223,7 +223,7 @@ class calsource_configuration_manager():
                     if state is not None:
                         self.log('switching %s %s' % (command[dev][parm],dev))
                         self.energenie.set_socket_states({self.powersocket[dev]:state})
-                        time.sleep(1)
+                        if state: time.sleep(2) # wait a bit after switching on
                     continue
                 
                 if dev=='calsource' and parm=='frequency':
