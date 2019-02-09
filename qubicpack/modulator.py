@@ -103,6 +103,7 @@ class modulator:
         s.write('\n*CLS\n')
         time.sleep(0.5)
         s.write('SYST:REM\n')
+        time.sleep(0.5)
 
         self.s=s
         return s
