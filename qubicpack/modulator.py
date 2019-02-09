@@ -172,14 +172,25 @@ class modulator:
             print("what is wrong here? received ans=%s" % vals)
             return None
         
-        val=vals[1].split(',')
-        settings['frequency']=eval(val[0])
-        settings['amplitude']=eval(val[1])
-        settings['offset']   =eval(val[2])
+        try:
+            val=vals[1].split(',')
+            settings['frequency']=eval(val[0])
+            settings['amplitude']=eval(val[1])
+            settings['offset']   =eval(val[2])
+        except:
+            print("Could not read signal generator settings: %s" % vals)
+            return None
+            
+            
         self.s.write('PULS:DCYC?\n')
         ans=self.s.readline()
         val=ans.strip()
-        settings['duty']=eval(val)
+        try:
+            settings['duty']=eval(val)
+        except:
+            print('Could not read the signal generator duty cycle: %s' % val)
+            return None
+        
         if show:
             print('SHAPE: %s\nFREQUENCY: %.2f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V\nDUTY CYCLE: %.1f%%' % \
                   (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset'],settings['duty']))
