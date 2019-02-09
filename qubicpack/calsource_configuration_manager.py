@@ -215,11 +215,16 @@ class calsource_configuration_manager():
         try:
             ack, addr = client.recvfrom(self.nbytes)
         except:
+            self.log('no response from Calibration Source Manager')
             return None
         received_date = dt.datetime.utcnow()
         received_tstamp = eval(received_date.strftime('%s.%f'))
         self.log('acknowledgement from %s at %s' % (addr,received_date.strftime(self.date_fmt)))
-        self.log(ack)
+        # clean up the acknowledgement
+        ack_cleaned = ''
+        for line in ack.strip().split('|'):
+            ack_cleaned += '%s\n' % line.strip()
+        self.log(ack_cleaned)
         return received_tstamp, ack
     
 
@@ -380,13 +385,6 @@ class calsource_configuration_manager():
 
             self.send_command(cmd_str)
             response = self.listen_for_acknowledgement()
-            if response is None:
-                self.log('no response from Calibration Source Manager')            
-            else:
-                tstamp = response[0]
-                ack = response[1]
-                self.log(ack)
-                
                 
         return
                 
