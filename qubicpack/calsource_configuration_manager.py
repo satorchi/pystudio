@@ -186,8 +186,6 @@ class calsource_configuration_manager():
         listen for a command string arriving on socket
         this message is called by the "manager"
         '''
-
-
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         client.bind((self.receiver, self.broadcast_port))
@@ -198,9 +196,32 @@ class calsource_configuration_manager():
         cmdstr, addr = client.recvfrom(self.nbytes)
         received_date = dt.datetime.utcnow()
         received_tstamp = eval(received_date.strftime('%s.%f'))
-        self.log('received a command at %s' % received_date.strftime(self.date_fmt))
-        return received_tstamp, cmdstr
+        self.log('received a command from %s at %s' % (addr,received_date.strftime(self.date_fmt)))
+        return received_tstamp, cmdstr, addr
 
+    def listen_for_acknowledgement(self):
+        '''
+        listen for an acknowledgement string arriving on socket
+        this message is called by the "commander" after sending a command
+        '''
+        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        client.settimeout(25)
+        client.bind((self.hostname, self.broadcast_port))
+
+        now = dt.datetime.utcnow()
+        self.log('listening for acknowledgement on %s' % self.hostname)
+
+        try:
+            ack, addr = client.recvfrom(self.nbytes)
+        except:
+            return None
+        received_date = dt.datetime.utcnow()
+        received_tstamp = eval(received_date.strftime('%s.%f'))
+        self.log('acknowledgement from %s at %s' % (addr,received_date.strftime(self.date_fmt)))
+        self.log(ack)
+        return received_tstamp, ack
+    
 
     def interpret_commands(self,command):
         '''
@@ -285,7 +306,7 @@ class calsource_configuration_manager():
         '''
         keepgoing = True
         while keepgoing:
-            received_tstamp, cmdstr = self.listen_for_command()
+            received_tstamp, cmdstr, addr = self.listen_for_command()
             received_date = dt.datetime.fromtimestamp(received_tstamp)
             command = self.parse_command_string(cmdstr)
             sent_date = dt.datetime.fromtimestamp(command['timestamp']['sent'])
@@ -293,7 +314,7 @@ class calsource_configuration_manager():
             self.log('command received: %s' % received_date.strftime(self.date_fmt))
             
             ack = self.interpret_commands(command)
-            print('acknowledgement to be sent: %s' % ack)
+            self.send_acknowledgement(ack,addr)
         return
                 
     def send_command(self,cmd_str):
@@ -317,6 +338,26 @@ class calsource_configuration_manager():
         s.close()
         return
 
+    def send_acknowledgement(self,ack,addr):
+        '''
+        send an acknowledgement to the commander
+        '''
+        s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        s.settimeout(0.2)
+        s.bind((self.hostname,self.broadcast_port))
+
+        now=dt.datetime.utcnow()
+        now_str = now.strftime('%s.%f')
+        len_nowstr = len(now_str)
+        len_remain = self.nbytes - len_nowstr - 1
+        fmt = '%%%is %%%is' % (len_nowstr,len_remain)
+        msg = fmt % (now_str,ack)
+
+        s.sendto(msg, (addr, self.broadcast_port))
+        s.close()
+        return
+    
     def command_loop(self):
         '''
         command line interface to send commands
@@ -338,7 +379,14 @@ class calsource_configuration_manager():
                 continue
 
             self.send_command(cmd_str)
-
+            response = self.listen_for_acknowledgement()
+            if response is None:
+                self.log('no response from Calibration Source Manager')            
+            else:
+                tstamp = response[0]
+                ack = response[1]
+                self.log(ack)
+                
                 
         return
                 
