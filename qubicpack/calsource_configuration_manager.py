@@ -158,7 +158,7 @@ class calsource_configuration_manager():
                 devcmd = cmd_lst[1]
             except:
                 # if we forget to specify the device, use the most recent one
-                devcmd = cmd_lst
+                devcmd = cmd_lst[0]
                 
             if devcmd.find('=')>0:
                 devcmd_lst = devcmd.split('=')
