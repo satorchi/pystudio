@@ -227,7 +227,7 @@ class calsource_configuration_manager():
                     continue
                 
                 if dev=='calsource' and parm=='frequency':
-                    self.device[dev].set_frequency(command[dev][parm])
+                    self.device[dev].set_Frequency(command[dev][parm])
                     continue
 
             # handle the modulator separately
