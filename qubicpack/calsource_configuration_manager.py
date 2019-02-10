@@ -417,7 +417,7 @@ class calsource_configuration_manager():
                 self.command_help()
                 continue
 
-            if if 'quit' in cmd_list or 'q' in cmd_list:
+            if 'quit' in cmd_list or 'q' in cmd_list:
                 keepgoing = False
                 continue
 
