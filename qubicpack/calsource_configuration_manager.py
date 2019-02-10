@@ -317,9 +317,9 @@ class calsource_configuration_manager():
                 if state is not None:
                     states[self.powersocket[dev]] = state
                     msg += 'switch %s %s: ' % (command[dev][parm],dev)
-                    self.log(msg)
         if states:
             msg += 'power on/off command %s' % self.onoff(states)
+            self.log(msg)
             ack += ' | %s' % msg
 
         # do configuration command for calsource
