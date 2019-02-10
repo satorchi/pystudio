@@ -42,7 +42,7 @@ class modulator:
         '''
         check if the signal generator is connected
         '''
-        is self.s is None: return False
+        if self.s is None: return False
         
         self.s.write('*IDN?\n')
         id = self.s.readline()
