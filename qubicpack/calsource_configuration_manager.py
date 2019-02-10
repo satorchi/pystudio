@@ -28,6 +28,9 @@ from qubicpack.calibration_source import calibration_source
 # the signal generator for modulating the calibration source
 from qubicpack.modulator import modulator
 
+# the Arduino Uno
+from qubicpack.arduino import arduino
+
 class calsource_configuration_manager():
 
     def __init__(self,role=None):
@@ -67,7 +70,10 @@ class calsource_configuration_manager():
         for dev in self.device_list:
             valid_commands = ', '.join(self.valid_commands[dev])
             txt += 'valid commands for %s: %s\n' % (dev,valid_commands)
-        txt += 'Example:\n'
+        txt += 'For the modulator, frequency is given in Hz\n'
+        txt += 'For the calibration source, frequency is given in GHz\n'
+        txt += 'For the arduino, duration is given in seconds.  Note that this command will immediately start an acquisition.\n'
+        txt += '\nExample:\n'
         txt += 'calsource:on amplifier:on modulator:on modulator:frequency=0.333 modulator:duty=33 modulator:shape=squ calsource:frequency=150\n'
         print(txt)
         return
@@ -116,6 +122,8 @@ class calsource_configuration_manager():
             self.energenie = PMSDevice('energenie', '1')
             self.device['modulator'] = modulator()
             self.device['calsource'] = calibration_source('LF')
+            self.device['arduino']   = arduino()
+            self.device['arduino'].init()
 
         # if undefined, try to get hostname from the ethernet device
         if self.hostname is None:
@@ -218,18 +226,21 @@ class calsource_configuration_manager():
         self.log('received a command from %s at %s' % (addr,received_date.strftime(self.date_fmt)))
         return received_tstamp, cmdstr, addr[0]
 
-    def listen_for_acknowledgement(self):
+    def listen_for_acknowledgement(self,timeout=None):
         '''
         listen for an acknowledgement string arriving on socket
         this message is called by the "commander" after sending a command
         '''
+        if timeout is None: timeout = 25
+        if timeout < 25: timeout = 25
+        
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client.settimeout(25)
+        client.settimeout(timeout)
         client.bind((self.hostname, self.broadcast_port))
 
         now = dt.datetime.utcnow()
-        self.log('listening for acknowledgement on %s' % self.hostname)
+        self.log('waiting up to %.0f seconds for acknowledgement on %s' % (timeout,self.hostname))
 
         try:
             ack, addr = client.recvfrom(self.nbytes)
@@ -297,6 +308,8 @@ class calsource_configuration_manager():
                     ack += ' | %s' % msg
                     continue
 
+                
+
             # handle the modulator separately
             if dev=='modulator' and modulator_configure:
                 self.device[dev].configure(frequency=command[dev]['frequency'],
@@ -320,6 +333,15 @@ class calsource_configuration_manager():
                     
                 self.log(msg)
                 ack += ' | %s' % msg
+
+
+            # run the Arduino last of all
+            if dev=='arduino':
+                for parm in command[dev].keys():
+                    if parm=='duration':
+                        filename = self.device[dev].acquire(duration=command[dev][parm],save=True)
+                        ack += ' | Arduino data saved to file: %s' % filename
+
                 
         return ack
 
@@ -390,20 +412,29 @@ class calsource_configuration_manager():
         while keepgoing:
             ans=raw_input('Enter command ("help" for list): ')
             cmd_str = ans.strip().lower()
-            if cmd_str.find('help')>=0:
+            cmd_list = cmd_str.split()
+            if 'help' in cmd_list or 'h' in cmd_list:
                 self.command_help()
                 continue
 
-            if cmd_str.find('quit')>=0:
-                keepgoing = False
-                continue
-
-            if cmd_str == 'q':
+            if if 'quit' in cmd_list or 'q' in cmd_list:
                 keepgoing = False
                 continue
 
             self.send_command(cmd_str)
-            response = self.listen_for_acknowledgement()
+
+            # check if we're doing an acquisition
+            for cmd in cmd_list:
+                if cmd.find('arduino:duration=')==0:
+                    duration_str = cmd.split('=')[1]
+                    try:
+                        duration = eval(duration_str)
+                    except:
+                        self.log('Could not interpret Arduino duration')
+                        duration = 0
+                    break
+            
+            response = self.listen_for_acknowledgement(timeout=duration)
                 
         return
                 
