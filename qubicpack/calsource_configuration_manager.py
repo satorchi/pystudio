@@ -64,9 +64,9 @@ class calsource_configuration_manager():
         txt += 'commands should be given in the following format:\n'
         txt += '    <device>:<parameter>[=<value>]\n\n'
         txt += '    valid devices: %s\n' % device_list_str
-        txt += '    valid commands for all devices: on, off\n'
-        txt += '    valid commands for the modulator: frequency, amplitude, offset, duty, shape\n'
-        txt += '    valid command for the calibration source: frequency\n\n'
+        for dev in self.device_list:
+            valid_commands = ', '.join(self.valid_commands[dev])
+            txt += 'valid commands for %s: %s\n' % (dev,valid_commands)
         txt += 'Example:\n'
         txt += 'calsource:on amplifier:on modulator:on modulator:frequency=0.333 modulator:duty=33 modulator:shape=squ calsource:frequency=150\n'
         print(txt)
@@ -79,7 +79,14 @@ class calsource_configuration_manager():
         '''
         self.role = role
         self.date_fmt = '%Y-%m-%d %H:%M:%S.%f'
-        self.device_list = ['modulator','calsource','lamp','amplifier']
+        self.device_list = ['modulator','calsource','lamp','amplifier','arduino']
+        self.valid_commands = {}
+        self.valid_commands['modulator'] = ['on','off','frequency','amplitude','offset','duty','shape']
+        self.valid_commands['calsource'] = ['on','off','frequency']
+        self.valid_commands['amplifier'] = ['on','off']
+        self.valid_commands['lamp' ]     = ['on','off']
+        self.valid_commands['arduino']   = ['duration']
+        
         self.device = {}
         self.powersocket = {}
         for idx,dev in enumerate(self.device_list):
@@ -159,24 +166,36 @@ class calsource_configuration_manager():
             except:
                 # if we forget to specify the device, use the most recent one
                 devcmd = cmd_lst[0]
-                
+
+            if dev not in self.device_list:
+                continue
+            
             if devcmd.find('=')>0:
                 devcmd_lst = devcmd.split('=')
                 parm = devcmd_lst[0]
                 val = devcmd_lst[1]
+
+                if parm not in self.valid_commands[dev]:
+                    continue
+                
                 try:
                     command[dev][parm] = eval(val)
                     #print('%s %s = %f (a number)' % (dev,parm,command[dev][parm]))
                 except:
                     command[dev][parm] = val
                     #print('%s %s = %s (a string)' % (dev,parm,command[dev][parm]))
+                    
             else:
                 if devcmd=='on' or devcmd=='off':
                     parm = 'onoff'
                     val = devcmd
+                    if devcmd not in self.valid_commands[dev]:
+                        continue
                 else:
                     parm = devcmd
                     val = True
+                    if parm not in self.valid_commands[dev]:
+                        continue
                 command[dev][parm] = val
         return command
 
