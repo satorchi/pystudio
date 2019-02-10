@@ -66,13 +66,14 @@ class calsource_configuration_manager():
         txt  = 'Calibration Source Commander:  Help\n'
         txt += 'commands should be given in the following format:\n'
         txt += '    <device>:<parameter>[=<value>]\n\n'
-        txt += '    valid devices: %s\n' % device_list_str
+        txt += 'valid devices: %s\n' % device_list_str
         for dev in self.device_list:
             valid_commands = ', '.join(self.valid_commands[dev])
             txt += 'valid commands for %s: %s\n' % (dev,valid_commands)
-        txt += 'For the modulator, frequency is given in Hz\n'
+        txt += '\nFor the modulator, frequency is given in Hz\n'
         txt += 'For the calibration source, frequency is given in GHz\n'
-        txt += 'For the arduino, duration is given in seconds.  Note that this command will immediately start an acquisition.\n'
+        txt += '\nFor the arduino, duration is given in seconds.\n'
+        txt += 'Note that this command will immediately start an acquisition.\n'
         txt += '\nExample:\n'
         txt += 'calsource:on amplifier:on modulator:on modulator:frequency=0.333 modulator:duty=33 modulator:shape=squ calsource:frequency=150\n'
         print(txt)
@@ -424,6 +425,7 @@ class calsource_configuration_manager():
             self.send_command(cmd_str)
 
             # check if we're doing an acquisition
+            duration = 0
             for cmd in cmd_list:
                 if cmd.find('arduino:duration=')==0:
                     duration_str = cmd.split('=')[1]
