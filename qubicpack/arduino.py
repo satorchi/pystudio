@@ -91,7 +91,7 @@ class arduino:
         t = np.array(arduino_t)
         a = np.array(arduino_a)
         if save:
-            self.write_date(t,a)
+            return self.write_date(t,a)
         
         return t,a
 
