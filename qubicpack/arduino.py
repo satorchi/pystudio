@@ -88,8 +88,22 @@ class arduino:
             except:
                 pass
         
-        return arduino_t,arduino_a
+        return np.array(arduino_t), np.array(arduino_a)
 
+    def write_data(self,t,v):
+        '''
+        write the result to file
+        '''
+        startTime = t[0]
+        outfile = startTime.strftime('calsource_%Y%m%dT%H%M%S.dat')
+        h=open(outfile,'w')
+        for idx,val in enumerate(v):
+            tstamp = t[idx].strftime('%s.%f')
+            h.write('%s %i\n' % (tstamp,val))
+        h.close()
+        print('output file written: %s' % outfile)
+        return outfile
+    
     def sin_curve(self,t,period,amplitude,offset,shift):
         '''
         the sine curve to fit to the modulated signal
@@ -99,6 +113,8 @@ class arduino:
         return val
 
 
+
+    
     def fit_signal(self,t,a,period=None,amplitude=None,offset=None,shift=None):
         '''
         fit the signal data to a sine curve
@@ -123,8 +139,11 @@ class arduino:
         return result
 
 
-
-    #### This needs work !! #####################################################
+    #############################################################################################
+    #### The following was intended to be a method within the qubicpack object
+    #### to configure QUBIC via PyStudio and acquire a timeline, including data from the arduino.
+    #### This will probably never be used.          #############################################
+    """
     def acquire_timeline(self,go,save=True,modulation=True):
         '''
         get a data timeline and the calibration source modulation at the same time
@@ -226,7 +245,8 @@ class arduino:
         
         if save:go.tdata.append(tdata)
         return timeline
-        
+       """
+    
 
 
 
