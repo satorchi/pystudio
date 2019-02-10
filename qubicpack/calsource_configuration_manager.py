@@ -321,6 +321,8 @@ class calsource_configuration_manager():
             msg += 'power on/off command %s' % self.onoff(states)
             self.log(msg)
             ack += ' | %s' % msg
+            # wait before doing other stuff
+            time.sleep(3)
 
         # do configuration command for calsource
         dev = 'calsource'
