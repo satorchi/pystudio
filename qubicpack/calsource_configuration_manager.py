@@ -304,9 +304,9 @@ class calsource_configuration_manager():
                 
 
         # do all on/off commands first
+        parm = 'onoff'
         for dev in command.keys():
-            if 'onoff' in command[dev].keys():
-                parm = 'onoff':
+            if parm in command[dev].keys():
                 state = None
                 if command[dev][parm] == 'on':
                     state = True
