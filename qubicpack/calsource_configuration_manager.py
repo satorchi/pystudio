@@ -435,7 +435,9 @@ class calsource_configuration_manager():
                         self.log('Could not interpret Arduino duration')
                         duration = 0
                     break
-            
+
+            # add margin to the acknowledgement timeout
+            duration += 5
             response = self.listen_for_acknowledgement(timeout=duration)
                 
         return
