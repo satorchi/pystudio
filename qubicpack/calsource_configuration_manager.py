@@ -274,7 +274,7 @@ class calsource_configuration_manager():
         delta = tot_seconds(now - self.energenie_lastcommand_date)
 
         if delta < reset_delta:
-            extra_wait = delta - reset_delta
+            extra_wait = reset_delta - delta
             time.sleep(extra_wait)
 
         try:
