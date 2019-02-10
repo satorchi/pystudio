@@ -43,6 +43,7 @@ class calibration_source:
 
     def __init__(self,source=None):
         self.s = None
+        self.port = None
         self.calsource = None
         self.init(source=source)
         return None
@@ -51,6 +52,9 @@ class calibration_source:
         '''
         setup communication to the calibration source
         '''
+        self.s = None
+        self.port = None
+        
         if source is None:
             print('Please enter the calibration source: HF or LF')
             return None
@@ -69,16 +73,34 @@ class calibration_source:
         
         if not os.path.exists(dev):
             print('ERROR! No device for the %s Frequency Calibration Source.' % which_freq)
-            self.s = None
             return None
 
         try:
             self.s = serial.Serial(dev,timeout=0.5)
+            self.port = dev
         except:
             print('ERROR! could not connect to the %s Frequency Calibration Source.' % which_freq)
             self.s = None
         return
 
+    def is_connected(self):
+        '''
+        check if the calibration source is connected
+        '''
+        if self.s is None:
+            return False
+
+        if self.port is None:
+            return False
+
+        if not os.path.exists(self.port):
+            self.s = None
+            self.port = None
+            return False
+        
+        return True
+
+    
     def set_FreqCommand(self,f):
         '''
         make the frequency command
