@@ -13,7 +13,7 @@ use the Arduino Uno as an ADC to monitor the signal generator
 
 '''
 from __future__ import division, print_function
-import serial,time,multiprocessing
+import serial,time,multiprocessing,os
 import numpy as np
 from scipy.optimize import curve_fit
 import datetime as dt
@@ -42,6 +42,22 @@ class arduino:
 
         self.connected = True
         return True
+
+    def is_connected(self):
+        '''
+        check if the arduino is connected
+        '''
+        if not self.connected:
+            return False
+
+        if self.s is None:
+            return False
+
+        if not os.path.exists('/dev/arduino'):
+            return False
+
+        return True
+
     
     def acquire(self,duration=None,save=True):
         '''
