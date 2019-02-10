@@ -27,6 +27,13 @@ class modulator:
     def __init__(self,port='/dev/rs232_1'):
         self.s = None
         self.energenie = None
+        self.default_settings = {}
+        self.default_settings['frequency'] = 1.0
+        self.default_settings['shape'] = 'SQU'
+        self.default_settings['amplitude'] = 5.0
+        self.default_settings['offset'] = 2.5
+        self.default_settings['duty'] = 50.0
+        
         return None
 
     def switchon(self):
@@ -105,6 +112,9 @@ class modulator:
         s.write('SYST:REM\n')
         time.sleep(0.5)
 
+        # configure with default settings
+        self.configure()
+
         self.s=s
         return s
 
@@ -120,24 +130,20 @@ class modulator:
             s=self.init_hp33120a(port=port)
             if s is None:return False
 
-        # default values
-        default_values = {}
-        default_values['frequency'] = 1.0
-        default_values['shape'] = 'SQU'
-        default_values['amplitude'] = 5.0
-        default_values['offset'] = 2.5
-        default_values['duty'] = 50.0
-        
         # set default values if *no* options given
-        if frequency is None and shape is None and amplitude is None and offset is None and duty is None:
-            settings = default_values
+        if frequency is None\
+           and shape is None\
+           and amplitude is None\
+           and offset is None\
+           and duty is None:
+            settings = self.default_settings
         else:        
             # read the current values for the default values if necessary
             settings = self.read_settings(show=False)
             
         # if something went wrong with reading, use the default values
         if settings is None:
-            settings = default_values
+            settings = self.default_settings
             
         if frequency is None:
             frequency=settings['frequency']
