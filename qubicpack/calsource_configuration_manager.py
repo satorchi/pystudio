@@ -31,6 +31,8 @@ from qubicpack.modulator import modulator
 # the Arduino Uno
 from qubicpack.arduino import arduino
 
+from satorchipy.datefunctions import tot_seconds
+
 class calsource_configuration_manager():
 
     def __init__(self,role=None):
@@ -99,6 +101,9 @@ class calsource_configuration_manager():
         for idx,dev in enumerate(self.device_list):
             self.powersocket[dev] = idx
             self.device[dev] = None
+
+        self.energenie_lastcommand_date = dt.datetime.utcnow()
+        self.energenie_timeout = 10
             
         self.qubic_central = "192.168.2.1"
         self.qubic_studio  = "192.168.2.8"
@@ -259,6 +264,28 @@ class calsource_configuration_manager():
         return received_tstamp, ack
     
 
+    def onoff(self,dev,state):
+        '''
+        switch on or off a device
+        we have to wait for the Energenie powerbar to reset
+        '''
+        reset_delta = self.energenie_timeout # minimum time to wait
+        now = dt.datetime.utcnow()
+        delta = tot_seconds(now - self.energenie_lastcommand_date)
+
+        if delta < reset_delta:
+            extra_wait = delta - reset_delta
+            time.sleep(extra_wait)
+
+        try:
+            self.energenie.set_socket_states({self.powersocket[dev]:state})
+            ack = 'OK'
+        except:
+            ack = 'FAILED'
+            
+        self.energenie_lastcommand_date = dt.datetime.utcnow()
+        return ack
+    
     def interpret_commands(self,command):
         '''
         interpret the dictionary of commands, and take the necessary steps
@@ -288,12 +315,7 @@ class calsource_configuration_manager():
                         state = False
                     if state is not None:
                         msg = 'switch %s %s: ' % (command[dev][parm],dev)
-                        try:
-                            self.energenie.set_socket_states({self.powersocket[dev]:state})
-                            time.sleep(4) # wait a bit after switching off/on
-                            msg += 'OK'                        
-                        except:
-                            msg += 'FAILED'
+                        msg += self.onoff(dev,state)
                         ack += ' | %s' % msg
                         self.log(msg)
                     continue
@@ -424,17 +446,20 @@ class calsource_configuration_manager():
 
             self.send_command(cmd_str)
 
-            # check if we're doing an acquisition
+            # check if we're doing an acquisition or other things that require extra time
             duration = 0
             for cmd in cmd_list:
                 if cmd.find('arduino:duration=')==0:
                     duration_str = cmd.split('=')[1]
                     try:
-                        duration = eval(duration_str)
+                        duration += eval(duration_str)
                     except:
                         self.log('Could not interpret Arduino duration')
-                        duration = 0
-                    break
+                    continue
+
+                if cmd.find('on')>0 or cmd.find('off')>0:
+                    duration += self.energenie_timeout
+                    
 
             # add margin to the acknowledgement timeout
             duration += 5
