@@ -303,67 +303,68 @@ class calsource_configuration_manager():
                 command['modulator'][parm] = None
                 
 
+        # do all on/off commands first
         for dev in command.keys():
-
-            # check for on/off commands
-            for parm in command[dev].keys():
-                if parm=='onoff':
-                    state = None
-                    if command[dev][parm] == 'on':
-                        state = True
-                    if command[dev][parm] == 'off':
-                        state = False
-                    if state is not None:
-                        msg = 'switch %s %s: ' % (command[dev][parm],dev)
-                        msg += self.onoff(dev,state)
-                        ack += ' | %s' % msg
-                        self.log(msg)
-                    continue
-                
-                if dev=='calsource' and parm=='frequency':
-                    of = self.device[dev].set_Frequency(command[dev][parm])
-                    msg = '%s:%s=%.1f: ' % (dev,parm,command[dev][parm])
-                    if of is None:
-                        msg += 'FAILED'
-                    else:
-                        msg += 'OK.  synthesiser frequency=%.2fGHz' % of
-                    self.log(msg)
+            if 'onoff' in command[dev].keys():
+                parm = 'onoff':
+                state = None
+                if command[dev][parm] == 'on':
+                    state = True
+                if command[dev][parm] == 'off':
+                    state = False
+                if state is not None:
+                    msg = 'switch %s %s: ' % (command[dev][parm],dev)
+                    msg += self.onoff(dev,state)
                     ack += ' | %s' % msg
-                    continue
+                    self.log(msg)
 
+        # do configuration command for calsource
+        dev = 'calsource'
+        parm =  'frequency'
+        if dev in command.keys() and parm in command[dev].keys():
+            of = self.device[dev].set_Frequency(command[dev][parm])
+            msg = '%s:%s=%.1f: ' % (dev,parm,command[dev][parm])
+            if of is None:
+                msg += 'FAILED'
+            else:
+                msg += 'OK.  synthesiser frequency=%.2fGHz' % of
+            self.log(msg)
+            ack += ' | %s' % msg
                 
 
-            # handle the modulator separately
-            if dev=='modulator' and modulator_configure:
-                self.device[dev].configure(frequency=command[dev]['frequency'],
-                                           amplitude=command[dev]['amplitude'],
-                                           shape=command[dev]['shape'],
-                                           offset=command[dev]['offset'],
-                                           duty=command[dev]['duty'])
+        # the modulator configuration
+        dev = 'modulator'
+        if dev in command.keys() and modulator_configure:
+            self.device[dev].configure(frequency=command[dev]['frequency'],
+                                       amplitude=command[dev]['amplitude'],
+                                       shape=command[dev]['shape'],
+                                       offset=command[dev]['offset'],
+                                       duty=command[dev]['duty'])
 
-                # wait a bit before trying to read the results
-                time.sleep(1)
-                settings = self.device[dev].read_settings(show=False)
-                if settings is None:
-                    msg = '%s: COMMAND FAILED' % dev
-                else:
-                    msg = '%s: SHAPE=%s FREQUENCY=%.2f Hz AMPLITUDE=%.3f V OFFSET=%.3f V DUTY CYCLE=%.1f%%' % \
-                        (dev,settings['shape'],
-                         settings['frequency'],
-                         settings['amplitude'],
-                         settings['offset'],
-                         settings['duty'])
+            # wait a bit before trying to read the results
+            time.sleep(1)
+            settings = self.device[dev].read_settings(show=False)
+            if settings is None:
+                msg = '%s: COMMAND FAILED' % dev
+            else:
+                msg = '%s: SHAPE=%s FREQUENCY=%.2f Hz AMPLITUDE=%.3f V OFFSET=%.3f V DUTY CYCLE=%.1f%%' % \
+                    (dev,
+                     settings['shape'],
+                     settings['frequency'],
+                     settings['amplitude'],
+                     settings['offset'],
+                     settings['duty'])
                     
-                self.log(msg)
-                ack += ' | %s' % msg
+            self.log(msg)
+            ack += ' | %s' % msg
 
 
-            # run the Arduino last of all
-            if dev=='arduino':
-                for parm in command[dev].keys():
-                    if parm=='duration':
-                        filename = self.device[dev].acquire(duration=command[dev][parm],save=True)
-                        ack += ' | Arduino data saved to file: %s' % filename
+        # run the Arduino last of all
+        dev = 'arduino'
+        parm = 'duration'
+        if dev in command.keys() and parm in command[dev].keys():
+            filename = self.device[dev].acquire(duration=command[dev][parm],save=True)
+            ack += ' | Arduino data saved to file: %s' % filename
 
                 
         return ack
