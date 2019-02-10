@@ -33,9 +33,23 @@ class modulator:
         self.default_settings['amplitude'] = 5.0
         self.default_settings['offset'] = 2.5
         self.default_settings['duty'] = 50.0
+
+        self.s = None
         
         return None
 
+    def is_connected(self):
+        '''
+        check if the signal generator is connected
+        '''
+        is self.s is None: return False
+        
+        self.s.write('*IDN?\n')
+        id = self.s.readline()
+        if id=='':  return False        
+        
+        return True
+    
     def switchon(self):
         '''
         use the Energenie smart powerbar to switch on the power to the modulator
@@ -83,7 +97,6 @@ class modulator:
         OWNER="qubic", GROUP="users", MODE="0664", SYMLINK+="rs232"
 
         '''
-
         # check of the requested device exists
         if not os.path.exists(port):
             print('Cannot connect to device.  Device does not exist: %s' % port)
@@ -114,7 +127,6 @@ class modulator:
 
         # configure with default settings
         self.configure()
-
         self.s=s
         return s
 
