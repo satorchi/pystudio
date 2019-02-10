@@ -135,7 +135,7 @@ class modulator:
             # read the current values for the default values if necessary
             settings = self.read_settings(show=False)
             
-        # is something went wrong with reading, use the default values
+        # if something went wrong with reading, use the default values
         if settings is None:
             settings = default_values
             
