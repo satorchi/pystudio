@@ -89,6 +89,9 @@ class calsource_configuration_manager():
         self.role = role
         self.date_fmt = '%Y-%m-%d %H:%M:%S.%f'
         self.device_list = ['modulator','calsource','lamp','amplifier','arduino']
+        self.amp_on = None   # need to find a way to detect this
+        self.lamp_on = None  # need to find a way to detect this
+
         self.valid_commands = {}
         self.valid_commands['modulator'] = ['on','off','frequency','amplitude','offset','duty','shape']
         self.valid_commands['calsource'] = ['on','off','frequency']
@@ -282,9 +285,57 @@ class calsource_configuration_manager():
             ack = 'OK'
         except:
             ack = 'FAILED'
-            
+
+
+        # check for the amplifier and lamp
+        if ack=='OK':
+            if 3 in states.keys():
+                self.amp_on = states[3]
+            if 2 in states.keys():
+                self.lamp_on = states[2]
+    
         self.energenie_lastcommand_date = dt.datetime.utcnow()
         return ack
+
+
+    def status(self):
+        '''
+        return status of all the components
+        '''
+        msg = ''
+        dev = 'amplifier'
+        msg += '%s: ' % dev
+        if self.amp_on is not None:
+            if self.amp_on:
+                msg += 'ON'
+            else:
+                msg += 'OFF'
+        else:
+            msg += 'UNKNOWN'
+
+        for dev in ['arduino','calsource','modulator']:
+            msg += ' | %s: ' % dev
+            if self.device[dev].is_connected():
+                msg += 'ON'
+            else:
+                msg += 'OFF'
+
+        dev = 'modulator'
+        if self.device[dev].is_connected():
+            settings = self.device[dev].read_settings(show=False)
+            if settings is None:
+                msg += ' | %s: FAILED TO READ SETTINGS' % dev
+            else:
+                msg += '| %s: SHAPE=%s FREQUENCY=%.2f Hz AMPLITUDE=%.3f V OFFSET=%.3f V DUTY CYCLE=%.1f%%' % \
+                    (dev,
+                     settings['shape'],
+                     settings['frequency'],
+                     settings['amplitude'],
+                     settings['offset'],
+                     settings['duty'])
+        
+            
+        return msg
     
     def interpret_commands(self,command):
         '''
@@ -371,6 +422,12 @@ class calsource_configuration_manager():
         if dev in command.keys() and parm in command[dev].keys():
             filename = self.device[dev].acquire(duration=command[dev][parm],save=True)
             ack += ' | Arduino data saved to file: %s' % filename
+
+
+        # STATUS
+        if 'status' in command.keys():
+            ack += ' | %s' % self.status()
+            
 
                 
         return ack
