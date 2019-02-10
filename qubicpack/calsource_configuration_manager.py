@@ -264,9 +264,9 @@ class calsource_configuration_manager():
         return received_tstamp, ack
     
 
-    def onoff(self,dev,state):
+    def onoff(self,states):
         '''
-        switch on or off a device
+        switch on or off devices
         we have to wait for the Energenie powerbar to reset
         '''
         reset_delta = self.energenie_timeout # minimum time to wait
@@ -278,7 +278,7 @@ class calsource_configuration_manager():
             time.sleep(extra_wait)
 
         try:
-            self.energenie.set_socket_states({self.powersocket[dev]:state})
+            self.energenie.set_socket_states(states)
             ack = 'OK'
         except:
             ack = 'FAILED'
@@ -305,6 +305,8 @@ class calsource_configuration_manager():
 
         # do all on/off commands first
         parm = 'onoff'
+        states = {}
+        msg = ''
         for dev in command.keys():
             if parm in command[dev].keys():
                 state = None
@@ -313,10 +315,12 @@ class calsource_configuration_manager():
                 if command[dev][parm] == 'off':
                     state = False
                 if state is not None:
-                    msg = 'switch %s %s: ' % (command[dev][parm],dev)
-                    msg += self.onoff(dev,state)
-                    ack += ' | %s' % msg
+                    states[self.powersocket[dev]] = state
+                    msg += 'switch %s %s: ' % (command[dev][parm],dev)
                     self.log(msg)
+        if states:
+            msg += 'power on/off command %s' % self.onoff(states)
+            ack += ' | %s' % msg
 
         # do configuration command for calsource
         dev = 'calsource'
