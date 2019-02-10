@@ -43,7 +43,7 @@ class arduino:
         self.connected = True
         return True
     
-    def acquire(self,duration=None):
+    def acquire(self,duration=None,save=True):
         '''
         acquire data with timestamps from the Arduino Uno
 
@@ -87,8 +87,13 @@ class arduino:
                 arduino_t.append(t[idx])
             except:
                 pass
+
+        t = np.array(arduino_t)
+        a = np.array(arduino_a)
+        if save:
+            self.write_date(t,a)
         
-        return np.array(arduino_t), np.array(arduino_a)
+        return t,a
 
     def write_data(self,t,v):
         '''
@@ -103,6 +108,7 @@ class arduino:
         h.close()
         print('output file written: %s' % outfile)
         return outfile
+
     
     def sin_curve(self,t,period,amplitude,offset,shift):
         '''
