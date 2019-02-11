@@ -32,7 +32,7 @@ class modulator:
         self.default_settings['shape'] = 'SQU'
         self.default_settings['amplitude'] = 5.0
         self.default_settings['offset'] = 2.5
-        self.default_settings['duty'] = 50.0
+        self.default_settings['duty'] = 33.0
 
         self.s = None
         
@@ -125,9 +125,7 @@ class modulator:
         s.write('SYST:REM\n')
         time.sleep(0.5)
 
-        # configure with default settings
         self.s=s
-        self.configure()
         return s
 
     def configure(self,frequency=None,shape=None,amplitude=None,offset=None,duty=None,port='/dev/rs232_1'):
@@ -178,6 +176,12 @@ class modulator:
         self.s.write(cmd)
         time.sleep(0.5)
         return True
+
+    def set_default_settings(self):
+        '''
+        configure with default settings
+        '''
+        return self.configure()
 
     def read_settings(self,show=True):
         '''
