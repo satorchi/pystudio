@@ -12,7 +12,7 @@ A class with methods to send/receive configuration command for the calibration s
 Commands are sent to switch on/off and configure three components: calsource, amplifier, modulator
 '''
 from __future__ import division, print_function
-import socket,subprocess,time,re
+import socket,subprocess,time,re,os
 import datetime as dt
 
 import readline
