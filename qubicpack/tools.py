@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 $Id: tools.py
 $auth: Steve Torchinsky <satorchi@apc.in2p3.fr>
