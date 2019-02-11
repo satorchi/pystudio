@@ -28,7 +28,7 @@ class modulator:
         self.s = None
         self.energenie = None
         self.default_settings = {}
-        self.default_settings['frequency'] = 1.0
+        self.default_settings['frequency'] = 0.333
         self.default_settings['shape'] = 'SQU'
         self.default_settings['amplitude'] = 5.0
         self.default_settings['offset'] = 2.5
