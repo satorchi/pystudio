@@ -140,7 +140,7 @@ class calsource_configuration_manager():
             cmd = '/sbin/ifconfig -a'
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             out, err = proc.communicate()
-            match = re.match('.* (192\.168\.2\..*?) ',out.replace('\n',' '))
+            match = re.match('.* inet (192\.168\.2\..*?) ',out.replace('\n',' '))
             if match:
                 ip_addr = match.groups()[0]
                 self.hostname = ip_addr
