@@ -172,6 +172,22 @@ class calibration_source:
         print('The output frequency is %.3f GHz' % of)
         return of
 
+    def set_default_settings(self):
+        '''
+        set default settings
+        '''
+        if not self.is_connected():
+            return False
+
+        if self.calsource = 'LF':
+            freq = 150.0
+
+        if self.calsource = 'HF':
+            freq = 220.0
+
+        self.set_Frequency(freq)
+        return True
+    
 
     
 
