@@ -116,7 +116,7 @@ class calsource_configuration_manager():
         
         self.broadcast_port = 37020
         self.nbytes = 256
-        self.receiver = self.raspberrypi
+        self.receiver = self.known_hosts['calsource']
 
         self.energenie = None
         self.hostname = None
