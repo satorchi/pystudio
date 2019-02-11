@@ -176,6 +176,10 @@ class calsource_configuration_manager():
         command_lst = command_lst[1:]
         dev = 'unknown'
         for cmd in command_lst:
+            if cmd=='status':
+                command['status'] = True
+                continue
+            
             cmd_lst = cmd.split(':')
             try:
                 devcmd = cmd_lst[1]
@@ -425,7 +429,7 @@ class calsource_configuration_manager():
 
 
         # STATUS
-        if 'status' in command.keys():
+        if 'status' in command.keys() and command[status]:
             ack += ' | %s' % self.status()
             
 
