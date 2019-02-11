@@ -383,6 +383,12 @@ class calsource_configuration_manager():
             # wait before doing other stuff
             time.sleep(3)
 
+            # initialize devices that need initializing
+            for dev in ['modulator','calsource']:
+                powersocket = self.powersocket[dev]
+                if powersocket in states.keys() and states[powersocket]:
+                    self.device[dev].set_default_settings()
+
         # do configuration command for calsource
         dev = 'calsource'
         parm =  'frequency'
