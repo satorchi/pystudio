@@ -141,7 +141,7 @@ class calibration_source:
         return (s+response[0])
 
 
-    def set_Frequency(self,f=None):
+    def set_Frequency(self,f):
         '''
         set the frequency.  Note that this will send the command to the device.
         the method above set_FreqCommand() only formats the command without sending
@@ -176,17 +176,14 @@ class calibration_source:
         '''
         set default settings
         '''
-        if not self.is_connected():
-            return False
-
         if self.calsource == 'LF':
             freq = 150.0
 
         if self.calsource == 'HF':
             freq = 220.0
 
-        self.set_Frequency(freq)
-        return True
+        of = self.set_Frequency(freq)
+        return of
     
 
     
