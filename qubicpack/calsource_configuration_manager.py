@@ -12,7 +12,7 @@ A class with methods to send/receive configuration command for the calibration s
 Commands are sent to switch on/off and configure three components: calsource, amplifier, modulator
 '''
 from __future__ import division, print_function
-import socket,subprocess,time
+import socket,subprocess,time,re
 import datetime as dt
 
 import readline
@@ -108,10 +108,11 @@ class calsource_configuration_manager():
 
         self.energenie_lastcommand_date = dt.datetime.utcnow()
         self.energenie_timeout = 10
-            
-        self.qubic_central = "192.168.2.1"
-        self.qubic_studio  = "192.168.2.8"
-        self.raspberrypi   = "192.168.2.5"
+
+        self.known_hosts = {}
+        self.known_hosts['qubic-central'] = "192.168.2.1"
+        self.known_hosts['qubic-studio']  = "192.168.2.8"
+        self.known_hosts['calsource']     = "192.168.2.5"
         
         self.broadcast_port = 37020
         self.nbytes = 256
@@ -119,12 +120,11 @@ class calsource_configuration_manager():
 
         self.energenie = None
         self.hostname = None
-        if role is None:
-            # try to get the role from the hostname
-            if 'HOST' in os.environ.keys():
-                self.hostname = os.environ['HOST']
-            if self.hostname=='calsource':
-                role = 'manager'
+        if 'HOST' in os.environ.keys():
+            self.hostname = os.environ['HOST']
+            
+        if role is None and self.hostname=='calsource':
+            role = 'manager'
         self.role = role
                 
         if role=='manager':
@@ -137,16 +137,13 @@ class calsource_configuration_manager():
 
         # if undefined, try to get hostname from the ethernet device
         if self.hostname is None:
-            cmd = 'ifconfig -a'
+            cmd = '/sbin/ifconfig -a'
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             out, err = proc.communicate()
-            lines = out.split('\n')
-            for idx,line in enumerate(lines):
-                if line.find('eth')==0:
-                    idx_addr = idx + 1
-                    if idx_addr < len(lines):
-                        self.hostname = lines[idx_addr].split()[1].strip()
-                    break
+            match = re.match('.* (192\.168\.2\..*?) ',out.replace('\n',' '))
+            if match:
+                ip_addr = match.groups()[0]
+                self.hostname = ip_addr
 
         # finally, if still undefined
         if self.hostname is None:
