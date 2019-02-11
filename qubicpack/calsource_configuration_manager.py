@@ -433,7 +433,7 @@ class calsource_configuration_manager():
 
 
         # STATUS
-        if 'status' in command.keys() and command[status]:
+        if command['all']['status']:
             ack += ' | %s' % self.status()
             
 
