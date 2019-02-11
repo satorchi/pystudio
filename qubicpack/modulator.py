@@ -126,8 +126,8 @@ class modulator:
         time.sleep(0.5)
 
         # configure with default settings
-        self.configure()
         self.s=s
+        self.configure()
         return s
 
     def configure(self,frequency=None,shape=None,amplitude=None,offset=None,duty=None,port='/dev/rs232_1'):
