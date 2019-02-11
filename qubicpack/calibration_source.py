@@ -179,10 +179,10 @@ class calibration_source:
         if not self.is_connected():
             return False
 
-        if self.calsource = 'LF':
+        if self.calsource == 'LF':
             freq = 150.0
 
-        if self.calsource = 'HF':
+        if self.calsource == 'HF':
             freq = 220.0
 
         self.set_Frequency(freq)
