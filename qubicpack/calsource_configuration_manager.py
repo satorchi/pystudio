@@ -180,6 +180,13 @@ class calsource_configuration_manager():
             if cmd=='status':
                 command['all']['status'] = True
                 continue
+
+            if cmd=='on' or cmd=='off':
+                command['all']['onoff'] = cmd
+                for dev in ['calsource','amplifier','modulator']:
+                    command[dev]['onoff'] = cmd
+                continue
+                    
             
             cmd_lst = cmd.split(':')
             try:
