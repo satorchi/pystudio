@@ -100,6 +100,8 @@ def pix2tes(self,PIX):
 def assign_lookup_table(self):
     '''
     make the lookup table with results for comparison
+
+    this was only done for array P73, so don't ask for this table otherwise
     '''
     filename='TES_translation_table.pickle'
     cwd=os.getcwd()
@@ -116,8 +118,9 @@ def assign_lookup_table(self):
             gotit=True
             break
     if not gotit:
-        print('WARNING! Cannot find translation table file: %s' % filename_fullpath)
-        print('Open loop and Room Temperature tests will not be noted in plots etc.')
+        if self.detector_name=='P73':
+            print('WARNING! Cannot find translation table file: %s' % filename_fullpath)
+            print('Open loop and Room Temperature tests will not be noted in plots etc.')
         self.transdic=None
         return None
 
