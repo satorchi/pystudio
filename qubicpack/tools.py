@@ -324,7 +324,7 @@ def read_qubicstudio_fits(self,hdulist):
     keys = hdu.header.keys()
 
     # what kind of QubicStudio file?
-    QS_filetypes = ['ASIC_SUMS','CONF_ASIC1','EXTERN_HK','ASIC_RAW']
+    QS_filetypes = ['ASIC_SUMS','CONF_ASIC1','EXTERN_HK','ASIC_RAW','INTERN_HK','QS_HK_IMacrt_MMR3']
     extname = hdu.header['EXTNAME'].strip()
     if extname not in QS_filetypes:
         print('ERROR! Unrecognized QubicStudio FITS file: %s' % extname)
