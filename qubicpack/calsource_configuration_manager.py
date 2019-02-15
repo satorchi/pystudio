@@ -120,7 +120,7 @@ class calsource_configuration_manager():
 
         self.energenie = None
         self.hostname = None
-        if 'HOST' in os.environ.keys():
+        if self.hostname is None and 'HOST' in os.environ.keys():
             self.hostname = os.environ['HOST']
             
         if role is None and self.hostname=='calsource':
@@ -135,15 +135,14 @@ class calsource_configuration_manager():
             self.device['arduino']   = arduino()
             self.device['arduino'].init()
 
-        # if undefined, try to get hostname from the ethernet device
-        if self.hostname is None:
-            cmd = '/sbin/ifconfig -a'
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-            out, err = proc.communicate()
-            match = re.match('.* inet (192\.168\.2\..*?) ',out.replace('\n',' '))
-            if match:
-                ip_addr = match.groups()[0]
-                self.hostname = ip_addr
+        # try to get hostname from the ethernet device
+        cmd = '/sbin/ifconfig -a'
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        out, err = proc.communicate()
+        match = re.match('.* inet (192\.168\.2\..*?) ',out.replace('\n',' '))
+        if match:
+            ip_addr = match.groups()[0]
+            self.hostname = ip_addr
 
         # finally, if still undefined
         if self.hostname is None:
