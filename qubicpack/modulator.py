@@ -25,7 +25,6 @@ class modulator:
     '''
 
     def __init__(self,port='/dev/rs232_1'):
-        self.s = None
         self.energenie = None
         self.default_settings = {}
         self.default_settings['frequency'] = 0.333
@@ -35,7 +34,7 @@ class modulator:
         self.default_settings['duty'] = 33.0
 
         self.s = None
-        
+        self.port = port
         return None
 
     def is_connected(self):
@@ -79,7 +78,7 @@ class modulator:
         return    
         
 
-    def init_hp33120a(self,port='/dev/rs232_1'):
+    def init_hp33120a(self,port=None):
         '''
         establish connection to the HP33120A waveform generator
         It should be connected by RS232 cable (serial port, usually /dev/ttyS0)
@@ -101,6 +100,9 @@ class modulator:
         if not os.path.exists(port):
             print('Cannot connect to device.  Device does not exist: %s' % port)
             return None
+
+        if port is None: port = self.port
+        if port is None: port = '/dev/rs232'
     
         s=serial.Serial(port=port,
                         baudrate=9600,
@@ -128,7 +130,7 @@ class modulator:
         self.s=s
         return s
 
-    def configure(self,frequency=None,shape=None,amplitude=None,offset=None,duty=None,port='/dev/rs232_1'):
+    def configure(self,frequency=None,shape=None,amplitude=None,offset=None,duty=None,port=None):
         '''
         configure the HP33120A waveform generator
         
