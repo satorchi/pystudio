@@ -21,11 +21,10 @@ try:
     with_pystudio=True
 except:
     with_pystudio=False
-    print('WARNING: importing qubicpack without pystudio')
+    print('importing qubicpack without pystudio')
 
     
 class qubicpack:
-
     from .assign_variables import\
         assign_defaults,\
         assign_observer,\
