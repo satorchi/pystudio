@@ -96,14 +96,14 @@ class modulator:
         OWNER="qubic", GROUP="users", MODE="0664", SYMLINK+="rs232"
 
         '''
+        if port is None: port = self.port
+        if port is None: port = '/dev/rs232'
+    
         # check of the requested device exists
         if not os.path.exists(port):
             print('Cannot connect to device.  Device does not exist: %s' % port)
             return None
 
-        if port is None: port = self.port
-        if port is None: port = '/dev/rs232'
-    
         s=serial.Serial(port=port,
                         baudrate=9600,
                         bytesize=8,
