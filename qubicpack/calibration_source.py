@@ -160,8 +160,17 @@ class calibration_source:
             
         
         cmd=self.set_FreqCommand(f/self.factor)
-        self.s.write(cmd)
-        response=bytearray(self.s.read(6))
+        try:
+            self.s.write(cmd)
+        except:
+            print("communication error")
+            return None
+
+        try:
+            response=bytearray(self.s.read(6))
+        except:
+            print("communication error")
+            return None
 
         if(response[0]==85):
             of=self.output_Frequency(response[1:])
