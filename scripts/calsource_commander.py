@@ -37,7 +37,7 @@ for arg in sys.argv:
         role = 'commander'
         continue
 
-cil = calsource_configuration_manager(role=role)
+cli = calsource_configuration_manager(role=role)
 
 
     
