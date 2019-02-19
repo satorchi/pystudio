@@ -368,7 +368,8 @@ class calsource_configuration_manager():
         parm = 'onoff'
         states = {}
         msg = ''
-        for dev in command.keys():
+        devlist = command.keys().remove('all').remove('timestamp')
+        for dev in devlist:
             if parm in command[dev].keys():
                 state = None
                 if command[dev][parm] == 'on':
