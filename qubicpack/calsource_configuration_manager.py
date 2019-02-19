@@ -369,7 +369,8 @@ class calsource_configuration_manager():
         states = {}
         msg = ''
         devlist = command.keys()
-        devlist.remove('all').remove('timestamp')
+        devlist.remove('all')
+        devlist.remove('timestamp')
         for dev in devlist:
             if parm in command[dev].keys():
                 state = None
