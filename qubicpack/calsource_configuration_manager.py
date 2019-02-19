@@ -68,7 +68,7 @@ class calsource_configuration_manager():
         txt  = 'Calibration Source Commander:  Help\n'
         txt += 'commands should be given in the following format:\n'
         txt += '    <device>:<parameter>[=<value>]\n\n'
-        txt += 'except for the command "status" which has no arguments\n\n'
+        txt += 'except for the following commands which have no arguments: help, status, on, off\n\n'
         txt += 'valid devices: %s\n' % device_list_str
         for dev in self.device_list:
             valid_commands = ', '.join(self.valid_commands[dev])
@@ -164,14 +164,13 @@ class calsource_configuration_manager():
 
         command['all'] = {}
         command['all']['status'] = False
-
+        
         command_lst = cmdstr.strip().split()
         tstamp_str = command_lst[0]
         try:
             command['timestamp']['sent'] = eval(tstamp_str)
         except:
             command['timestamp']['sent'] = tstamp_str
-
         
         command_lst = command_lst[1:]
         dev = 'unknown'
