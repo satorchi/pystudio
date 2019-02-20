@@ -11,9 +11,6 @@ $license: GPLv3 or later, see https://www.gnu.org/licenses/gpl-3.0.txt
 
 This is an example script for analysing the QUBIC I-V measurement
 You can run this in ipython, or Jupyter notebook.
-
-If running in Jupyter notebook, you should start the notebook with the following magic command:
-%matplotlib notebook
 '''
 
 
@@ -48,6 +45,7 @@ import os,sys
 jupyter=False
 if sys.argv[0].find('ipykernel')>=0:jupyter=True
 
+# make plots within the notebook if using jupyter notebook
 if jupyter:        
     %matplotlib notebook
 
