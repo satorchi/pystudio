@@ -177,7 +177,7 @@ class calibration_source:
             print('initializing calibration source %s' % self.calsource)
             self.init(source=self.calsource)
 
-        if not self.is_conneced():
+        if not self.is_connected():
             return None
             
         
