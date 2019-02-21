@@ -153,8 +153,20 @@ class calibration_source:
 
     def set_Frequency(self,f):
         '''
+        this is a wrapper to send the frequency command.
+        we add the possibility to try twice in case we lost contact with the device
+        '''
+        of = self.send_set_Frequency(f)
+        if of is None:
+            of = self.send_set_Frequency(f)
+
+        return of
+    
+
+    def send_set_Frequency(self,f):
+        '''
         set the frequency.  Note that this will send the command to the device.
-        the method above set_FreqCommand() only formats the command without sending
+        the method set_FreqCommand() only formats the command without sending
         '''
 
         if self.calsource is None:
