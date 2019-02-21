@@ -52,8 +52,10 @@ class calibration_source:
         '''
         setup communication to the calibration source
         '''
-        self.s = None
-        self.port = None
+        self.clear_connection()
+
+        if source is None:
+            source = self.calsource
         
         if source is None:
             print('Please enter the calibration source: HF or LF')
@@ -83,6 +85,15 @@ class calibration_source:
             self.s = None
         return
 
+    def clear_connection(self):
+        '''
+        clear a stale connection
+        this could be called by set_Frequency()
+        '''
+        self.s = None
+        self.port = None
+        return
+
     def is_connected(self):
         '''
         check if the calibration source is connected
@@ -94,8 +105,7 @@ class calibration_source:
             return False
 
         if not os.path.exists(self.port):
-            self.s = None
-            self.port = None
+            self.clear_connection()
             return False
         
         return True
@@ -151,11 +161,11 @@ class calibration_source:
             print('Please initialize the calibration source')
             return None
 
-        if self.s is None:
+        if not self.is_connected():
             print('initializing calibration source %s' % self.calsource)
             self.init(source=self.calsource)
 
-        if self.s is None:
+        if not self.is_conneced():
             return None
             
         
@@ -163,19 +173,22 @@ class calibration_source:
         try:
             self.s.write(cmd)
         except:
-            print("communication error")
+            print("Communication error: Could not send command.")
+            self.clear_connection()
             return None
 
         try:
             response=bytearray(self.s.read(6))
         except:
-            print("communication error")
+            print("Communication error:  Could not receive response.")
+            self.clear_connection()
             return None
 
         if(response[0]==85):
             of=self.output_Frequency(response[1:])
         else:
-            print("communication error")
+            print("Communication error:  Invalid response.")
+            self.clear_connection()
             return None
     
         print('The output frequency is %.3f GHz' % of)
