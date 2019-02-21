@@ -399,6 +399,9 @@ class calsource_configuration_manager():
         parm =  'frequency'
         if dev in command.keys() and parm in command[dev].keys():
             of = self.device[dev].set_Frequency(command[dev][parm])
+            if of is None: #  try one more time, it may have needed a reset
+                of = self.device[dev].set_Frequency(command[dev][parm])
+                
             msg = '%s:%s=%.1f: ' % (dev,parm,command[dev][parm])
             if of is None:
                 msg += 'FAILED'
