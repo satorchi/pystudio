@@ -149,13 +149,14 @@ def timeline_npts(self):
     timeline_size = int(np.ceil(self.tinteg / sample_period))
     return timeline_size
 
-def timeline_timeaxis(self,timeline_index,axistype='index'):
+def timeline_timeaxis(self,timeline_index=None,axistype='index'):
     '''
     the timeline time axis.  
     This is determined from the sample period and the number of points
     or, possibly given as a list of datetime
     '''
     if not self.exist_timeline_data():return None
+    if timeline_index is None:timeline_index = 0
 
     if 'DATE-OBS' in self.tdata[timeline_index].keys():
         timeline_date=self.tdata[timeline_index]['DATE-OBS']
@@ -166,10 +167,10 @@ def timeline_timeaxis(self,timeline_index,axistype='index'):
     sample_period = self.sample_period(timeline_index)
     time_axis_index = sample_period*np.arange(timeline_npts)
 
-    if axistype=='index':
+    if axistype.lower()=='index':
         return time_axis_index
 
-    if axistype=='pps':
+    if axistype.lower()=='pps':
         if 'PPS' in self.tdata[timeline_index].keys() and 'GPS' in self.tdata[timeline_index].keys():
             pps = self.tdata[timeline_index]['PPS']
             gps = self.tdata[timeline_index]['GPS']

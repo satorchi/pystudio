@@ -778,7 +778,7 @@ def pps2date(self,pps,gps):
             if not last_one_is_no_good:
                 gps_indexes.append(offset_idx)
 
-        tstamp[idx] = 1e-3*next_gps
+        tstamp[idx] = next_gps
 
     first_sample_period = None    
     for idx in range(len(pps_indexes)-1):
