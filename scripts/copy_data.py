@@ -52,18 +52,23 @@ def copy2cc():
     qs_datadir = '/qs/Qubic Studio/backup'
     cs_datadir = '/calsource/qubic'
 
-    # files on the calsource
-    glob_pattern = '%s/calsource_*.dat' % cs_datadir
-    cs_filelist = glob(glob_pattern)
-    cs_filelist_relative = make_relative_filelist(cs_datadir,cs_filelist)
-
     # files on Qubic Studio
     glob_pattern = '%s/20??-??-??/*/*/*.fits' % qs_datadir
     qs_filelist = glob(glob_pattern)
     qs_filelist_relative = make_relative_filelist(qs_datadir,qs_filelist)
+    src_list = qs_filelist
 
+    # files on the calsource
+    glob_pattern = '%s/calsource_*.dat' % cs_datadir
+    cs_filelist = glob(glob_pattern)
+    cs_filelist_relative = make_relative_filelist(cs_datadir,cs_filelist)
+    # files on cc are in the calsource subdirectory
+    for idx,f in enumerate(cs_filelist_relative):
+        cs_filelist_relative[idx] = 'calsource/'+f
+    src_list += cs_filelist
+    
     # files on CC
-    cmd = 'find %s -type f -name "*.fits"' % cc_datadir
+    cmd = 'find %s -type f \\( -name "*.fits" -o -name "*.dat" \\)' % cc_datadir
     out,err = cc_command(cmd)
     if err:
         print(err)
@@ -72,21 +77,19 @@ def copy2cc():
     cc_filelist_relative = make_relative_filelist(cc_datadir,cc_filelist)
 
     # now check what is new
-    files2copy = []
-    for f in qs_filelist_relative+cs_filelist_relative:
+    destfiles2copy = []
+    srcfiles2copy = []
+    for idx,f in enumerate(qs_filelist_relative+cs_filelist_relative):
         if f not in cc_filelist_relative:
-            files2copy.append(f)
+            destfiles2copy.append(f)
+            srcfiles2copy.append(src_list[idx])
 
-    if not files2copy:
+    if not destfiles2copy:
         return
 
     # we need to create the destination directories before copying the file
-    for f in files2copy:
+    for idx,f in enumerate(destfiles2copy):
 
-    # for a test, just do the first one
-    #f = files2copy[0]
-    #print('testing with file:\n   %s' % f)
-    
         dest_fullpath = '%s/%s' % (cc_datadir,f)
         print('file destination:\n   %s' % dest_fullpath)
         d = os.path.dirname(dest_fullpath)
@@ -101,7 +104,8 @@ def copy2cc():
             print(out)
 
         escaped_destination = dest_fullpath.replace(' ','\\ ')
-        cmd = 'scp -p "%s/%s" cc:"%s"' % (qs_datadir,f,escaped_destination)
+        src_file = srcfiles2copy[idx]
+        cmd = 'scp -p "%s" cc:"%s"' % (src_file,escaped_destination)
         #print('copy command:\n   %s' % cmd)
         out,err = shell_command(cmd)
         if err:
