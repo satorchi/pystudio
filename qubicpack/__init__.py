@@ -66,7 +66,8 @@ class qubicpack:
         output_filename,\
         data_subdir,\
         get_from_keyboard,\
-        writelog
+        writelog,\
+        pps2date
 
     from .iv import\
         exist_iv_data,\
