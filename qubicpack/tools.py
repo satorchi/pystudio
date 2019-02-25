@@ -406,6 +406,7 @@ def read_qubicstudio_science_fits(self,hdu):
     # get the time axis
     computertime_idx = 0
     gpstime_idx = 1
+    ppstime_idx = 2
     dateobs = []
     timestamp = 1e-3*hdu.data.field(computertime_idx)
     for tstamp in timestamp:
@@ -414,6 +415,9 @@ def read_qubicstudio_science_fits(self,hdu):
     tdata['BEG-OBS'] = dateobs[0]
     self.obsdate = tdata['BEG-OBS']
     tdata['END-OBS'] = dateobs[-1]
+
+    tdata['GPS'] = 1e-3*hdu.data.field(gpstime_idx)
+    tdata['PPS'] = hdu.data.field(ppstime_idx)
     
     return
 
@@ -748,3 +752,53 @@ def writelog(self,msg):
 
     return
          
+
+def pps2date(self,pps,gps):
+    '''
+    convert the gps date to a precise date given the pps
+    '''
+    npts = len(pps)
+
+    pps_indexes = np.where(pps==1)[0]
+    gps_indexes = []
+    # there is exactly one second between gps_indexes
+    # and the date is the one found at each gps_index
+    tstamp = -np.ones(npts)
+    last_one_is_no_good = False
+    for idx in pps_indexes:
+        gps_at_pps = gps[idx]
+        next_gps = gps_at_pps
+        offset_idx = idx
+        while next_gps==gps_at_pps:
+            offset_idx += 1
+            if offset_idx>=npts:
+                last_one_is_no_good = True
+                break
+            next_gps = gps[offset_idx]
+            if not last_one_is_no_good:
+                gps_indexes.append(offset_idx)
+
+        tstamp[idx] = 1e-3*next_gps
+
+    first_sample_period = None    
+    for idx in range(len(pps_indexes)-1):
+        diff_idx = pps_indexes[idx+1] - pps_indexes[idx]
+        sample_period = 1.0/diff_idx # exactly one second between pulses
+        if first_sample_period is None:
+            first_sample_period = sample_period
+        for idx_offset in range(diff_idx):
+            tstamp[pps_indexes[idx]+idx_offset] = tstamp[pps_indexes[idx]] + idx_offset*sample_period
+
+    last_sample_period = sample_period
+
+    # do the first bit before the first PPS
+    tstamp0 = tstamp[pps_indexes[0]]
+    for idx in range(pps_indexes[0]+1):
+        tstamp[pps_indexes[0] - idx] = tstamp0 - idx*first_sample_period
+
+    # do the last bit after the last PPS
+    tstampF = tstamp[pps_indexes[-1]]
+    for idx in range(npts - pps_indexes[-1]):
+        tstamp[pps_indexes[-1] + idx] = tstampF + idx*last_sample_period
+
+    return tstamp
