@@ -32,6 +32,16 @@ def cc_command(cc_cmd):
     cmd = 'ssh cc "%s"' % cc_cmd
     return shell_command(cmd)
 
+def make_relative_filelist(datadir,filelist):
+    '''
+    make a list of relative filenames (strip the absolute path)
+    '''
+    filelist_relative = []
+    delete_txt = '%s/' % datadir
+    for f in filelist:
+        filelist_relative.append(f.replace(delete_txt,''))
+    return filelist_relative
+    
 
 def copy2cc():
     '''
@@ -40,16 +50,17 @@ def copy2cc():
     
     cc_datadir = '/sps/hep/qubic/Data/Calib-TD'
     qs_datadir = '/qs/Qubic Studio/backup'
+    cs_datadir = '/calsource/qubic'
 
+    # files on the calsource
+    glob_pattern = '%s/calsource_*.dat' % cs_datadir
+    cs_filelist = glob(glob_pattern)
+    cs_filelist_relative = make_relative_filelist(cs_datadir,cs_filelist)
 
     # files on Qubic Studio
     glob_pattern = '%s/20??-??-??/*/*/*.fits' % qs_datadir
     qs_filelist = glob(glob_pattern)
-
-    qs_filelist_relative = []
-    delete_txt = '%s/' % qs_datadir
-    for f in qs_filelist:
-        qs_filelist_relative.append(f.replace(delete_txt,''))
+    qs_filelist_relative = make_relative_filelist(qs_datadir,qs_filelist)
 
     # files on CC
     cmd = 'find %s -type f -name "*.fits"' % cc_datadir
@@ -58,24 +69,16 @@ def copy2cc():
         print(err)
 
     cc_filelist = out.split('\n')
-    cc_filelist_relative = []
-    delete_txt = '%s/' % cc_datadir
-    for f in cc_filelist:
-        cc_filelist_relative.append(f.replace(delete_txt,''))
+    cc_filelist_relative = make_relative_filelist(cc_datadir,cc_filelist)
 
     # now check what is new
     files2copy = []
-    for f in qs_filelist_relative:
+    for f in qs_filelist_relative+cs_filelist_relative:
         if f not in cc_filelist_relative:
             files2copy.append(f)
 
     if not files2copy:
         return
-
-    #print('files to copy:\n')
-    #for f in files2copy:
-    #    print(f)
-
 
     # we need to create the destination directories before copying the file
     for f in files2copy:
