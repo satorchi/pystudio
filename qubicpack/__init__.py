@@ -62,6 +62,7 @@ class qubicpack:
         read_qubicstudio_science_fits,\
         read_qubicstudio_asic_fits,\
         read_qubicstudio_hkextern_fits,\
+        read_qubicstudio_hkfits,\
         read_bins,\
         output_filename,\
         data_subdir,\
