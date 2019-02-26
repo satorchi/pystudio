@@ -81,6 +81,7 @@ def assign_defaults(self):
     self.calsource_HF=None
     self.modulator=None
     self.datafiletype=None
+    self.hk = {}
 
     # keynames and descriptions for FITS files
     self.fitsblurbs={}
