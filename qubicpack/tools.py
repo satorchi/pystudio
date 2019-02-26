@@ -289,7 +289,8 @@ def read_qubicstudio_dataset(self,datadir,asic=None):
     pattern['science'] = '%s/%s/science-asic%i-*.fits' % (datadir,subdir['science'],asic)
     pattern['asic'] = '%s/%s/conf-asics-*.fits' % (datadir,subdir['asic'])
     pattern['hkextern'] = '%s/%s/hk-extern-*.fits' % (datadir,subdir['hkextern'])
-    pattern['hkintern'] = '%s/%s/hk-intern-*.fits' % (datadir,subdir['hkextern'])
+    pattern['hkintern'] = '%s/%s/hk-intern-*.fits' % (datadir,subdir['hkintern'])
+    pattern['MMR'] = '%s/%s/hk-MMR-*.fits' % (datadir,subdir['MMR'])
 
     # check for files, and read if found
     for filetype in pattern.keys():
@@ -324,7 +325,7 @@ def read_qubicstudio_fits(self,hdulist):
     keys = hdu.header.keys()
 
     # what kind of QubicStudio file?
-    QS_filetypes = ['ASIC_SUMS','CONF_ASIC1','EXTERN_HK','ASIC_RAW','INTERN_HK','QS_HK_IMacrt_MMR3']
+    QS_filetypes = ['ASIC_SUMS','CONF_ASIC1','EXTERN_HK','ASIC_RAW','INTERN_HK','MMR_HK']
     extname = hdu.header['EXTNAME'].strip()
     if extname not in QS_filetypes:
         print('ERROR! Unrecognized QubicStudio FITS file: %s' % extname)
@@ -341,15 +342,22 @@ def read_qubicstudio_fits(self,hdulist):
     # get the timeline data from each detector
     if extname=='ASIC_SUMS':
         self.read_qubicstudio_science_fits(hdu)
+        hdulist.close()
+        return
         
     if extname=='CONF_ASIC1':
         self.read_qubicstudio_asic_fits(hdulist)
+        hdulist.close()
+        return
 
     if extname=='EXTERN_HK':
         self.read_qubicstudio_hkextern_fits(hdu)
+        hdulist.close()
+        return
 
+    self.read_qubicstudio_hkfits(hdu)
     hdulist.close()
-    return True
+    return
 
 def read_qubicstudio_science_fits(self,hdu):
     '''
@@ -503,6 +511,26 @@ def read_qubicstudio_asic_fits(self,hdulist):
         msg = 'WARNING! nsample changed during the measurement!'
         tdata['WARNING'].append(msg)
 
+    # read all the stuff in the asic file as an HK file
+    return self.read_qubicstudio_hkfits(hdu)
+
+def read_qubicstudio_hkfits(self,hdu):
+    '''
+    read a QubicStudio housekeeping FITS file
+    '''
+    hkname = hdu.header['EXTNAME']
+    self.hk[hkname] = {}
+    nfields = hdu.header['TFIELDS']
+    for idx in range(nfields):
+        fieldno = idx + 1
+        fieldname = hdu.header['TTYPE%i' % fieldno]
+        self.hk[hkname][fieldname] = hdu.data.field(idx)
+
+    # convert QubicStudio timestamps in ms to s
+    for key in ['ComputerDate','GPSDate']:
+        if key in self.hk[hkname].keys():
+            self.hk[hkname][key] = 1e-3*self.hk[hkname][key]
+            
     return
 
 def read_qubicstudio_hkextern_fits(self,hdu):
@@ -519,9 +547,7 @@ def read_qubicstudio_hkextern_fits(self,hdu):
     self.tdata[0]['TES_TEMP'] = temperature
     self.temperature = temperature
 
-
-    # When I have time, I'll implement reading all the other stuff
-    return
+    return self.read_qubicstudio_hkfits(hdu)
 
 def read_qubicpack_fits(self,h):
     '''
@@ -758,10 +784,29 @@ def pps2date(self,pps,gps):
     convert the gps date to a precise date given the pps
     '''
     npts = len(pps)
+    pps_separation=1  # exactly one second between pulses (2 seconds?)
 
-    pps_indexes = np.where(pps==1)[0]
+    separations = []
+    pps_high = np.where(pps==1)[0]
+    # select the first PPS in each series
+    pps_indexes = []
+    prev = gps[0]
+    for idx in pps_high:
+        if (idx>0 and pps[idx-1]==0) or (idx<npts-1 and pps[idx+1]==0):
+            pps_indexes.append(idx)
+            separations.append(gps[idx] - prev)
+            prev = gps[idx]            
+
+    separations = np.array(separations[1:])
+
+    mean_separation = separations.mean()
+    print('mean separation between pulses is %.2f seconds' % mean_separation)
+    int_separation = int(mean_separation)
+    print('setting pps interval to %i seconds' % int_separation)
+    pps_separation = int_separation
+            
     gps_indexes = []
-    # there is exactly one second between gps_indexes
+    # there is exactly one second between gps_indexes (two seconds?)
     # and the date is the one found at each gps_index
     tstamp = -np.ones(npts)
     last_one_is_no_good = False
@@ -782,8 +827,8 @@ def pps2date(self,pps,gps):
 
     first_sample_period = None    
     for idx in range(len(pps_indexes)-1):
-        diff_idx = pps_indexes[idx+1] - pps_indexes[idx]
-        sample_period = 1.0/diff_idx # exactly one second between pulses
+        diff_idx = pps_indexes[idx+1] - pps_indexes[idx] - 1
+        sample_period = float(pps_separation)/diff_idx
         if first_sample_period is None:
             first_sample_period = sample_period
         for idx_offset in range(diff_idx):
