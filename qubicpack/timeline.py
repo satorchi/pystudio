@@ -245,7 +245,7 @@ def determine_bias_modulation(self,TES,timeline_index=None):
     self.bias_period = peak1-peak0
     return (ipeak0,ipeak1)
 
-def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None,plot_sine=True,xwin=True,timeaxis='index'):
+def plot_timeline(self,TES,timeline_index=None,fit=False,ipeak0=None,ipeak1=None,plot_sine=True,xwin=True,timeaxis='pps'):
     '''
     plot the timeline
     '''
