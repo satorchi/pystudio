@@ -424,8 +424,11 @@ def read_qubicstudio_science_fits(self,hdu):
     self.obsdate = tdata['BEG-OBS']
     tdata['END-OBS'] = dateobs[-1]
 
-    tdata['GPS'] = 1e-3*hdu.data.field(gpstime_idx)
-    tdata['PPS'] = hdu.data.field(ppstime_idx)
+    # save PPS/GPS as we do for HK files
+    extname = hdu.header['EXTNAME'].strip()
+    self.hk[extname] = {}
+    self.hk[extname]['GPS'] = 1e-3*hdu.data.field(gpstime_idx)
+    self.hk[extname]['PPS'] = hdu.data.field(ppstime_idx)
     
     return
 
@@ -518,7 +521,7 @@ def read_qubicstudio_hkfits(self,hdu):
     '''
     read a QubicStudio housekeeping FITS file
     '''
-    hkname = hdu.header['EXTNAME']
+    hkname = hdu.header['EXTNAME'].strip()
     self.hk[hkname] = {}
     nfields = hdu.header['TFIELDS']
     for idx in range(nfields):
@@ -784,7 +787,7 @@ def pps2date(self,pps,gps):
     convert the gps date to a precise date given the pps
     '''
     npts = len(pps)
-    pps_separation=1  # exactly one second between pulses (2 seconds?)
+    pps_separation=1  # exactly one second between pulses
 
     separations = []
     pps_high = np.where(pps==1)[0]
@@ -800,13 +803,13 @@ def pps2date(self,pps,gps):
     separations = np.array(separations[1:])
 
     mean_separation = separations.mean()
-    print('mean separation between pulses is %.2f seconds' % mean_separation)
+    print('mean separation between pulses is %.2f second' % mean_separation)
     int_separation = int(mean_separation)
-    print('setting pps interval to %i seconds' % int_separation)
+    print('setting pps interval to %i second' % int_separation)
     pps_separation = int_separation
             
     gps_indexes = []
-    # there is exactly one second between gps_indexes (two seconds?)
+    # there is exactly one second between gps_indexes
     # and the date is the one found at each gps_index
     tstamp = -np.ones(npts)
     last_one_is_no_good = False
@@ -827,7 +830,7 @@ def pps2date(self,pps,gps):
 
     first_sample_period = None    
     for idx in range(len(pps_indexes)-1):
-        diff_idx = pps_indexes[idx+1] - pps_indexes[idx] - 1
+        diff_idx = pps_indexes[idx+1] - pps_indexes[idx]
         sample_period = float(pps_separation)/diff_idx
         if first_sample_period is None:
             first_sample_period = sample_period
