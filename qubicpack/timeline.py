@@ -171,9 +171,9 @@ def timeline_timeaxis(self,timeline_index=None,axistype='index'):
         return time_axis_index
 
     if axistype.lower()=='pps':
-        if 'PPS' in self.tdata[timeline_index].keys() and 'GPS' in self.tdata[timeline_index].keys():
-            pps = self.tdata[timeline_index]['PPS']
-            gps = self.tdata[timeline_index]['GPS']
+        if 'ASIC_SUMS' in self.hk.keys():
+            pps = self.hk['ASIC_SUMS']['PPS']
+            gps = self.hk['ASIC_SUMS']['GPS']
             time_axis = self.pps2date(pps,gps)
             return time_axis
         print('ERROR! No PPS data.')
@@ -183,7 +183,6 @@ def timeline_timeaxis(self,timeline_index=None,axistype='index'):
         if isinstance(timeline_date,list) and isinstance(timeline_date[0],dt.datetime):
             time_axis = np.array([ eval(t.strftime('%s.%f')) for t in timeline_date ])
             t0 = time_axis[0]
-            time_axis -= t0
             return time_axis
         print('ERROR! No Computer Time.')
         return time_axis_index
