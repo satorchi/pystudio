@@ -48,11 +48,22 @@ class PowerSupply :
     def log(self,msg):
         '''messages to log file and to screen
         '''
+
+        if 'HOME' in os.environ.keys():
+            homedir = os.environ['HOME']
+        else:
+            homedir = '/tmp'
+        
+        logfile = homedir + os.sep + 'hk_powersupply.log'
+        
         now=dt.datetime.utcnow()
         logmsg='%s | %s' % (now.strftime('%Y-%m-%d %H:%M:%S UT'),msg)
-        h=open('hk_powersupply.log','a')
-        h.write(logmsg+'\n')
-        h.close()
+        try:
+            h=open(logfile,'a')
+            h.write(logmsg+'\n')
+            h.close()
+        except:
+            pass
         print(logmsg)
         return
                 
