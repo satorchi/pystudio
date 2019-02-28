@@ -27,6 +27,7 @@ class arduino:
 
     def __init__(self):
         self.s = None
+        self.interrupt_flag_file = '/tmp/__ARDUINO_STOP__'
         return None
 
     def init(self,port='/dev/arduino'):
@@ -80,12 +81,18 @@ class arduino:
         start_time=dt.datetime.utcnow()
         end_time=start_time+dt_duration
         now=dt.datetime.utcnow()
-        while now < end_time:
+        while now < end_time and not os.path.isfile(self.interrupt_flag_file):
             x=self.s.readline()
             now=dt.datetime.utcnow()
             y.append(x)
             t.append(dt.datetime.utcnow())
 
+        if os.path.isfile(self.interrupt_flag_file):
+            try:
+                os.remove(self.interrupt_flag_file)
+            except:
+                print('WARNING: Could not remove interrupt flag file: %s' % self.interrupt_flag_file)
+                
 
         print('started data acquisition at %s' %  t[0].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
         print('  ended data acquisition at %s' % t[-1].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
