@@ -429,6 +429,7 @@ def read_qubicstudio_science_fits(self,hdu):
     self.hk[extname] = {}
     self.hk[extname]['GPS'] = 1e-3*hdu.data.field(gpstime_idx)
     self.hk[extname]['PPS'] = hdu.data.field(ppstime_idx)
+    self.hk[extname]['ComputerDate'] = timestamp
     
     return
 
@@ -527,6 +528,7 @@ def read_qubicstudio_hkfits(self,hdu):
     for idx in range(nfields):
         fieldno = idx + 1
         fieldname = hdu.header['TTYPE%i' % fieldno]
+        if fieldname=='Platform-PPS': fieldname = 'PPS'
         self.hk[hkname][fieldname] = hdu.data.field(idx)
 
     # convert QubicStudio timestamps in ms to s
