@@ -12,7 +12,7 @@ A class with methods to send/receive configuration command for the calibration s
 Commands are sent to switch on/off and configure three components: calsource, amplifier, modulator
 '''
 from __future__ import division, print_function
-import socket,subprocess,time,re,os
+import socket,subprocess,time,re,os,pathlib,multiprocessing
 import datetime as dt
 
 import readline
@@ -437,11 +437,18 @@ class calsource_configuration_manager():
 
         # run the Arduino last of all
         dev = 'arduino'
-        parm = 'duration'
-        if dev in command.keys() and parm in command[dev].keys():
-            filename = self.device[dev].acquire(duration=command[dev][parm],save=True)
-            ack += ' | Arduino data saved to file: %s' % filename
+        if dev in command.keys():
+            if 'duration' in command[dev].keys():
+                manager=multiprocessing.Manager()
+    
+                arduino_proc  = multiprocessing.Process(target=self.device[dev].acquire, args=(command[dev]['duration'],True))
+                arduino_proc.start()
+                arduino_proc.join()
+                filename = arduino_proc
+                ack += ' | Arduino data saved to file: %s' % filename
 
+            if 'save' in command.keys():
+                pathlib.Path(self.device[dev].interrupt_file_flag).touch()
 
         # STATUS
         if command['all']['status']:
