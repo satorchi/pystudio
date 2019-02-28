@@ -336,7 +336,7 @@ class calsource_configuration_manager():
             if settings is None:
                 msg += ' | %s: FAILED TO READ SETTINGS' % dev
             else:
-                msg += '| %s: SHAPE=%s FREQUENCY=%.5f Hz AMPLITUDE=%.5f V OFFSET=%.5f V DUTY CYCLE=%.1f%%' % \
+                msg += '| %s: SHAPE=%s FREQUENCY=%.6f Hz AMPLITUDE=%.6f V OFFSET=%.6f V DUTY CYCLE=%.1f%%' % \
                     (dev,
                      settings['shape'],
                      settings['frequency'],
@@ -403,7 +403,7 @@ class calsource_configuration_manager():
             if of is None:
                 msg += 'FAILED'
             else:
-                msg += 'OK.  synthesiser frequency=%.5fGHz' % of
+                msg += 'OK.  synthesiser frequency=%.6fGHz' % of
             self.log(msg)
             ack += ' | %s' % msg
                 
@@ -423,7 +423,7 @@ class calsource_configuration_manager():
             if settings is None:
                 msg = '%s: COMMAND FAILED' % dev
             else:
-                msg = '%s: SHAPE=%s FREQUENCY=%.5f Hz AMPLITUDE=%.5f V OFFSET=%.5f V DUTY CYCLE=%.1f%%' % \
+                msg = '%s: SHAPE=%s FREQUENCY=%.6f Hz AMPLITUDE=%.6f V OFFSET=%.6f V DUTY CYCLE=%.1f%%' % \
                     (dev,
                      settings['shape'],
                      settings['frequency'],
