@@ -176,6 +176,9 @@ class qubicpack:
         oxford_determine_best_heater_level,\
         oxford_increase_heater_range
     
+    from .timestamping_diagnostic import\
+        plot_timestamp_diagnostic
+    
     if with_pystudio:
         '''
         these methods connect to QubicStudio and require pystudio
@@ -203,6 +206,7 @@ class qubicpack:
 
         from .squids import\
             squid_test
+
 
     def __init__(self):
         self.assign_defaults()
