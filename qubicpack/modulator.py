@@ -228,7 +228,7 @@ class modulator:
             return None
         
         if show:
-            print('SHAPE: %s\nFREQUENCY: %.2f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V\nDUTY CYCLE: %.1f%%' % \
+            print('SHAPE: %s\nFREQUENCY: %.3f Hz\nAMPLITUDE: %.3f V\nOFFSET: %.3f V\nDUTY CYCLE: %.1f%%' % \
                   (settings['shape'],settings['frequency'],settings['amplitude'],settings['offset'],settings['duty']))
         return settings
         
@@ -245,7 +245,7 @@ class modulator:
         self.s.write('FREQ?\n')
         freq_str=self.s.readline()
         freq=eval(freq_str.strip())
-        print('HP33120A is set to %.2f Hz' % freq)
+        print('HP33120A is set to %.3f Hz' % freq)
         return freq
 
     def read_shape(self):
