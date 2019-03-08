@@ -519,7 +519,7 @@ class calsource_configuration_manager():
         len_remain = self.nbytes - len_nowstr - 3
         fmt = '%%%is | %%%is' % (len_nowstr,len_remain)
         msg = fmt % (now_str,ack)
-
+        print('sending acknowledgement: %s' % msg)
         s.sendto(msg, (addr, self.broadcast_port))
         s.close()
         return
