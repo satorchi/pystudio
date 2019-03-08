@@ -41,7 +41,7 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
               
     
     pps = self.hk[hk]['PPS']
-    gps = self.hk[hk]['GPS']
+    gps = self.hk[hk]['GPSDate']
     compstamps  = self.hk[hk]['ComputerDate']
     npts = len(pps)
     sample_period = self.sample_period()
@@ -81,7 +81,7 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
         plt.plot(indextime+t0,                ls='none',marker='d',label='index time')
     plt.plot(tstamps,                         ls='none',marker='o',label='derived timestamps')
     plt.plot(compstamps,                      ls='none',marker='*',label='computer time')
-    plt.plot(gps,                             ls='none',marker='x',label='GPS')
+    plt.plot(gps,                             ls='none',marker='x',label='GPS date')
     plt.plot(pps_high,tstamps[pps_high],      ls='none',marker='^',label='pps high')
     plt.plot(pps_indexes,tstamps[pps_indexes],ls='none',marker='v',label='pps indexes')
     ax1 = fig1.axes[0]
@@ -108,7 +108,7 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
         plt.plot(indextime-ypts+t0,                ls='none',marker='d',label='index time')
     plt.plot(tstamps-ypts,                         ls='none',marker='o',label='derived timestamps')
     plt.plot(compstamps-ypts,                      ls='none',marker='*',label='computer time')
-    plt.plot(gps-ypts,                             ls='none',marker='x',label='GPS')
+    plt.plot(gps-ypts,                             ls='none',marker='x',label='GPS date')
 
     '''
     xpts = np.arange(len(pps_high))
