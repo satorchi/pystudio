@@ -427,7 +427,7 @@ def read_qubicstudio_science_fits(self,hdu):
     # save PPS/GPS as we do for HK files
     extname = hdu.header['EXTNAME'].strip()
     self.hk[extname] = {}
-    self.hk[extname]['GPS'] = 1e-3*hdu.data.field(gpstime_idx)
+    self.hk[extname]['GPSDate'] = 1e-3*hdu.data.field(gpstime_idx)
     self.hk[extname]['PPS'] = hdu.data.field(ppstime_idx)
     self.hk[extname]['ComputerDate'] = timestamp
     
@@ -852,3 +852,43 @@ def pps2date(self,pps,gps):
         tstamp[pps_indexes[-1] + idx] = tstampF + idx*last_sample_period
 
     return tstamp
+
+def gps(self,hk=None):
+    '''
+    return the GPS readings for a given housekeeping
+    '''
+    if hk is None: hk = 'INTERN_HK'
+    if hk.upper() == 'PLATFORM': hk = 'INTERN_HK'
+    if hk.upper() == 'ASIC': hk = 'CONF_ASIC1'
+    if hk.upper() == 'EXTERN': hk = 'EXTERN_HK'
+    if hk.upper().find('SCI')==0: hk = 'ASIC_SUMS'
+
+    if hk not in self.hk.keys():
+        print('Not a valid housekeeping ID: %s' % hk)
+        return None
+
+    if 'GPSDate' not in self.hk[hk].keys():
+        print('No GPS in %s' % hk)
+        return None
+
+    return self.hk[hk]['GPSDate']
+
+def pps(self,hk=None):
+    '''
+    return the PPS for a given housekeeping
+    '''
+    if hk is None: hk = 'INTERN_HK'
+    if hk.upper() == 'PLATFORM': hk = 'INTERN_HK'
+    if hk.upper() == 'ASIC': hk = 'CONF_ASIC1'
+    if hk.upper() == 'EXTERN': hk = 'EXTERN_HK'
+    if hk.upper().find('SCI')==0: hk = 'ASIC_SUMS'
+    
+    if hk not in self.hk.keys():
+        print('Not a valid housekeeping ID: %s' % hk)
+        return None
+
+    if 'PPS' not in self.hk[hk].keys():
+        print('No PPS in %s' % hk)
+        return None
+
+    return self.hk[hk]['PPS']
