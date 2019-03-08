@@ -439,12 +439,7 @@ class calsource_configuration_manager():
         dev = 'arduino'
         if dev in command.keys():
             if 'duration' in command[dev].keys():
-                manager=multiprocessing.Manager()
-    
-                arduino_proc  = multiprocessing.Process(target=self.device[dev].acquire, args=(command[dev]['duration'],True))
-                arduino_proc.start()
-                arduino_proc.join()
-                filename = arduino_proc
+                filename = self.device[dev].acquire(command[dev]['duration'],True)
                 ack += ' | Arduino data saved to file: %s' % filename
 
             if 'save' in command.keys():
@@ -471,8 +466,20 @@ class calsource_configuration_manager():
             sent_date = dt.datetime.fromtimestamp(command['timestamp']['sent'])
             self.log('command sent:     %s' % sent_date.strftime(self.date_fmt))
             self.log('command received: %s' % received_date.strftime(self.date_fmt))
-            
-            ack = self.interpret_commands(command)
+
+            # interpret the commands in a separate process and continue listening
+            manager=multiprocessing.Manager()
+            return_dict = manager.dict()
+    
+            proc  = multiprocessing.Process(target=self.interpret_commands, args=(command))
+            proc.start()
+            if 'arduino' in command.keys() and 'duration' in command['arduino'].keys():
+                self.send_acknowledgement('Send command "save" to interrupt and save immediately',addr)
+                received_tstamp, cmdstr, addr = self.listen_for_command()
+                if cmdstr.lower()=='save':
+                    pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
+            proc.join()
+            ack = return_dict.values()[0]
             self.send_acknowledgement(ack,addr)
         return
                 
