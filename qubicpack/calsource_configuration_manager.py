@@ -479,7 +479,7 @@ class calsource_configuration_manager():
                 if cmdstr.lower()=='save':
                     pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
             proc.join()
-            ack = return_dict.values()[0]
+            ack = return_dict.values()
             self.send_acknowledgement(ack,addr)
         return
                 
