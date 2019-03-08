@@ -68,7 +68,9 @@ class qubicpack:
         data_subdir,\
         get_from_keyboard,\
         writelog,\
-        pps2date
+        pps2date,\
+        gps,\
+        pps
 
     from .iv import\
         exist_iv_data,\
