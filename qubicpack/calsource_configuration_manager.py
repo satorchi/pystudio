@@ -471,7 +471,7 @@ class calsource_configuration_manager():
             manager=multiprocessing.Manager()
             return_dict = manager.dict()
     
-            proc  = multiprocessing.Process(target=self.interpret_commands, args=(command))
+            proc  = multiprocessing.Process(target=self.interpret_commands, args=(self,command))
             proc.start()
             if 'arduino' in command.keys() and 'duration' in command['arduino'].keys():
                 self.send_acknowledgement('Send command "save" to interrupt and save immediately',addr)
