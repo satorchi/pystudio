@@ -450,7 +450,7 @@ class calsource_configuration_manager():
             ack += ' | %s' % self.status()
             
 
-        retval = [ack]  
+        retval.append(ack)
         return retval
 
 
