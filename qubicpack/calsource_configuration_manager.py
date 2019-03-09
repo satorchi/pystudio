@@ -240,9 +240,10 @@ class calsource_configuration_manager():
         self.log('client listening on %s' % self.receiver)
 
         cmdstr, addr = client.recvfrom(self.nbytes)
+        cmdstr = cmdstr.strip()
         received_date = dt.datetime.utcnow()
         received_tstamp = eval(received_date.strftime('%s.%f'))
-        self.log('received a command from %s at %s' % (addr,received_date.strftime(self.date_fmt)))
+        self.log('received a command from %s at %s: %s' % (addr,received_date.strftime(self.date_fmt),cmdstr))
         return received_tstamp, cmdstr, addr[0]
 
     def listen_for_acknowledgement(self,timeout=None):
@@ -475,7 +476,8 @@ class calsource_configuration_manager():
             if 'arduino' in command.keys() and 'duration' in command['arduino'].keys():
                 self.send_acknowledgement('Send command "save" to interrupt and save immediately',addr)
                 received_tstamp, cmdstr, addr = self.listen_for_command()
-                if cmdstr.lower()=='save':
+                command2 = self.parse_command_string(cmdstr)
+                if 'save' in command2.keys():
                     pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
             proc.join()
             ack = retval[0]
