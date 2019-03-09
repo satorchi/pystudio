@@ -486,7 +486,6 @@ class calsource_configuration_manager():
                 working = True
                 print("going into loop until %s or until 'save' command received" % stoptime.strftime('%Y-%m-%d %H:%M:%S UT'))
                 while working and now<stoptime:
-                    now = dt.datetime.utcnow()
                     received_tstamp, cmdstr, addr = self.listen_for_command()
                     command2 = self.parse_command_string(cmdstr)
                     if 'arduino' in command2.keys() and 'save' in command2['arduino'].keys():
@@ -494,9 +493,22 @@ class calsource_configuration_manager():
                         working = False
                     else:
                         self.send_acknowledgement("I'm busy and can only respond to the 'save' command",addr)
+                    now = dt.datetime.utcnow()
+
             proc.join()
             ack = retval[0]
             self.send_acknowledgement(ack,addr)
+
+            # clean up just in case
+            if os.path.isfile(self.device['arduino'].interrupt_flag_file):
+                print('cleaning up interrupt flag file')
+                try:
+                    os.remove(self.device['arduino'].interrupt_flag_file)
+                except:
+                    print('WARNING: Could not remove interrupt flag file: %s' % self.device['arduino'].interrupt_flag_file)
+            else:
+                print('no interrupt flag file')    
+            
         return
                 
     def send_command(self,cmd_str):
