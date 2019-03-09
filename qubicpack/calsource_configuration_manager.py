@@ -240,11 +240,12 @@ class calsource_configuration_manager():
         self.log('client listening on %s' % self.receiver)
 
         cmdstr, addr = client.recvfrom(self.nbytes)
-        cmdstr = cmdstr.strip()
+        cmdstr_clean = ' '.join(cmdstr.strip().split())
         received_date = dt.datetime.utcnow()
         received_tstamp = eval(received_date.strftime('%s.%f'))
-        self.log('received a command from %s at %s: %s' % (addr,received_date.strftime(self.date_fmt),cmdstr))
-        return received_tstamp, cmdstr, addr[0]
+        
+        self.log('received a command from %s at %s: %s' % (addr,received_date.strftime(self.date_fmt),cmdstr_clean))
+        return received_tstamp, cmdstr_clean, addr[0]
 
     def listen_for_acknowledgement(self,timeout=None):
         '''
