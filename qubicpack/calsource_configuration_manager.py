@@ -449,7 +449,7 @@ class calsource_configuration_manager():
                 ack += ' | Arduino data saved to file: %s' % filename
 
             if 'save' in command[dev].keys():
-                pathlib.Path(self.device[dev].interrupt_file_flag).touch()
+                pathlib.Path(self.device[dev].interrupt_flag_file).touch()
 
         # STATUS
         if command['all']['status']:
@@ -483,7 +483,7 @@ class calsource_configuration_manager():
                 received_tstamp, cmdstr, addr = self.listen_for_command()
                 command2 = self.parse_command_string(cmdstr)
                 if 'arduino' in command2.keys() and 'save' in command2['arduino'].keys():
-                    pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
+                    pathlib.Path(self.device['arduino'].interrupt_flag_file).touch()
             proc.join()
             ack = retval[0]
             self.send_acknowledgement(ack,addr)
