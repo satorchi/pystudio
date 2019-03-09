@@ -480,10 +480,15 @@ class calsource_configuration_manager():
             proc.start()
             if 'arduino' in command.keys() and 'duration' in command['arduino'].keys():
                 self.send_acknowledgement('Send command "save" to interrupt and save immediately',addr)
-                received_tstamp, cmdstr, addr = self.listen_for_command()
-                command2 = self.parse_command_string(cmdstr)
-                if 'arduino' in command2.keys() and 'save' in command2['arduino'].keys():
-                    pathlib.Path(self.device['arduino'].interrupt_flag_file).touch()
+                working = True
+                while working:
+                    received_tstamp, cmdstr, addr = self.listen_for_command()
+                    command2 = self.parse_command_string(cmdstr)
+                    if 'arduino' in command2.keys() and 'save' in command2['arduino'].keys():
+                        pathlib.Path(self.device['arduino'].interrupt_flag_file).touch()
+                        working = False
+                    else:
+                        self.send_acknowledgement("I'm busy and can only respond to the 'save' command",addr)
             proc.join()
             ack = retval[0]
             self.send_acknowledgement(ack,addr)
