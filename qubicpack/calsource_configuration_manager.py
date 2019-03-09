@@ -347,7 +347,7 @@ class calsource_configuration_manager():
             
         return msg
     
-    def interpret_commands(self,command,retval=None):
+    def interpret_commands(self,command,retval):
         '''
         interpret the dictionary of commands, and take the necessary steps
         this method is called by the "manager"
@@ -478,6 +478,8 @@ class calsource_configuration_manager():
                 if cmdstr.lower()=='save':
                     pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
             proc.join()
+            print('retval is of type: %s' % type(retval))
+            print('retval has length: %i' % len(retval))
             if isinstance(retval,list) and len(retval)==1:
                 ack = retval[0]
             else:
