@@ -478,12 +478,7 @@ class calsource_configuration_manager():
                 if cmdstr.lower()=='save':
                     pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
             proc.join()
-            print('retval is of type: %s' % type(retval))
-            print('retval has length: %i' % len(retval))
-            if isinstance(retval,list) and len(retval)==1:
-                ack = retval[0]
-            else:
-                ack = retval
+            ack = retval[0]
             self.send_acknowledgement(ack,addr)
         return
                 
