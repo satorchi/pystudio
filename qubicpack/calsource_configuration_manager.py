@@ -347,7 +347,7 @@ class calsource_configuration_manager():
             
         return msg
     
-    def interpret_commands(self,command):
+    def interpret_commands(self,command,retval=None):
         '''
         interpret the dictionary of commands, and take the necessary steps
         this method is called by the "manager"
@@ -450,7 +450,7 @@ class calsource_configuration_manager():
             ack += ' | %s' % self.status()
             
 
-                
+        retval = ack  
         return ack
 
 
@@ -468,10 +468,9 @@ class calsource_configuration_manager():
             self.log('command received: %s' % received_date.strftime(self.date_fmt))
 
             # interpret the commands in a separate process and continue listening
-            manager=multiprocessing.Manager()
-            return_dict = manager.dict()
-    
-            proc  = multiprocessing.Process(target=self.interpret_commands, args=(command,))
+            manager = multiprocessing.Manager()
+            retval = manager.list()
+            proc = multiprocessing.Process(target=self.interpret_commands, args=(command,retval))
             proc.start()
             if 'arduino' in command.keys() and 'duration' in command['arduino'].keys():
                 self.send_acknowledgement('Send command "save" to interrupt and save immediately',addr)
@@ -479,7 +478,10 @@ class calsource_configuration_manager():
                 if cmdstr.lower()=='save':
                     pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
             proc.join()
-            ack = return_dict.values()
+            if isinstance(retval,list) and len(retval)==1:
+                ack = retval[0]
+            else:
+                ack = retval
             self.send_acknowledgement(ack,addr)
         return
                 
