@@ -479,9 +479,14 @@ class calsource_configuration_manager():
             proc = multiprocessing.Process(target=self.interpret_commands, args=(command,retval))
             proc.start()
             if 'arduino' in command.keys() and 'duration' in command['arduino'].keys():
+                delta = dt.timedelta(seconds=command['arduino']['duration'])
+                now = dt.datetime.utcnow()
+                stoptime = now + delta
                 self.send_acknowledgement('Send command "save" to interrupt and save immediately',addr)
                 working = True
-                while working:
+                print("going into loop until %s or until 'save' command received" % stoptime.strftime('%Y-%m-%d %H:%M:%S UT'))
+                while working and now<stoptime:
+                    now = dt.datetime.utcnow()
                     received_tstamp, cmdstr, addr = self.listen_for_command()
                     command2 = self.parse_command_string(cmdstr)
                     if 'arduino' in command2.keys() and 'save' in command2['arduino'].keys():
