@@ -165,7 +165,7 @@ class calsource_configuration_manager():
         command['all'] = {}
         command['all']['status'] = False
         
-        command_lst = cmdstr.strip().split()
+        command_lst = cmdstr.strip().lower().split()
         tstamp_str = command_lst[0]
         try:
             command['timestamp']['sent'] = eval(tstamp_str)
@@ -183,6 +183,10 @@ class calsource_configuration_manager():
                 command['all']['onoff'] = cmd
                 for dev in ['calsource','amplifier','modulator']:
                     command[dev]['onoff'] = cmd
+                continue
+
+            if cmd=='save':
+                command['arduino']['save'] = True
                 continue
                     
             
@@ -444,7 +448,7 @@ class calsource_configuration_manager():
                 filename = self.device[dev].acquire(command[dev]['duration'],True)
                 ack += ' | Arduino data saved to file: %s' % filename
 
-            if 'save' in command.keys():
+            if 'save' in command[dev].keys():
                 pathlib.Path(self.device[dev].interrupt_file_flag).touch()
 
         # STATUS
@@ -478,7 +482,7 @@ class calsource_configuration_manager():
                 self.send_acknowledgement('Send command "save" to interrupt and save immediately',addr)
                 received_tstamp, cmdstr, addr = self.listen_for_command()
                 command2 = self.parse_command_string(cmdstr)
-                if 'save' in command2.keys():
+                if 'arduino' in command2.keys() and 'save' in command2['arduino'].keys():
                     pathlib.Path(self.device['arduino'].interrupt_file_flag).touch()
             proc.join()
             ack = retval[0]
