@@ -12,7 +12,7 @@ A class with methods to send/receive configuration command for the calibration s
 Commands are sent to switch on/off and configure three components: calsource, amplifier, modulator
 '''
 from __future__ import division, print_function
-import socket,subprocess,time,re,os,pathlib,multiprocessing
+import socket,subprocess,time,re,os,multiprocessing
 import datetime as dt
 
 import readline
@@ -449,7 +449,7 @@ class calsource_configuration_manager():
                 ack += ' | Arduino data saved to file: %s' % filename
 
             if 'save' in command[dev].keys():
-                pathlib.Path(self.device[dev].interrupt_flag_file).touch()
+                self.device[dev].interrupt()
 
         # STATUS
         if command['all']['status']:
@@ -464,9 +464,10 @@ class calsource_configuration_manager():
         '''
         keep listening on the socket for commands
         '''
+        cmdstr = None
         keepgoing = True
         while keepgoing:
-            received_tstamp, cmdstr, addr = self.listen_for_command()
+            if cmdstr is None: received_tstamp, cmdstr, addr = self.listen_for_command()
             received_date = dt.datetime.fromtimestamp(received_tstamp)
             command = self.parse_command_string(cmdstr)
             sent_date = dt.datetime.fromtimestamp(command['timestamp']['sent'])
@@ -487,27 +488,21 @@ class calsource_configuration_manager():
                 print("going into loop until %s or until 'save' command received" % stoptime.strftime('%Y-%m-%d %H:%M:%S UT'))
                 while working and now<stoptime:
                     received_tstamp, cmdstr, addr = self.listen_for_command()
+                    now = dt.datetime.utcnow()
                     command2 = self.parse_command_string(cmdstr)
                     if 'arduino' in command2.keys() and 'save' in command2['arduino'].keys():
-                        pathlib.Path(self.device['arduino'].interrupt_flag_file).touch()
+                        self.device['arduino'].interrupt()
                         working = False
-                    else:
+                        cmdstr = None
+                    elif now<stoptime:
                         self.send_acknowledgement("I'm busy and can only respond to the 'save' command",addr)
-                    now = dt.datetime.utcnow()
+                    else:
+                        print('command will be carried into main loop: %s' % cmdstr)
 
             proc.join()
             ack = retval[0]
             self.send_acknowledgement(ack,addr)
 
-            # clean up just in case
-            if os.path.isfile(self.device['arduino'].interrupt_flag_file):
-                print('cleaning up interrupt flag file')
-                try:
-                    os.remove(self.device['arduino'].interrupt_flag_file)
-                except:
-                    print('WARNING: Could not remove interrupt flag file: %s' % self.device['arduino'].interrupt_flag_file)
-            else:
-                print('no interrupt flag file')    
             
         return
                 
