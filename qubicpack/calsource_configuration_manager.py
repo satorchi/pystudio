@@ -498,6 +498,8 @@ class calsource_configuration_manager():
                         self.send_acknowledgement("I'm busy and can only respond to the 'save' command",addr)
                     else:
                         print('command will be carried into main loop: %s' % cmdstr)
+            else:
+                cmdstr = None
 
             proc.join()
             ack = retval[0]
