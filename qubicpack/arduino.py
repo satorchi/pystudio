@@ -86,12 +86,6 @@ class arduino:
             now=dt.datetime.utcnow()
             y.append(x)
             t.append(dt.datetime.utcnow())
-
-        if os.path.isfile(self.interrupt_flag_file):
-            try:
-                os.remove(self.interrupt_flag_file)
-            except:
-                print('WARNING: Could not remove interrupt flag file: %s' % self.interrupt_flag_file)
                 
 
         print('started data acquisition at %s' %  t[0].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
@@ -113,10 +107,37 @@ class arduino:
 
         t = np.array(arduino_t)
         a = np.array(arduino_a)
+
+        self.clear_interrupt_flag()
+        
         if save:
             return self.write_data(t,a)
         
         return t,a
+
+    def interrupt(self):
+        '''
+        interrupt an ongoing acquisition
+        this is done simply by creating a file which acts as a flag
+        '''
+        try:
+            pathlib.Path(self.interrupt_flag_file).touch()
+        except:
+            print('ERROR! Could not create interrupt flag file: %s' % self.interrupt_flag_file)
+        return
+
+    def clear_interrupt_flag(self):
+        '''
+        remove the interrupt flag file
+        '''
+        if os.path.isfile(self.interrupt_flag_file):
+            print('cleaning up interrupt flag file')
+            try:
+                os.remove(self.interrupt_flag_file)
+            except:
+                print('WARNING: Could not remove interrupt flag file: %s' % self.interrupt_flag_file)
+        return
+
 
     def write_data(self,t,v):
         '''
