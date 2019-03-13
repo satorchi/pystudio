@@ -790,46 +790,52 @@ def pps2date(self,pps,gps):
     '''
     npts = len(pps)
     pps_separation=1  # exactly one second between pulses
+    epsilon = 0.1
 
     separations = []
     pps_high = np.where(pps==1)[0]
-    # select the first PPS in each series
+    # select the first/last PPS in each series
     pps_indexes = []
     prev = gps[0]
     for idx in pps_high:
-        if (idx>0 and pps[idx-1]==0) or (idx<npts-1 and pps[idx+1]==0):
-            pps_indexes.append(idx)
+        if (idx>0 and pps[idx-1]==0)\
+           or (idx<npts-1 and pps[idx+1]==0):
+            pps_indexes.append(idx)    
             separations.append(gps[idx] - prev)
             prev = gps[idx]            
 
     separations = np.array(separations[1:])
 
     mean_separation = separations.mean()
-    print('mean separation between pulses is %.2f second' % mean_separation)
     int_separation = int(mean_separation)
     print('setting pps interval to %i second' % int_separation)
     pps_separation = int_separation
             
-    gps_indexes = []
-    # there is exactly one second between gps_indexes
-    # and the date is the one found at each gps_index
+    # find the GPS date corresponding to the PPS
     tstamp = -np.ones(npts)
-    last_one_is_no_good = False
+    prev_gps = gps[0]
     for idx in pps_indexes:
         gps_at_pps = gps[idx]
-        next_gps = gps_at_pps
-        offset_idx = idx
-        while next_gps==gps_at_pps:
-            offset_idx += 1
-            if offset_idx>=npts:
-                last_one_is_no_good = True
-                break
-            next_gps = gps[offset_idx]
-            if not last_one_is_no_good:
-                gps_indexes.append(offset_idx)
 
+        # we use the GPS timestamp from 2 samples later
+        offset_idx = idx + 2
+        if offset_idx>=npts:offset_idx=npts-1
+        next_gps = gps[offset_idx]
+
+        ''' forget all this...
+        if idx>0: prev_gps = gps[idx-1]
+        # check if the new GPS date arrived at the same time as the PPS.  It happens sometimes
+        if gps_at_pps==prev_gps:
+        	while next_gps==gps_at_pps:
+                    if offset_idx>=npts: break # jump out before the end of the samples
+                    next_gps = gps[offset_idx]
+                    offset_idx += 1
+        else:
+            print('GPS arrived at same time as PPS at index: %i' % idx)        
+        '''
         tstamp[idx] = next_gps
 
+    # now finally do the interpolation for the time axis
     first_sample_period = None    
     for idx in range(len(pps_indexes)-1):
         diff_idx = pps_indexes[idx+1] - pps_indexes[idx]
