@@ -22,7 +22,7 @@ import numpy as np
 a2=qp()
 a2.read_qubicstudio_dataset('2019/2019-02-22/2019-02-22_16.28.01__Scan2/',asic=2)
 pps = a2.hk['ASIC_SUMS']['PPS']
-gps = a2.hk['ASIC_SUMS']['GPS']
+gps = a2.hk['ASIC_SUMS']['GPSDate']
 tstamps    = a2.timeline_timeaxis(axistype='pps')
 indextime  = a2.timeline_timeaxis(axistype='index')
 compstamps = a2.timeline_timeaxis(axistype='computertime')

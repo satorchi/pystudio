@@ -173,7 +173,7 @@ def timeline_timeaxis(self,timeline_index=None,axistype='index'):
     if axistype.lower()=='pps':
         if 'ASIC_SUMS' in self.hk.keys():
             pps = self.hk['ASIC_SUMS']['PPS']
-            gps = self.hk['ASIC_SUMS']['GPS']
+            gps = self.hk['ASIC_SUMS']['GPSDate']
             time_axis = self.pps2date(pps,gps)
             return time_axis
         print('ERROR! No PPS data.')
