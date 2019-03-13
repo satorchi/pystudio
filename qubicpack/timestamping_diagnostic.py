@@ -50,15 +50,40 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
     datainfo = '%s, ASIC=%i' % (self.obsdate.strftime('%Y-%m-%d %H:%M:%S'),self.asic)
     
     ttl = 'Timestamps diagnostic'
+
+    ########## the following is also found in pps2date
+    epsilon = 0.1
+    separations = []
+    separations_idx = []
     pps_high = np.where(pps==1)[0]
     pps_indexes = []
     prev = gps[0]
     for idx in pps_high:
         if (idx>0 and pps[idx-1]==0) or (idx<npts-1 and pps[idx+1]==0):
             pps_indexes.append(idx)
+            separations.append(gps[idx] - prev)
+            separations_idx.append(idx)
             prev = gps[idx]            
 
-    
+    separations = np.array(separations[1:])
+    separations_idx = np.array(separations_idx[1:])
+    print('number of separations: %i' % len(separations))
+    print('number of samples: %i' % len(pps))
+
+    mean_separation = separations.mean()
+    print('mean separation between pulses is %.2f second' % mean_separation)
+    max_separation = separations.max()
+    print('max separation between pulses is %.2f second' % max_separation)
+    min_separation = separations.min()
+    print('min separation between pulses is %.2f second' % min_separation)
+
+    jump_indexes = np.where(separations>1+epsilon)[0]
+    print('there are %i jumps at:  %s' % (len(jump_indexes),separations_idx[jump_indexes]))
+
+    stick_indexes = np.where(separations<1-epsilon)[0]
+    print('there are %i sticks at: %s' % (len(jump_indexes),separations_idx[stick_indexes]))
+    ############### end repeated code from pps2date
+
     tstamps = self.pps2date(pps,gps)
     t0 = tstamps[0]
 
@@ -72,6 +97,9 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
     xpts = np.arange(len(tstamps))
     ypts = slope*xpts + offset
 
+    # mark problems with a vertical line
+    yminmax = (compstamps.min(),compstamps.max())
+
     plt.ion()
     fig1 = plt.figure(figsize=(16,8))
     fig1.canvas.set_window_title('plt: %s' % ttl)
@@ -83,10 +111,15 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
     plt.plot(compstamps,                      ls='none',marker='*',label='computer time')
     plt.plot(gps,                             ls='none',marker='x',label='GPS date')
     plt.plot(pps_high,tstamps[pps_high],      ls='none',marker='^',label='pps high')
-    plt.plot(pps_indexes,tstamps[pps_indexes],ls='none',marker='v',label='pps indexes')
+    plt.plot(pps_indexes,tstamps[pps_indexes],ls='none',marker='o',label='pps indexes',markerfacecolor='none',markersize=16,color='black')
+    for idx in jump_indexes:
+        plt.plot((separations_idx[idx],separations_idx[idx]),yminmax,color='red',ls='dashed')
+    for idx in stick_indexes:
+        plt.plot((separations_idx[idx],separations_idx[idx]),yminmax,color='magenta',ls='dotted')
+    
     ax1 = fig1.axes[0]
     ax1.set_ylabel('seconds')
-    ax1.set_ylim(compstamps.min(),compstamps.max())
+    ax1.set_ylim(yminmax)
     ax1.set_xlabel('sample number')
     plt.legend()
     pngname = '%s_full.png' % ttl.lower().replace(' ','_')
@@ -124,8 +157,13 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
     ax2.set_ylabel('seconds')
     ax2.set_xlabel('sample number')
     horiz_y = tstamps - ypts
-    #ax2.set_ylim(horiz_y.min(),horiz_y.max())
-    ax2.set_ylim(-0.5,0.015)
+    #yminmax = (horiz_y.min(),horiz_y,max())
+    yminmax = (-0.5,0.015)
+    ax2.set_ylim(yminmax)
+    for idx in jump_indexes:
+        plt.plot((separations_idx[idx],separations_idx[idx]),yminmax,color='red',ls='dashed')
+    for idx in stick_indexes:
+        plt.plot((separations_idx[idx],separations_idx[idx]),yminmax,color='magenta',ls='dotted')
     plt.legend()
     pngname = '%s_full.png' % ttl.lower().replace(' ','_')
     plt.savefig(pngname,format='png',dpi=100,bbox_inches='tight')
