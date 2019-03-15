@@ -149,7 +149,7 @@ def timeline_npts(self):
     timeline_size = int(np.ceil(self.tinteg / sample_period))
     return timeline_size
 
-def timeline_timeaxis(self,timeline_index=None,axistype='index'):
+def timeline_timeaxis(self,timeline_index=None,axistype='pps'):
     '''
     the timeline time axis.  
     This is determined from the sample period and the number of points
@@ -172,8 +172,11 @@ def timeline_timeaxis(self,timeline_index=None,axistype='index'):
 
     if axistype.lower()=='pps':
         if 'ASIC_SUMS' in self.hk.keys():
-            pps = self.hk['ASIC_SUMS']['PPS']
-            gps = self.hk['ASIC_SUMS']['GPSDate']
+            pps = self.pps(hk='ASIC_SUMS')
+            gps = self.gps(hk='ASIC_SUMS')
+            if gps is None or gps.min()<1494486000 or gps.max()<1494486000:
+                print('ERROR! Bad GPS data.  Using sample rate to make a time axis.')
+                return time_axis_index
             time_axis = self.pps2date(pps,gps)
             return time_axis
         print('ERROR! No PPS data.')
