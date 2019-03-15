@@ -821,18 +821,6 @@ def pps2date(self,pps,gps):
         offset_idx = idx + 2
         if offset_idx>=npts:offset_idx=npts-1
         next_gps = gps[offset_idx]
-
-        ''' forget all this...
-        if idx>0: prev_gps = gps[idx-1]
-        # check if the new GPS date arrived at the same time as the PPS.  It happens sometimes
-        if gps_at_pps==prev_gps:
-        	while next_gps==gps_at_pps:
-                    if offset_idx>=npts: break # jump out before the end of the samples
-                    next_gps = gps[offset_idx]
-                    offset_idx += 1
-        else:
-            print('GPS arrived at same time as PPS at index: %i' % idx)        
-        '''
         tstamp[idx] = next_gps
 
     # now finally do the interpolation for the time axis
