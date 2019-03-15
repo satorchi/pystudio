@@ -58,6 +58,7 @@ setup(install_requires=['numpy'],
 # install the executable scripts
 exec_dir = '/usr/local/bin'
 scripts = ['scripts/calsource_commander.py',
+           'qubicpack/hk/powersupply.py',
            'qubicpack/copy_data.py',
            'scripts/make_hk_fits.py',
            'scripts/modulator_commander.py',
