@@ -44,7 +44,10 @@ def plot_timestamp_diagnostic(self,hk=None,zoomx=None,zoomy=None):
     gps = self.hk[hk]['GPSDate']
     compstamps  = self.hk[hk]['ComputerDate']
     npts = len(pps)
-    sample_period = self.sample_period()
+    if hk=='ASIC_SUMS':
+        sample_period = self.sample_period()
+    else:
+        sample_period = float(compstamps.max() - compstamps.min())/len(compstamps)
     indextime = sample_period*np.arange(npts)
 
     datainfo = '%s, ASIC=%i' % (self.obsdate.strftime('%Y-%m-%d %H:%M:%S'),self.asic)
