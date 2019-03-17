@@ -86,7 +86,10 @@ class arduino:
             now=dt.datetime.utcnow()
             y.append(x)
             t.append(dt.datetime.utcnow())
-                
+
+        if len(t)==0:
+            if save: return None
+            return None,None
 
         print('started data acquisition at %s' %  t[0].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
         print('  ended data acquisition at %s' % t[-1].strftime('%Y-%m-%d %H:%M:%S.%f UTC'))
