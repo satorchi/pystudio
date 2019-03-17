@@ -446,7 +446,10 @@ class calsource_configuration_manager():
         if dev in command.keys():
             if 'duration' in command[dev].keys():
                 filename = self.device[dev].acquire(command[dev]['duration'],True)
-                ack += ' | Arduino data saved to file: %s' % filename
+                if filename is None:
+                    ack += ' | Arduino acquistion failed'
+                else:
+                    ack += ' | Arduino data saved to file: %s' % filename
 
             if 'save' in command[dev].keys():
                 self.device[dev].interrupt()
@@ -502,7 +505,10 @@ class calsource_configuration_manager():
                 cmdstr = None
 
             proc.join()
-            ack = retval[0]
+            if len(retval)==0:
+                ack = 'no acknowledgement'
+            else:
+                ack = retval[0]
             self.send_acknowledgement(ack,addr)
 
             
