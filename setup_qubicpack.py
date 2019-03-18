@@ -58,6 +58,8 @@ setup(install_requires=['numpy'],
 # install the executable scripts
 exec_dir = '/usr/local/bin'
 scripts = ['scripts/calsource_commander.py',
+           'calsource_set_frequency.py',
+           'calsource_step_frequency.py',
            'qubicpack/hk/powersupply.py',
            'qubicpack/copy_data.py',
            'scripts/make_hk_fits.py',
