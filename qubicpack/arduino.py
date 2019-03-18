@@ -28,6 +28,7 @@ class arduino:
     def __init__(self):
         self.s = None
         self.interrupt_flag_file = '/tmp/__ARDUINO_STOP__'
+        self.clear_interrupt_flag()
         return None
 
     def init(self,port='/dev/arduino'):
@@ -69,6 +70,7 @@ class arduino:
         print('##### arduino_acquire #####')
         if not self.connected: self.init()
         if not self.connected: return None,None
+        self.clear_interrupt_flag()
 
         if duration is None:
             dt_duration=dt.timedelta(minutes=5)
