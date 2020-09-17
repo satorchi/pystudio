@@ -8,7 +8,7 @@ A Python interface for Qubic Studio
 - current maintainer: Steve Torchinsky <satorchi@apc,in2p3.fr>
 
 QubicStudio is the control software for QUBIC
-developed by Wilfried Marty at IRAP
+developed at IRAP
 
 
 Introduction
